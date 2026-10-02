@@ -4,9 +4,12 @@ Github Username: Fahada-code
 
 Github Username: nooralam15
 
-
-   Name: Aalok Mishra
-   CCID: aalok1
-   Github Username: Mishra411
+Name: Aalok Mishra
+CCID: aalok1
+Github Username: Mishra411
 
 Github Username: AByte-voyager
+
+Name: Dean Elbery
+CCID: delbery
+Guthub username: Eazydean

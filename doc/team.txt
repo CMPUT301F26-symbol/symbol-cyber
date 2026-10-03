@@ -12,4 +12,6 @@ Github Username: AByte-voyager
 
 Name: Dean Elbery
 CCID: delbery
-Guthub username: Eazydean
+GitHub username: Eazydean
+
+GitHub username: awsolim

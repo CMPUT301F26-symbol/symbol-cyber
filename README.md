@@ -8,17 +8,15 @@ This repository is for our CMPUT 301 team project Symbol.
 
 All deliverables are maintained in the repository's **GitHub Wiki**.
 
-> **Setup:** Replace `OWNER` and `REPOSITORY` in the links below with the actual GitHub organization/user and repository name.
-
 | Deliverable | Documentation | Responsible members |
 | --- | --- | --- |
 | Product Backlog | [Wiki: Product Backlog](https://github.com/OWNER/REPOSITORY/wiki/Product-Backlog) | Fahad Khan, Amr Soliman |
-| UI Mockups and Storyboards | [Wiki: UI Mockups and Storyboards](https://github.com/OWNER/REPOSITORY/wiki/UI-Mockups-and-Storyboards) | Aalok Mishra, Abhishek Mishra |
-| CRC Cards | [Wiki: CRC Cards](https://github.com/OWNER/REPOSITORY/wiki/CRC-Cards) | Noor Alam |
+| UI Mockups and Storyboards | [Wiki: UI Mockups and Storyboards](https://github.com/CMPUT301F26-symbol/symbol-cyber/wiki/UI-Mockups) (https://github.com/CMPUT301F26-symbol/symbol-cyber/wiki/Storyboards) | Aalok Mishra, Abhishek Mishra |
+| CRC Cards | [Wiki: CRC Cards](https://github.com/CMPUT301F26-symbol/symbol-cyber/wiki/CRC-Cards) | Noor Alam |
 | Wiki Structure and Tool Use | [Wiki: Tool Use](https://github.com/OWNER/REPOSITORY/wiki/Tool-Use) | Dean Elbery |
 
-**[Open the Wiki Home page](https://github.com/OWNER/REPOSITORY/wiki)**  
-**GitHub Project board:** [Add the Project board URL]
+**[Open the Wiki Home page](https://github.com/CMPUT301F26-symbol/symbol-cyber/wiki/CMPUT-301-%E2%80%90-Symbol)**  
+**GitHub Project board:**
 
 ### Deliverable Requirements
 
@@ -76,7 +74,7 @@ All deliverables are maintained in the repository's **GitHub Wiki**.
 
 **AI tool used:** ChatGPT (OpenAI).
 
-**How it was used:** To help draft and format the GitHub Wiki Home page, a CRC Cards page with illustrative examples, and this README. The team is responsible for reviewing, correcting, and finalizing all content against the official project specification. In particular, sample CRC cards must not be treated as verified project analysis.
+**How it was used:** To help draft and format the GitHub Wiki Home page, a CRC Cards page with illustrative examples, and this README. The team is responsible for reviewing, correcting, and finalizing all content in accordance with the official project specification. In particular, sample CRC cards must not be treated as verified project analysis.
 
 **Approximate amount of AI use:** [Team to add a rough estimate of AI-assisted work across the deliverables before submission.]
 

@@ -76,6 +76,13 @@ All deliverables are maintained in the repository's **GitHub Wiki**.
 
 **How it was used:** To help draft and format the GitHub Wiki Home page, a CRC Cards page with illustrative examples, and this README. The team is responsible for reviewing, correcting, and finalizing all content in accordance with the official project specification. In particular, sample CRC cards must not be treated as verified project analysis.
 
+**AI Tool Use in the CRC Cards (45%)**
+GPT 6.1-Sol was used to assist in the formulation of the CRC Cards. It was used to help extract the appropriate classes from the User Story (5%). It was also used to help formula the cards for Reservation, Rating, Image, Map, Notifcation, Message, and AvailablilitySchedule (40%)
+
+“I am creating CRC cards for the following software description problem. These are the classes I identitifed, is this correct? Entrant, Campsite, Lottery, WaitingList, Notification, AvailableDates,Reservation, CampsiteOwner, QRCode, Message, Rating, User (Abstract) Admin” prompt. ChatGPT, model GPT-6.1 Sol, OpenAI, 18 Oct. 2026, chatgpt.com. (5%)
+
+“I have completed the detailed CRC Cards for the Entrant, CampsiteOwner, Admin, Campsite, Lottery, and WaitingList classes. Please complete the remaining classes for Reservation, Rating, Image, Map, Notifcation, Message, and AvailablilitySchedule (Not sure if this should be included). Ensure that cards are One to One (If A lists B, B should list A). Also do a check to ensure that all User Stories are mentioned in the final classes. I have yet to include a handful of the User stories including the ones such as reservation confirmation, notidcation of reservation cancellation etc. Do a final check” prompt. ChatGPT, model GPT-6.1 Sol, OpenAI, 18 Oct. 2026, chatgpt.com. (40%)
+
 **Approximate amount of AI use:** [Team to add a rough estimate of AI-assisted work across the deliverables before submission.]
 
 ---

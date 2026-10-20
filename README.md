@@ -16,7 +16,7 @@ All deliverables are maintained in the repository's **GitHub Wiki**.
 | Wiki Structure and Tool Use | Wiki: [Tool Use](https://github.com/CMPUT301F26-symbol/symbol-cyber/wiki/Tool-Use) | Dean Elbery |
 
 **[Open the Wiki Home page](https://github.com/CMPUT301F26-symbol/symbol-cyber/wiki/CMPUT-301-%E2%80%90-Symbol)**  
-**GitHub Project board:**
+**[GitHub Project board](https://github.com/orgs/CMPUT301F26-symbol/projects/2)**
 
 ### Deliverable Requirements
 

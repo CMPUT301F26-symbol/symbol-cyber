@@ -101,8 +101,6 @@ Claude (Anthropic) was used to help with the UI mockup images, screen descriptio
   
 "Review the user story-to-screen traceability table and check whether each user story is connected to the correct screens. Identify missing connections, inconsistencies, or improvements, and suggest changes for me to review." Claude, Anthropic, 19 Oct. 2026, claude.ai. (20%)
 
-**Approximate amount of AI use:** [Team to add a rough estimate of AI-assisted work across the deliverables before submission.]
-
 ---
 
 *Project documentation is maintained collaboratively by the CMPUT 301 team.*

@@ -94,6 +94,13 @@ Claude Opus 4.8 was used to help draft and format the user stories. We provided 
 
 "Use the following guidelines when assigning story points and risk levels to each user story. Story points are based on the amount of work, complexity, and uncertainty involved. Use a scale of 1, 2, 3, 5, and 8 points. Risk should be evaluated separately based on technical uncertainty. High risk involves unfamiliar technologies, medium risk involves Firestore data structures that have not yet been designed, and low risk involves straightforward features. Apply these guidelines consistently when creating the user stories." Claude, model Claude Opus 4.8, Anthropic, 12 Oct, 2026, claude.ai. (10%)
 
+**AI Tool Use in the UI Mockups and Storyboards (60%)**
+Claude (Anthropic) was used to help with the UI mockup images, screen descriptions, how the storyboard sequences should be, and the user story-to-screen traceability table. We provided directions on how the user stories should connect to the screens, reviewed the generated content, and asked Claude to check the work and suggest possible improvements. We decided which suggestions to use, added the Device Sign In screen, and uploaded the final files to the project wiki.
+
+"Help me develop UI mockups and the flow of storyboard sequences based on the information I provided. Make sure the screens connect logically to the user stories. I will review the results and provide further direction. Also, suggest any changes that could improve the mockups and storyboards." Claude, Anthropic, 8 Oct. 2026, claude.ai. (40%)
+  
+"Review the user story-to-screen traceability table and check whether each user story is connected to the correct screens. Identify missing connections, inconsistencies, or improvements, and suggest changes for me to review." Claude, Anthropic, 19 Oct. 2026, claude.ai. (20%)
+
 **Approximate amount of AI use:** [Team to add a rough estimate of AI-assisted work across the deliverables before submission.]
 
 ---

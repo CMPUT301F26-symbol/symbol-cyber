@@ -83,6 +83,17 @@ GPT 6.1-Sol was used to assist in the formulation of the CRC Cards. It was used 
 
 “I have completed the detailed CRC Cards for the Entrant, CampsiteOwner, Admin, Campsite, Lottery, and WaitingList classes. Please complete the remaining classes for Reservation, Rating, Image, Map, Notifcation, Message, and AvailablilitySchedule (Not sure if this should be included). Ensure that cards are One to One (If A lists B, B should list A). Also do a check to ensure that all User Stories are mentioned in the final classes. I have yet to include a handful of the User stories including the ones such as reservation confirmation, notidcation of reservation cancellation etc. Do a final check” prompt. ChatGPT, model GPT-6.1 Sol, OpenAI, 18 Oct. 2026, chatgpt.com. (40%)
 
+**AI tool used:** Claude Opus 4.8
+
+**How it was used:** Claude Opus 4.8 was used to format the user stories. We provided an example user story as a template, along with our team's guidelines for estimating story points and assigning risk levels. The AI helped assist with consistent descriptions, acceptance criteria, and story point and risk estimates for the remaining user stories. The team is responsible for reviewing, correcting, and finalizing the generated content.
+
+**AI Tool use in the Project Backlog (50%)**
+Claude Opus 4.8 was used to help draft and format the user stories. We provided the structure of US 01.01.01 as an example and instructed the AI to follow the same format for the remaining stories. We also provided our story point estimation scale and risk definitions so that the estimates would remain consistent across the project.
+
+"Use the following user story as a template for the remaining user stories. Follow the same format, including the user story title, description, acceptance criteria, and a table containing the actor, story points, risk, and Halfway (Part 3) MVP status." Claude, model Claude Opus 4.8, Anthropic, 12 Oct, 2026, claude.ai. (40%)
+
+"Use the following guidelines when assigning story points and risk levels to each user story. Story points are based on the amount of work, complexity, and uncertainty involved. Use a scale of 1, 2, 3, 5, and 8 points. Risk should be evaluated separately based on technical uncertainty. High risk involves unfamiliar technologies, medium risk involves Firestore data structures that have not yet been designed, and low risk involves straightforward features. Apply these guidelines consistently when creating the user stories." Claude, model Claude Opus 4.8, Anthropic, 12 Oct, 2026, claude.ai. (10%)
+
 **Approximate amount of AI use:** [Team to add a rough estimate of AI-assisted work across the deliverables before submission.]
 
 ---

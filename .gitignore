@@ -1,0 +1,49 @@
+
+# ==========================================
+# CMPUT 301 - Symbol
+# Android Studio / Gradle .gitignore
+# ==========================================
+
+# Android Studio
+.idea/
+*.iml
+captures/
+
+# Gradle
+.gradle/
+build/
+.gradle-cache/
+
+# Local machine configuration
+local.properties
+
+# Compiled Android files
+*.apk
+*.aab
+*.class
+*.hprof
+
+# Android native build files
+.externalNativeBuild/
+.cxx/
+
+# Log files
+*.log
+
+# Operating system files
+.DS_Store
+Thumbs.db
+
+# Sensitive files and credentials
+*.jks
+*.keystore
+keystore.properties
+secrets.properties
+.env
+.env.*
+!.env.example
+
+# Temporary files
+*.tmp
+*.swp
+*~

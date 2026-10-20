@@ -13,7 +13,7 @@ All deliverables are maintained in the repository's **GitHub Wiki**.
 | Product Backlog | Wiki: [Product Backlog](https://github.com/CMPUT301F26-symbol/symbol-cyber/wiki/Product-Backlog) | Fahad Khan, Amr Soliman |
 | UI Mockups and Storyboards | Wiki: [UI Mockups](https://github.com/CMPUT301F26-symbol/symbol-cyber/wiki/UI-Mockups) and [Storyboards](https://github.com/CMPUT301F26-symbol/symbol-cyber/wiki/Storyboards) | Aalok Mishra, Abhishek Mishra |
 | CRC Cards | Wiki: [CRC Cards](https://github.com/CMPUT301F26-symbol/symbol-cyber/wiki/CRC-Cards) | Noor Alam |
-| Wiki Structure and Tool Use | Wiki: [Tool Use](https://github.com/OWNER/REPOSITORY/wiki/Tool-Use) | Dean Elbery |
+| Wiki Structure and Tool Use | Wiki: [Tool Use](https://github.com/CMPUT301F26-symbol/symbol-cyber/wiki/Tool-Use) | Dean Elbery |
 
 **[Open the Wiki Home page](https://github.com/CMPUT301F26-symbol/symbol-cyber/wiki/CMPUT-301-%E2%80%90-Symbol)**  
 **GitHub Project board:**

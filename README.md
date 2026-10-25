@@ -104,3 +104,43 @@ Claude (Anthropic) was used to help with the UI mockup images, screen descriptio
 ---
 
 *Project documentation is maintained collaboratively by the CMPUT 301 team.*
+
+## Build and run
+
+Requirements: Android Studio, the Android SDK components requested by
+the project, and a compatible emulator or Android device.
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/CMPUT301F26-symbol/symbol-cyber.git
+   ```
+2. In Android Studio, select File → Open and open the `code` folder.
+3. Wait for Gradle sync to finish. Install any requested SDK components.
+   Android Studio creates the local `local.properties` file.
+4. Select a compatible emulator or connected Android device.
+5. Press Run.
+
+### Getting google-services.json
+
+The initial T1 skeleton does not use Firebase and runs without this file.
+Firebase integration will be added in T2.
+
+The teammate responsible for T2 creates the shared Firebase project
+using a personal Google account, as instructed in the Firestore lab,
+and registers our Android application.
+
+After the Firebase project is configured:
+
+1. Obtain `google-services.json` from the teammate managing Firebase.
+   Alternatively, if you have access to the shared Firebase project,
+   open Project settings → General → Your apps, select our Android app,
+   and download `google-services.json`.
+2. Place the file at `code/app/google-services.json`.
+   It belongs inside the app module, not the repository or project root.
+3. Sync the project with Gradle in Android Studio.
+
+Use the team's shared Firebase project; do not create a separate
+Firebase project for each teammate.
+
+Firebase dependencies, database setup, and read/write functionality
+are handled in T2.

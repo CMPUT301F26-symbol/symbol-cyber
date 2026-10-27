@@ -25,17 +25,23 @@ import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.code.controller.CampsiteController
 import com.example.code.ui.admin.AdminCampsitesScreen
 import com.example.code.ui.common.PlaceholderScreen
 import com.example.code.ui.common.ProfileScreen
+import com.example.code.ui.entrant.CampsiteDetailsScreen
 import com.example.code.ui.entrant.ExploreScreen
 import com.example.code.ui.owner.OwnerCampsitesScreen
 import com.example.code.ui.owner.RegisterCampsiteScreen
+
+private const val CAMPSITE_DETAILS_ROUTE =
+    "entrant/campsite/{campsiteId}"
 
 /**
  * Root composable of the app.
@@ -79,6 +85,7 @@ private fun ModeShell(
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
+    val campsites by campsiteController.campsites.collectAsState()
 
     Scaffold(
         topBar = {
@@ -88,7 +95,9 @@ private fun ModeShell(
                     if (mode == AppMode.ADMIN) {
                         IconButton(
                             onClick = {
-                                navController.navigate(Destination.ADMIN_PROFILE.route) {
+                                navController.navigate(
+                                    Destination.ADMIN_PROFILE.route
+                                ) {
                                     launchSingleTop = true
                                 }
                             },
@@ -106,7 +115,9 @@ private fun ModeShell(
             BottomBar(
                 tabs = Destination.tabsFor(mode),
                 currentRoute = currentRoute,
-                onTabSelected = { navController.openTab(it, mode) },
+                onTabSelected = {
+                    navController.openTab(it, mode)
+                },
             )
         },
     ) { padding ->
@@ -129,6 +140,37 @@ private fun ModeShell(
                         )
                     }
                 }
+
+            if (mode == AppMode.ENTRANT) {
+                composable(
+                    route = CAMPSITE_DETAILS_ROUTE,
+                    arguments = listOf(
+                        navArgument("campsiteId") {
+                            type = NavType.StringType
+                        }
+                    ),
+                ) { detailsEntry ->
+                    val campsiteId =
+                        detailsEntry.arguments
+                            ?.getString("campsiteId")
+
+                    val campsite =
+                        campsites.firstOrNull {
+                            it.id == campsiteId
+                        }
+
+                    if (campsite == null) {
+                        Text("Campsite not found")
+                    } else {
+                        CampsiteDetailsScreen(
+                            campsite = campsite,
+                            onBack = {
+                                navController.popBackStack()
+                            },
+                        )
+                    }
+                }
+            }
         }
     }
 }
@@ -148,7 +190,14 @@ private fun DestinationContent(
     val campsites by campsiteController.campsites.collectAsState()
 
     when (destination) {
-        Destination.ENTRANT_EXPLORE -> ExploreScreen()
+        Destination.ENTRANT_EXPLORE -> ExploreScreen(
+            campsites = campsites,
+            onCampsiteClick = { campsite ->
+                navController.navigate(
+                    "entrant/campsite/${campsite.id}"
+                )
+            },
+        )
 
         Destination.OWNER_CAMPSITES -> OwnerCampsitesScreen(
             campsites = campsites,
@@ -159,17 +208,19 @@ private fun DestinationContent(
             },
         )
 
-        Destination.OWNER_REGISTER_CAMPSITE -> RegisterCampsiteScreen(
-            onRegister = { campsite ->
-                campsiteController.addCampsite(campsite)
-                navController.popBackStack()
-            },
-            onBack = {
-                navController.popBackStack()
-            },
-        )
+        Destination.OWNER_REGISTER_CAMPSITE ->
+            RegisterCampsiteScreen(
+                onRegister = { campsite ->
+                    campsiteController.addCampsite(campsite)
+                    navController.popBackStack()
+                },
+                onBack = {
+                    navController.popBackStack()
+                },
+            )
 
-        Destination.ADMIN_CAMPSITES -> AdminCampsitesScreen()
+        Destination.ADMIN_CAMPSITES ->
+            AdminCampsitesScreen()
 
         Destination.ENTRANT_PROFILE,
         Destination.OWNER_PROFILE,
@@ -180,7 +231,8 @@ private fun DestinationContent(
                 onSwitchMode = onSwitchMode,
             )
 
-        else -> PlaceholderScreen(destination.label)
+        else ->
+            PlaceholderScreen(destination.label)
     }
 }
 

@@ -9,6 +9,7 @@ package com.example.code.controller
 
 import androidx.lifecycle.ViewModel
 import com.example.code.model.Campsite
+import java.util.UUID
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -27,8 +28,18 @@ class CampsiteController : ViewModel() {
 
     /**
      * Adds [campsite] to the current campsite collection.
+     *
+     * A temporary unique ID is generated when the campsite does not already
+     * have one. Firestore document IDs will replace this behavior later.
      */
     fun addCampsite(campsite: Campsite) {
-        _campsites.value += campsite
+        val campsiteWithId =
+            if (campsite.id.isBlank()) {
+                campsite.copy(id = UUID.randomUUID().toString())
+            } else {
+                campsite
+            }
+
+        _campsites.value += campsiteWithId
     }
 }

@@ -32,6 +32,7 @@ import com.example.code.ui.common.PlaceholderScreen
 import com.example.code.ui.common.ProfileScreen
 import com.example.code.ui.entrant.ExploreScreen
 import com.example.code.ui.owner.OwnerCampsitesScreen
+import com.example.code.ui.owner.RegisterCampsiteScreen
 
 /**
  * Root composable of the app.
@@ -41,6 +42,7 @@ import com.example.code.ui.owner.OwnerCampsitesScreen
 @Composable
 fun AppNavHost(controller: ModeController = viewModel()) {
     val mode by controller.activeMode.collectAsState()
+
     // A new mode gets a new navigation stack.
     key(mode) {
         ModeShell(
@@ -76,12 +78,17 @@ private fun ModeShell(
                 actions = {
                     // Admin has no Profile tab, so the mode switch is reached from here.
                     if (mode == AppMode.ADMIN) {
-                        IconButton(onClick = {
-                            navController.navigate(Destination.ADMIN_PROFILE.route) {
-                                launchSingleTop = true
-                            }
-                        }) {
-                            Icon(Icons.Filled.Person, contentDescription = "Profile")
+                        IconButton(
+                            onClick = {
+                                navController.navigate(Destination.ADMIN_PROFILE.route) {
+                                    launchSingleTop = true
+                                }
+                            },
+                        ) {
+                            Icon(
+                                Icons.Filled.Person,
+                                contentDescription = "Profile",
+                            )
                         }
                     }
                 },
@@ -100,11 +107,19 @@ private fun ModeShell(
             startDestination = Destination.startFor(mode).route,
             modifier = Modifier.padding(padding),
         ) {
-            Destination.entries.filter { it.mode == mode }.forEach { destination ->
-                composable(destination.route) {
-                    DestinationContent(destination, mode, availableModes, onSwitchMode)
+            Destination.entries
+                .filter { it.mode == mode }
+                .forEach { destination ->
+                    composable(destination.route) {
+                        DestinationContent(
+                            destination = destination,
+                            mode = mode,
+                            availableModes = availableModes,
+                            onSwitchMode = onSwitchMode,
+                            navController = navController,
+                        )
+                    }
                 }
-            }
         }
     }
 }
@@ -119,13 +134,34 @@ private fun DestinationContent(
     mode: AppMode,
     availableModes: List<AppMode>,
     onSwitchMode: (AppMode) -> Unit,
+    navController: NavHostController,
 ) {
     when (destination) {
         Destination.ENTRANT_EXPLORE -> ExploreScreen()
-        Destination.OWNER_CAMPSITES -> OwnerCampsitesScreen()
+
+        Destination.OWNER_CAMPSITES -> OwnerCampsitesScreen(
+            onRegisterCampsite = {
+                navController.navigate(
+                    Destination.OWNER_REGISTER_CAMPSITE.route
+                )
+            },
+        )
+
+        Destination.OWNER_REGISTER_CAMPSITE -> RegisterCampsiteScreen(
+            onRegister = { _ ->
+                // Firestore saving will be added when T2 is integrated.
+                navController.popBackStack()
+            },
+            onBack = {
+                navController.popBackStack()
+            },
+        )
+
         Destination.ADMIN_CAMPSITES -> AdminCampsitesScreen()
 
-        Destination.ENTRANT_PROFILE, Destination.OWNER_PROFILE, Destination.ADMIN_PROFILE ->
+        Destination.ENTRANT_PROFILE,
+        Destination.OWNER_PROFILE,
+        Destination.ADMIN_PROFILE ->
             ProfileScreen(
                 activeMode = mode,
                 availableModes = availableModes,
@@ -136,10 +172,18 @@ private fun DestinationContent(
     }
 }
 
-/** Opens [tab] of [mode] without stacking tabs on top of each other. */
-private fun NavHostController.openTab(tab: Destination, mode: AppMode) {
+/**
+ * Opens [tab] of [mode] without stacking tabs on top of each other.
+ */
+private fun NavHostController.openTab(
+    tab: Destination,
+    mode: AppMode,
+) {
     navigate(tab.route) {
-        popUpTo(Destination.startFor(mode).route) { saveState = true }
+        popUpTo(Destination.startFor(mode).route) {
+            saveState = true
+        }
+
         launchSingleTop = true
         restoreState = true
     }

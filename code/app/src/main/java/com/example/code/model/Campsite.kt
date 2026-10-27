@@ -15,6 +15,8 @@ package com.example.code.model
  * @property location human-readable campsite location.
  * @property description campsite description and amenities.
  * @property maxOccupancy maximum number of guests allowed.
+ * @property latitude latitude of the campsite's map location.
+ * @property longitude longitude of the campsite's map location.
  * @property rating average campsite rating, or null if there are no ratings yet.
  * @property imageUrl optional promotional image URL.
  * @property tags descriptive campsite tags.
@@ -26,6 +28,8 @@ data class Campsite(
     val location: String = "",
     val description: String = "",
     val maxOccupancy: Int = 0,
+    val latitude: Double = 0.0,
+    val longitude: Double = 0.0,
     val rating: Double? = null,
     val imageUrl: String? = null,
     val tags: List<String> = emptyList(),

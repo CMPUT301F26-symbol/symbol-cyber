@@ -42,12 +42,19 @@ fun BottomBar(
             NavigationBarItem(
                 selected = tab.route == currentRoute,
                 onClick = { onTabSelected(tab) },
-                icon = { Icon(iconFor(tab), contentDescription = tab.label) },
+                icon = {
+                    Icon(
+                        iconFor(tab),
+                        contentDescription = tab.label,
+                    )
+                },
                 label = {
                     // Small text so 5 labels fit on narrow phones.
                     Text(
                         tab.label,
-                        style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 0.sp),
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            letterSpacing = 0.sp
+                        ),
                         fontSize = 10.sp,
                         maxLines = 1,
                         softWrap = false,
@@ -58,17 +65,44 @@ fun BottomBar(
     }
 }
 
-/** Icon shown for [destination] on the bottom bar. */
-private fun iconFor(destination: Destination): ImageVector = when (destination) {
-    Destination.ENTRANT_EXPLORE -> Icons.Filled.Search
-    Destination.ENTRANT_SCAN -> Icons.Filled.Add
-    Destination.ENTRANT_RESERVATIONS, Destination.OWNER_RESERVATIONS -> Icons.Filled.DateRange
-    Destination.ENTRANT_NOTIFICATIONS -> Icons.Filled.Notifications
-    Destination.OWNER_CAMPSITES, Destination.ADMIN_CAMPSITES -> Icons.Filled.Home
-    Destination.OWNER_LOTTERIES -> Icons.Filled.Star
-    Destination.ADMIN_IMAGES -> Icons.Filled.Face
-    Destination.ADMIN_LOGS -> Icons.AutoMirrored.Filled.List
-    Destination.ENTRANT_PROFILE, Destination.OWNER_PROFILE,
-    Destination.ADMIN_PROFILES, Destination.ADMIN_PROFILE,
-        -> Icons.Filled.Person
-}
+/**
+ * Icon shown for [destination] on the bottom bar.
+ *
+ * Destinations that are not bottom-bar tabs still need an icon here because
+ * this when-expression must handle every Destination value.
+ */
+private fun iconFor(destination: Destination): ImageVector =
+    when (destination) {
+        Destination.ENTRANT_EXPLORE ->
+            Icons.Filled.Search
+
+        Destination.ENTRANT_SCAN ->
+            Icons.Filled.Add
+
+        Destination.ENTRANT_RESERVATIONS,
+        Destination.OWNER_RESERVATIONS ->
+            Icons.Filled.DateRange
+
+        Destination.ENTRANT_NOTIFICATIONS ->
+            Icons.Filled.Notifications
+
+        Destination.OWNER_CAMPSITES,
+        Destination.OWNER_REGISTER_CAMPSITE,
+        Destination.ADMIN_CAMPSITES ->
+            Icons.Filled.Home
+
+        Destination.OWNER_LOTTERIES ->
+            Icons.Filled.Star
+
+        Destination.ADMIN_IMAGES ->
+            Icons.Filled.Face
+
+        Destination.ADMIN_LOGS ->
+            Icons.AutoMirrored.Filled.List
+
+        Destination.ENTRANT_PROFILE,
+        Destination.OWNER_PROFILE,
+        Destination.ADMIN_PROFILES,
+        Destination.ADMIN_PROFILE ->
+            Icons.Filled.Person
+    }

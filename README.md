@@ -18,6 +18,15 @@ All deliverables are maintained in the repository's **GitHub Wiki**.
 **[Open the Wiki Home page](https://github.com/CMPUT301F26-symbol/symbol-cyber/wiki/CMPUT-301-%E2%80%90-Symbol)**  
 **[GitHub Project board](https://github.com/orgs/CMPUT301F26-symbol/projects/2)**
 
+### Sprint 1 process
+
+The [Sprint 1 wiki](https://github.com/CMPUT301F26-symbol/symbol-cyber/wiki/Sprint-1)
+records this week's stories and owners, dependencies, current progress, the
+October 27 demo checks, and **Part 2 feedback addressed**. A versioned copy is
+kept in [doc/sprint-1.md](doc/sprint-1.md). Track process work in
+[T8 #93](https://github.com/CMPUT301F26-symbol/symbol-cyber/issues/93) and keep
+the issue, Project board, and wiki backlog aligned as stories finish.
+
 ### Deliverable Requirements
 
 **Product Backlog**

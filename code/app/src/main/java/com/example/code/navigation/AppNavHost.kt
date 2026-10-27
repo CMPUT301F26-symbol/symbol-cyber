@@ -1,10 +1,12 @@
 /*
  * AppNavHost.kt
  * Navigation shell: top bar, bottom bar and a NavHost for the active mode.
- * Each mode gets its own NavHost, so switching mode (on Profile) starts
- * fresh on that mode's first tab, as in storyboard S2.
- * Known issues: feature screens are placeholders until their tasks are done.
+ * Each mode gets its own NavHost, while shared application data is kept in
+ * controllers above the individual mode navigation stacks.
+ * Known issues: Firebase persistence and device-based user identification
+ * are not connected yet.
  */
+
 package com.example.code.navigation
 
 import androidx.compose.foundation.layout.padding
@@ -27,6 +29,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.example.code.controller.CampsiteController
 import com.example.code.ui.admin.AdminCampsitesScreen
 import com.example.code.ui.common.PlaceholderScreen
 import com.example.code.ui.common.ProfileScreen
@@ -37,18 +40,22 @@ import com.example.code.ui.owner.RegisterCampsiteScreen
 /**
  * Root composable of the app.
  *
- * @param controller keeps the active mode; one per activity.
+ * @param controller keeps the active user mode.
+ * @param campsiteController manages campsite data shared across modes.
  */
 @Composable
-fun AppNavHost(controller: ModeController = viewModel()) {
+fun AppNavHost(
+    controller: ModeController = viewModel(),
+    campsiteController: CampsiteController = viewModel(),
+) {
     val mode by controller.activeMode.collectAsState()
 
-    // A new mode gets a new navigation stack.
     key(mode) {
         ModeShell(
             mode = mode,
             availableModes = controller.availableModes,
             onSwitchMode = { controller.switchTo(it) },
+            campsiteController = campsiteController,
         )
     }
 }
@@ -58,7 +65,8 @@ fun AppNavHost(controller: ModeController = viewModel()) {
  *
  * @param mode the active mode.
  * @param availableModes modes shown on the Profile mode switch.
- * @param onSwitchMode called when the user picks another mode on Profile.
+ * @param onSwitchMode called when the user chooses another mode.
+ * @param campsiteController shared controller for campsite data.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -66,6 +74,7 @@ private fun ModeShell(
     mode: AppMode,
     availableModes: List<AppMode>,
     onSwitchMode: (AppMode) -> Unit,
+    campsiteController: CampsiteController,
 ) {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
@@ -76,7 +85,6 @@ private fun ModeShell(
             TopAppBar(
                 title = { Text(mode.label) },
                 actions = {
-                    // Admin has no Profile tab, so the mode switch is reached from here.
                     if (mode == AppMode.ADMIN) {
                         IconButton(
                             onClick = {
@@ -117,6 +125,7 @@ private fun ModeShell(
                             availableModes = availableModes,
                             onSwitchMode = onSwitchMode,
                             navController = navController,
+                            campsiteController = campsiteController,
                         )
                     }
                 }
@@ -125,8 +134,7 @@ private fun ModeShell(
 }
 
 /**
- * Shows the screen for [destination]. Replace a placeholder here when its
- * feature screen is ready.
+ * Shows the screen for [destination].
  */
 @Composable
 private fun DestinationContent(
@@ -135,11 +143,15 @@ private fun DestinationContent(
     availableModes: List<AppMode>,
     onSwitchMode: (AppMode) -> Unit,
     navController: NavHostController,
+    campsiteController: CampsiteController,
 ) {
+    val campsites by campsiteController.campsites.collectAsState()
+
     when (destination) {
         Destination.ENTRANT_EXPLORE -> ExploreScreen()
 
         Destination.OWNER_CAMPSITES -> OwnerCampsitesScreen(
+            campsites = campsites,
             onRegisterCampsite = {
                 navController.navigate(
                     Destination.OWNER_REGISTER_CAMPSITE.route
@@ -148,8 +160,8 @@ private fun DestinationContent(
         )
 
         Destination.OWNER_REGISTER_CAMPSITE -> RegisterCampsiteScreen(
-            onRegister = { _ ->
-                // Firestore saving will be added when T2 is integrated.
+            onRegister = { campsite ->
+                campsiteController.addCampsite(campsite)
                 navController.popBackStack()
             },
             onBack = {

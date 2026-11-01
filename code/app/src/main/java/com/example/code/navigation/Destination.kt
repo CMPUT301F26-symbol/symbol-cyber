@@ -28,6 +28,14 @@ enum class Destination(
     ENTRANT_PROFILE("entrant/profile", "Profile", AppMode.ENTRANT),
 
     OWNER_CAMPSITES("owner/campsites", "Campsites", AppMode.OWNER),
+
+    OWNER_REGISTER_CAMPSITE(
+        "owner/register-campsite",
+        "Register campsite",
+        AppMode.OWNER,
+        inBottomBar = false,
+    ),
+
     OWNER_LOTTERIES("owner/lotteries", "Lotteries", AppMode.OWNER),
     OWNER_RESERVATIONS("owner/reservations", "Reservations", AppMode.OWNER),
     OWNER_PROFILE("owner/profile", "Profile", AppMode.OWNER),
@@ -63,6 +71,7 @@ enum class Destination(
         /**
          * Finds the destination with [route], or null if there is none.
          */
-        fun fromRoute(route: String?): Destination? = entries.firstOrNull { it.route == route }
+        fun fromRoute(route: String?): Destination? =
+            entries.firstOrNull { it.route == route }
     }
 }

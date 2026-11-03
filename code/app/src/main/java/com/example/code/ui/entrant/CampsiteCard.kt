@@ -1,12 +1,10 @@
 /*
  * CampsiteCard.kt
  * Displays summary information for a campsite in the entrant Explore list.
- * Known issues: campsite images are not shown in summary cards yet.
  */
 
 package com.example.code.ui.entrant
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -31,9 +29,8 @@ fun CampsiteCard(
     onClick: () -> Unit,
 ) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick),
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth(),
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
@@ -50,11 +47,7 @@ fun CampsiteCard(
                 text = "Maximum occupancy: ${campsite.maxOccupancy}"
             )
 
-            Text(
-                text = campsite.rating?.let {
-                    "Rating: $it"
-                } ?: "No ratings yet"
-            )
+            Text(text = campsiteRatingText(campsite.rating))
         }
     }
 }

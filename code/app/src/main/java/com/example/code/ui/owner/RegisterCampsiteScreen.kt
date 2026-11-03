@@ -1,9 +1,4 @@
-/*
- * RegisterCampsiteScreen.kt
- * Allows a campsite owner to enter the information required to register a campsite.
- * Known issues: registration is not yet persisted to Firestore and image selection
- * is not yet implemented.
- */
+// Form where an owner registers a new campsite.
 
 package com.example.code.ui.owner
 
@@ -34,7 +29,7 @@ import com.example.code.model.Campsite
  */
 @Composable
 fun RegisterCampsiteScreen(
-    onRegister: (Campsite) -> Unit,
+    onRegister: (Campsite, (String) -> Unit) -> Unit,
     onBack: () -> Unit,
 ) {
     var name by remember { mutableStateOf("") }
@@ -141,7 +136,10 @@ fun RegisterCampsiteScreen(
                             .filter { it.isNotEmpty() },
                     )
 
-                    onRegister(campsite)
+                    // Show the error if saving fails
+                    onRegister(campsite) { message ->
+                        errorMessage = message
+                    }
                 }
             },
             modifier = Modifier.fillMaxWidth(),

@@ -10,6 +10,7 @@ package com.example.code.controller
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import com.example.code.model.Campsite
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.GeoPoint
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -42,39 +43,25 @@ class CampsiteController : ViewModel() {
         listenForCampsites()
     }
 
-    /**
-     * Adds [campsite] to Firestore.
-     *
-     * Firestore generates the campsite ID. The generated ID is also stored
-     * inside the campsite document.
-     */
-    fun addCampsite(campsite: Campsite) {
+    /** Saves the campsite under the signed-in owner. */
+    fun addCampsite(campsite: Campsite, onSuccess: () -> Unit, onFailure: (String) -> Unit) {
+        // Get the person who is signed in
+        val ownerId = FirebaseAuth.getInstance().currentUser?.uid
+
+        // Nobody signed in, so don't save
+        if (ownerId == null) {
+            onFailure("You need to be signed in.")
+            return
+        }
+
         val documentReference = campsiteCollection.document()
 
-        val campsiteWithId = campsite.copy(
-            id = documentReference.id
-        )
+        // Add the new id and the owner to the campsite
+        val campsiteToSave = campsite.copy(id = documentReference.id, ownerId = ownerId)
 
-        documentReference
-            .set(campsiteWithId)
-            .addOnSuccessListener {
-                _errorMessage.value = null
-
-                Log.d(
-                    "CampsiteController",
-                    "Campsite saved with ID ${documentReference.id}"
-                )
-            }
-            .addOnFailureListener { exception ->
-                _errorMessage.value =
-                    "Failed to save campsite: ${exception.message}"
-
-                Log.e(
-                    "CampsiteController",
-                    "Failed to save campsite",
-                    exception
-                )
-            }
+        documentReference.set(campsiteToSave)
+            .addOnSuccessListener { onSuccess() }
+            .addOnFailureListener { onFailure("Could not save campsite. Try again.") }
     }
 
     /**

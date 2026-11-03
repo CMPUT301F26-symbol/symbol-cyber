@@ -1,7 +1,7 @@
 /*
  * ReservationControllerTest.kt
  * Unit tests for ReservationController: a winner accepts a reservation and
- * the entrant sees their active reservations (US 01.06.01).
+ * entrants and owners see active reservations (US 01.06.01, 02.07.01).
  * Known issues: none.
  */
 
@@ -74,6 +74,20 @@ class ReservationControllerTest {
         )
 
         assertEquals(listOf(TestData.priyaReservation), active)
+    }
+
+    @Test
+    fun ownerSeesActiveReservationsSoonestFirst() {
+        val others = TestData.priyaReservation.copy(id = "x", ownerId = "another-owner")
+        val all = listOf(TestData.liamReservation, others, TestData.priyaReservation)
+
+        val active = ReservationController.activeForOwner(
+            all,
+            TestData.OWNER_ID,
+            TestData.AFTER_REGISTRATION,
+        )
+
+        assertEquals(listOf(TestData.priyaReservation, TestData.liamReservation), active)
     }
 
     @Test

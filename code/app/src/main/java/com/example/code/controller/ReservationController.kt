@@ -1,9 +1,10 @@
 /*
  * ReservationController.kt
- * Controller for reservations: a lottery winner accepts a reservation and
- * entrants see their active reservations (US 01.06.01).
- * Known issues: the entrant is identified by the device ID until the User
- * model (US 01.09.01) is connected.
+ * Controller for reservations: a lottery winner accepts a reservation,
+ * entrants see their active reservations (US 01.06.01) and owners see
+ * active reservations for their campsites (US 02.07.01).
+ * Known issues: entrants and owners are identified by the device ID until
+ * the User model (US 01.09.01) is connected.
  */
 
 package com.example.code.controller
@@ -15,7 +16,7 @@ import com.example.code.model.WaitingListEntry
 import kotlinx.coroutines.flow.Flow
 
 /**
- * Handles reservations for entrants.
+ * Handles reservations for entrants and campsite owners.
  *
  * @param reservations where reservations are read and saved.
  * @param clock current time in milliseconds; replaceable in tests.
@@ -67,6 +68,10 @@ class ReservationController(
         /** Entrant [entrantId]'s active reservations at [now], soonest first (US 01.06.01). */
         fun activeForEntrant(all: List<Reservation>, entrantId: String, now: Long): List<Reservation> =
             all.filter { it.entrantId == entrantId && isActive(it, now) }.sortedBy { it.startDate }
+
+        /** Active reservations at [now] for campsites of owner [ownerId] (US 02.07.01). */
+        fun activeForOwner(all: List<Reservation>, ownerId: String, now: Long): List<Reservation> =
+            all.filter { it.ownerId == ownerId && isActive(it, now) }.sortedBy { it.startDate }
 
         /** Entrant [entrantId]'s reservation from [lotteryId], or null. */
         fun forLottery(all: List<Reservation>, lotteryId: String, entrantId: String): Reservation? =

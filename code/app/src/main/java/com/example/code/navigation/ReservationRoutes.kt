@@ -18,6 +18,7 @@ import com.example.code.model.Reservation
 import com.example.code.model.WaitingListEntry
 import com.example.code.ui.entrant.EntrantReservationsScreen
 import com.example.code.ui.entrant.WinnerReservationCard
+import com.example.code.ui.owner.OwnerReservationsScreen
 import kotlinx.coroutines.launch
 
 /**
@@ -77,6 +78,23 @@ fun WinnerReservationContent(
 fun EntrantReservationsRoute(reservations: List<Reservation>, deviceId: String) {
     EntrantReservationsScreen(
         reservations = ReservationController.activeForEntrant(
+            reservations,
+            deviceId,
+            System.currentTimeMillis(),
+        ),
+    )
+}
+
+/**
+ * Owner's Reservations tab.
+ *
+ * @param reservations all reservations.
+ * @param deviceId this owner's ID.
+ */
+@Composable
+fun OwnerReservationsRoute(reservations: List<Reservation>, deviceId: String) {
+    OwnerReservationsScreen(
+        reservations = ReservationController.activeForOwner(
             reservations,
             deviceId,
             System.currentTimeMillis(),

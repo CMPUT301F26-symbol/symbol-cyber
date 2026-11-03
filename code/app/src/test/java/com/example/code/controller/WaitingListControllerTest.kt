@@ -2,7 +2,8 @@
  * WaitingListControllerTest.kt
  * Unit tests for WaitingListController: which lottery a campsite's details
  * screen shows (US 01.01.06), joining and leaving the waiting list
- * (US 01.02.01, 01.02.02) and the waitlist cap. Uses an in-memory fake repository.
+ * (US 01.02.01, 01.02.02), the waitlist cap, and the owner's lotteries
+ * (US 02.09.01). Uses an in-memory fake repository.
  * Known issues: none.
  */
 
@@ -127,5 +128,15 @@ class WaitingListControllerTest {
 
         val shown = WaitingListController.lotteryForCampsite(listOf(older, newer), "camp-jasper-riverside")
         assertEquals(newer, shown)
+    }
+
+    @Test
+    fun ownerSeesOnlyTheirLotteries() {
+        val other = TestData.banffLottery.copy(id = "lottery-other", ownerId = "someone-else")
+        val all = listOf(TestData.jasperLottery, TestData.banffLottery, other)
+
+        val mine = WaitingListController.lotteriesOfOwner(all, TestData.OWNER_ID)
+
+        assertEquals(setOf("lottery-jasper-nov", "lottery-banff-nov"), mine.map { it.id }.toSet())
     }
 }

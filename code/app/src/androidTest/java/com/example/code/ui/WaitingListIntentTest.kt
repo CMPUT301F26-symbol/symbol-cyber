@@ -1,8 +1,10 @@
 /*
  * WaitingListIntentTest.kt
- * UI (intent) tests for the lottery card on the entrant's campsite details
- * screen: seeing the active lottery (US 01.01.06) and joining and leaving
- * its waiting list (US 01.02.01, 01.02.02). Screens get canned data, so no Firestore is needed.
+ * UI (intent) tests for the waiting list stories: on the campsite details
+ * screen an entrant sees the active lottery (US 01.01.06) and joins and
+ * leaves its waiting list (US 01.02.01, 01.02.02); the owner sees each
+ * lottery's waiting list (US 02.09.01). Screens get canned data, so no
+ * Firestore is needed.
  * Known issues: none.
  */
 
@@ -15,6 +17,9 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.code.model.Lottery
 import com.example.code.model.WaitingListEntry
 import com.example.code.ui.entrant.LotterySection
+import com.example.code.ui.owner.OwnerLotteriesScreen
+import com.example.code.ui.owner.OwnerWaitingListScreen
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -43,6 +48,7 @@ class WaitingListIntentTest {
     )
 
     private val priya = WaitingListEntry("device-priya-01", "Priya Shah", 1793545260000L)
+    private val liam = WaitingListEntry("device-liam-02", "Liam Chen", 1793545320000L)
 
     @Test
     fun entrantJoinsWaitingListFromDetails() {
@@ -136,5 +142,37 @@ class WaitingListIntentTest {
         }
 
         composeRule.onNodeWithText("This campsite has no lottery yet.").assertExists()
+    }
+
+    @Test
+    fun ownerOpensWaitingListFromLotteries() {
+        var opened: Lottery? = null
+        composeRule.setContent {
+            OwnerLotteriesScreen(lotteries = listOf(lottery), onOpenWaitingList = { opened = it })
+        }
+
+        composeRule.onNodeWithText("Jasper Riverside").assertExists()
+        composeRule.onNodeWithText("Waiting list (2)").performClick()
+        assertEquals(lottery, opened)
+    }
+
+    @Test
+    fun ownerSeesWhoJoined() {
+        composeRule.setContent {
+            OwnerWaitingListScreen(lottery = lottery, entries = listOf(priya, liam), onBack = {})
+        }
+
+        composeRule.onNodeWithText("Priya Shah").assertExists()
+        composeRule.onNodeWithText("Liam Chen").assertExists()
+        composeRule.onNodeWithText("2 entrants joined").assertExists()
+    }
+
+    @Test
+    fun emptyWaitingListShowsMessage() {
+        composeRule.setContent {
+            OwnerWaitingListScreen(lottery = lottery, entries = emptyList(), onBack = {})
+        }
+
+        composeRule.onNodeWithText("No entrants have joined yet.").assertExists()
     }
 }

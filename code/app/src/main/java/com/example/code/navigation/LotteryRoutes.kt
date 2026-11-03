@@ -19,6 +19,8 @@ import com.example.code.controller.WaitingListController
 import com.example.code.data.JoinResult
 import com.example.code.model.Lottery
 import com.example.code.ui.entrant.LotterySection
+import com.example.code.ui.owner.OwnerLotteriesScreen
+import com.example.code.ui.owner.OwnerWaitingListScreen
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 
@@ -81,5 +83,47 @@ fun EntrantLotteryCard(
                 busy = false
             }
         },
+    )
+}
+
+/**
+ * Owner's Lotteries tab.
+ *
+ * @param lotteries all lotteries.
+ * @param deviceId this owner's ID.
+ * @param onOpenWaitingList called with the lottery to open.
+ */
+@Composable
+fun OwnerLotteriesRoute(
+    lotteries: List<Lottery>,
+    deviceId: String,
+    onOpenWaitingList: (Lottery) -> Unit,
+) {
+    OwnerLotteriesScreen(
+        lotteries = WaitingListController.lotteriesOfOwner(lotteries, deviceId),
+        onOpenWaitingList = onOpenWaitingList,
+    )
+}
+
+/**
+ * Owner's waiting list screen for one lottery.
+ *
+ * @param lottery the lottery.
+ * @param controller waiting list controller.
+ * @param onBack called when the owner goes back.
+ */
+@Composable
+fun OwnerWaitingListRoute(
+    lottery: Lottery,
+    controller: WaitingListController,
+    onBack: () -> Unit,
+) {
+    val entries by remember(lottery.id) { controller.waitingList(lottery.id) }
+        .collectAsState(initial = emptyList())
+
+    OwnerWaitingListScreen(
+        lottery = lottery,
+        entries = entries,
+        onBack = onBack,
     )
 }

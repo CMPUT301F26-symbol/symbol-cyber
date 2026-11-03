@@ -3,8 +3,8 @@
  * Navigation shell: top bar, bottom bar and a NavHost for the active mode.
  * Each mode gets its own NavHost, while shared application data is kept in
  * controllers above the individual mode navigation stacks.
- * Known issues: Firebase persistence and device-based user identification
- * are not connected yet.
+ * Lottery screens are wired in through LotteryRoutes.kt.
+ * Known issues: device-based user identification is not connected yet.
  */
 
 package com.example.code.navigation
@@ -22,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -32,6 +33,9 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.code.controller.CampsiteController
+import com.example.code.controller.WaitingListController
+import com.example.code.data.FirestoreLotteryRepository
+import com.example.code.model.Lottery
 import com.example.code.ui.admin.AdminCampsitesScreen
 import com.example.code.ui.common.PlaceholderScreen
 import com.example.code.ui.common.ProfileScreen
@@ -48,13 +52,18 @@ private const val CAMPSITE_DETAILS_ROUTE =
  *
  * @param controller keeps the active user mode.
  * @param campsiteController manages campsite data shared across modes.
+ * @param waitingListController manages lotteries and waiting lists.
  */
 @Composable
 fun AppNavHost(
     controller: ModeController = viewModel(),
     campsiteController: CampsiteController = viewModel(),
+    waitingListController: WaitingListController = remember {
+        WaitingListController(FirestoreLotteryRepository())
+    },
 ) {
     val mode by controller.activeMode.collectAsState()
+    val lotteries by waitingListController.allLotteries.collectAsState(initial = emptyList())
 
     key(mode) {
         ModeShell(
@@ -62,6 +71,7 @@ fun AppNavHost(
             availableModes = controller.availableModes,
             onSwitchMode = { controller.switchTo(it) },
             campsiteController = campsiteController,
+            lotteries = lotteries,
         )
     }
 }
@@ -73,6 +83,7 @@ fun AppNavHost(
  * @param availableModes modes shown on the Profile mode switch.
  * @param onSwitchMode called when the user chooses another mode.
  * @param campsiteController shared controller for campsite data.
+ * @param lotteries all lotteries, loaded once for every mode.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -81,6 +92,7 @@ private fun ModeShell(
     availableModes: List<AppMode>,
     onSwitchMode: (AppMode) -> Unit,
     campsiteController: CampsiteController,
+    lotteries: List<Lottery>,
 ) {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
@@ -166,6 +178,14 @@ private fun ModeShell(
                             campsite = campsite,
                             onBack = {
                                 navController.popBackStack()
+                            },
+                            lotteryContent = {
+                                EntrantLotteryCard(
+                                    lottery = WaitingListController.lotteryForCampsite(
+                                        lotteries,
+                                        campsite.id,
+                                    ),
+                                )
                             },
                         )
                     }

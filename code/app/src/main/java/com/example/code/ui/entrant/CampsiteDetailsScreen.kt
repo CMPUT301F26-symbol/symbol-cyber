@@ -1,6 +1,7 @@
 /*
  * CampsiteDetailsScreen.kt
  * Displays detailed information for a campsite selected by an entrant.
+ * The lottery card (join / leave waiting list) is passed in as [lotteryContent].
  * Known issues: remote promotional image loading is not yet implemented.
  */
 
@@ -25,11 +26,13 @@ import com.example.code.model.Campsite
  *
  * @param campsite campsite being viewed.
  * @param onBack called when the entrant returns to the campsite list.
+ * @param lotteryContent lottery card shown below the details.
  */
 @Composable
 fun CampsiteDetailsScreen(
     campsite: Campsite,
     onBack: () -> Unit,
+    lotteryContent: @Composable () -> Unit = {},
 ) {
     Column(
         modifier = Modifier
@@ -103,5 +106,7 @@ fun CampsiteDetailsScreen(
         } else {
             Text(campsite.imageUrl)
         }
+
+        lotteryContent()
     }
 }

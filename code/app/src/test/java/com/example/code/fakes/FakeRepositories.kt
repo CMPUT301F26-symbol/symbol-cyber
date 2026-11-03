@@ -44,4 +44,14 @@ class FakeLotteryRepository(lotteries: List<Lottery> = emptyList()) : LotteryRep
             }
         }
     }
+
+    override suspend fun leaveWaitingList(lotteryId: String, entrantId: String): Boolean {
+        val list = waitingLists.value[lotteryId].orEmpty()
+        if (list.none { it.entrantId == entrantId }) return false
+        waitingLists.value = waitingLists.value + (lotteryId to list.filter { it.entrantId != entrantId })
+        val lottery = lotteries.value.getValue(lotteryId)
+        lotteries.value = lotteries.value +
+                (lotteryId to lottery.copy(waitingListCount = lottery.waitingListCount - 1))
+        return true
+    }
 }

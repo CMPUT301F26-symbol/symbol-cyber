@@ -1,7 +1,6 @@
 /*
  * LotteryRepository.kt
- * Reads lotteries and their waiting lists, and adds entrants to a
- * waiting list.
+ * Reads lotteries and their waiting lists, and adds or removes entrants.
  * The interface lets controllers and tests use a fake instead of Firestore;
  * FirestoreLotteryRepository is the real implementation.
  * Known issues: lotteries are listed from one collection without paging.
@@ -48,6 +47,13 @@ interface LotteryRepository {
      * lottery's capacity.
      */
     suspend fun joinWaitingList(lotteryId: String, entry: WaitingListEntry): JoinResult
+
+    /**
+     * Removes entrant [entrantId] from the waiting list of [lotteryId].
+     *
+     * @return true if the entrant was on the list.
+     */
+    suspend fun leaveWaitingList(lotteryId: String, entrantId: String): Boolean
 }
 
 /**
@@ -112,6 +118,20 @@ class FirestoreLotteryRepository(
                     transaction.update(lotteryRef, "waitingListCount", FieldValue.increment(1))
                     JoinResult.JOINED
                 }
+            }
+        }.awaitResult()
+    }
+
+    override suspend fun leaveWaitingList(lotteryId: String, entrantId: String): Boolean {
+        val lotteryRef = lotteries.document(lotteryId)
+        val entryRef = lotteryRef.collection(WAITING_LIST).document(entrantId)
+        return db.runTransaction { transaction ->
+            if (!transaction.get(entryRef).exists()) {
+                false
+            } else {
+                transaction.delete(entryRef)
+                transaction.update(lotteryRef, "waitingListCount", FieldValue.increment(-1))
+                true
             }
         }.awaitResult()
     }

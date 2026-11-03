@@ -1,8 +1,8 @@
 /*
  * WaitingListController.kt
  * Controller for lottery waiting lists: finds the lottery shown on a
- * campsite's details screen (US 01.01.06) and lets entrants join its
- * waiting list (US 01.02.01).
+ * campsite's details screen (US 01.01.06) and lets entrants join and leave
+ * its waiting list (US 01.02.01, 01.02.02).
  * Known issues: the entrant ID is the device ID until the User model
  * (US 01.09.01) is connected.
  */
@@ -49,6 +49,17 @@ class WaitingListController(
             joinedAt = now,
         )
         return lotteries.joinWaitingList(lottery.id, entry)
+    }
+
+    /**
+     * Removes entrant [entrantId] from the waiting list of [lottery]
+     * (US 01.02.02). Entrants can only leave while registration is open.
+     *
+     * @return true if the entrant was removed.
+     */
+    suspend fun leave(lottery: Lottery, entrantId: String): Boolean {
+        if (!LotteryController.isRegistrationOpen(lottery, clock())) return false
+        return lotteries.leaveWaitingList(lottery.id, entrantId)
     }
 
     companion object {

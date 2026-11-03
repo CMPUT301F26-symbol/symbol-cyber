@@ -65,5 +65,21 @@ fun EntrantLotteryCard(
                 busy = false
             }
         },
+        onLeave = {
+            val target = lottery ?: return@LotterySection
+            busy = true
+            scope.launch {
+                message = try {
+                    if (controller.leave(target, deviceId)) {
+                        "You left the waiting list."
+                    } else {
+                        "You are not on the waiting list."
+                    }
+                } catch (e: Exception) {
+                    "Could not leave: ${e.message}"
+                }
+                busy = false
+            }
+        },
     )
 }

@@ -1,8 +1,8 @@
 /*
  * WaitingListIntentTest.kt
  * UI (intent) tests for the lottery card on the entrant's campsite details
- * screen: seeing the active lottery (US 01.01.06) and joining its waiting
- * list (US 01.02.01). Screens get canned data, so no Firestore is needed.
+ * screen: seeing the active lottery (US 01.01.06) and joining and leaving
+ * its waiting list (US 01.02.01, 01.02.02). Screens get canned data, so no Firestore is needed.
  * Known issues: none.
  */
 
@@ -55,6 +55,7 @@ class WaitingListIntentTest {
                 busy = false,
                 statusMessage = null,
                 onJoin = { joined = true },
+                onLeave = {},
             )
         }
 
@@ -65,7 +66,8 @@ class WaitingListIntentTest {
     }
 
     @Test
-    fun joinedEntrantSeesTheyAreOnTheList() {
+    fun joinedEntrantCanLeave() {
+        var left = false
         composeRule.setContent {
             LotterySection(
                 lottery = lottery,
@@ -74,12 +76,14 @@ class WaitingListIntentTest {
                 busy = false,
                 statusMessage = "You joined the waiting list.",
                 onJoin = {},
+                onLeave = { left = true },
             )
         }
 
         composeRule.onNodeWithText("You are on the waiting list.").assertExists()
         composeRule.onNodeWithText("You joined the waiting list.").assertExists()
-        composeRule.onNodeWithText("Join Waiting List").assertDoesNotExist()
+        composeRule.onNodeWithText("Leave Waiting List").performClick()
+        assertTrue(left)
     }
 
     @Test
@@ -92,6 +96,7 @@ class WaitingListIntentTest {
                 busy = false,
                 statusMessage = null,
                 onJoin = {},
+                onLeave = {},
             )
         }
 
@@ -109,6 +114,7 @@ class WaitingListIntentTest {
                 busy = false,
                 statusMessage = null,
                 onJoin = {},
+                onLeave = {},
             )
         }
 
@@ -125,6 +131,7 @@ class WaitingListIntentTest {
                 busy = false,
                 statusMessage = null,
                 onJoin = {},
+                onLeave = {},
             )
         }
 

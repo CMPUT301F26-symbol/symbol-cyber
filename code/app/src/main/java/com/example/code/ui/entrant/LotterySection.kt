@@ -2,8 +2,8 @@
  * LotterySection.kt
  * Lottery part of the entrant's campsite details screen (mockup E05):
  * shows the campsite's lottery and its periods (US 01.01.06) and lets the
- * entrant join its waiting list (US 01.02.01).
- * Known issues: leaving the waiting list is added with US 01.02.02.
+ * entrant join or leave its waiting list (US 01.02.01, 01.02.02).
+ * Known issues: none.
  */
 
 package com.example.code.ui.entrant
@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -31,9 +32,10 @@ import com.example.code.ui.common.formatDateTime
  * @param lottery the campsite's lottery, or null if it has none.
  * @param myEntry this entrant's waiting list entry, or null if not joined.
  * @param now current time in milliseconds.
- * @param busy true while a join request is running.
+ * @param busy true while a join or leave request is running.
  * @param statusMessage result of the last action, or null.
  * @param onJoin called when the entrant taps "Join Waiting List".
+ * @param onLeave called when the entrant taps "Leave Waiting List".
  */
 @Composable
 fun LotterySection(
@@ -43,6 +45,7 @@ fun LotterySection(
     busy: Boolean,
     statusMessage: String?,
     onJoin: () -> Unit,
+    onLeave: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Card(modifier = modifier.fillMaxWidth()) {
@@ -74,7 +77,12 @@ fun LotterySection(
                 now >= lottery.registrationEnd ->
                     Text("Registration is closed. Winners are being drawn.")
 
-                myEntry != null -> Text("You are on the waiting list.")
+                myEntry != null -> {
+                    Text("You are on the waiting list.")
+                    OutlinedButton(onClick = onLeave, enabled = !busy) {
+                        Text("Leave Waiting List")
+                    }
+                }
 
                 !LotteryController.hasRoom(lottery) -> Text("The waiting list is full.")
 

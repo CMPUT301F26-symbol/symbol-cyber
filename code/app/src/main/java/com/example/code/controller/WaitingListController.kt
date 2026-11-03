@@ -1,9 +1,8 @@
 /*
  * WaitingListController.kt
- * Controller for lottery waiting lists: finds the lottery shown on a
- * campsite's details screen (US 01.01.06), lets entrants join and leave
- * its waiting list (US 01.02.01, 01.02.02) and lists an owner's lotteries
- * so they can see who joined (US 02.09.01).
+ * Controller for lottery waiting lists: entrants join and leave
+ * (US 01.01.06, 01.02.01, 01.02.02), owners see who joined (US 02.09.01)
+ * and send them a notification (US 02.10.01).
  * Known issues: the entrant ID is the device ID until the User model
  * (US 01.09.01) is connected.
  */
@@ -12,18 +11,22 @@ package com.example.code.controller
 
 import com.example.code.data.JoinResult
 import com.example.code.data.LotteryRepository
+import com.example.code.data.NotificationRepository
+import com.example.code.model.AppNotification
 import com.example.code.model.Lottery
 import com.example.code.model.WaitingListEntry
 import kotlinx.coroutines.flow.Flow
 
 /**
- * Handles waiting list actions.
+ * Handles waiting list actions for entrants and campsite owners.
  *
  * @param lotteries source of lotteries and waiting lists.
+ * @param notifications where owner messages are saved.
  * @param clock current time in milliseconds; replaceable in tests.
  */
 class WaitingListController(
     private val lotteries: LotteryRepository,
+    private val notifications: NotificationRepository,
     private val clock: () -> Long = System::currentTimeMillis,
 ) {
 
@@ -61,6 +64,38 @@ class WaitingListController(
     suspend fun leave(lottery: Lottery, entrantId: String): Boolean {
         if (!LotteryController.isRegistrationOpen(lottery, clock())) return false
         return lotteries.leaveWaitingList(lottery.id, entrantId)
+    }
+
+    /**
+     * Sends [message] from owner [senderId] to every entrant in [entries]
+     * on the waiting list of [lottery] (US 02.10.01).
+     *
+     * @return number of notifications sent.
+     * @throws IllegalArgumentException if [message] is blank.
+     */
+    suspend fun notifyWaitingList(
+        lottery: Lottery,
+        senderId: String,
+        entries: List<WaitingListEntry>,
+        message: String,
+    ): Int {
+        val text = message.trim()
+        require(text.isNotEmpty()) { "Message cannot be empty" }
+        val now = clock()
+        val toSend = entries.map { entry ->
+            AppNotification(
+                recipientId = entry.entrantId,
+                senderId = senderId,
+                lotteryId = lottery.id,
+                campsiteName = lottery.campsiteName,
+                type = AppNotification.TYPE_WAITLIST_MESSAGE,
+                title = "Message about ${lottery.campsiteName}",
+                message = text,
+                createdAt = now,
+            )
+        }
+        notifications.sendAll(toSend)
+        return toSend.size
     }
 
     companion object {

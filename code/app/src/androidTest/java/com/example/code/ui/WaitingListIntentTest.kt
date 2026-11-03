@@ -3,16 +3,18 @@
  * UI (intent) tests for the waiting list stories: on the campsite details
  * screen an entrant sees the active lottery (US 01.01.06) and joins and
  * leaves its waiting list (US 01.02.01, 01.02.02); the owner sees each
- * lottery's waiting list (US 02.09.01). Screens get canned data, so no
- * Firestore is needed.
+ * lottery's waiting list (US 02.09.01) and notifies it (US 02.10.01).
+ * Screens get canned data, so no Firestore is needed.
  * Known issues: none.
  */
 
 package com.example.code.ui
 
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.code.model.Lottery
 import com.example.code.model.WaitingListEntry
@@ -157,22 +159,43 @@ class WaitingListIntentTest {
     }
 
     @Test
-    fun ownerSeesWhoJoined() {
+    fun ownerSeesEntrantsAndNotifiesThem() {
+        var sentMessage: String? = null
         composeRule.setContent {
-            OwnerWaitingListScreen(lottery = lottery, entries = listOf(priya, liam), onBack = {})
+            OwnerWaitingListScreen(
+                lottery = lottery,
+                entries = listOf(priya, liam),
+                statusMessage = null,
+                onNotify = { sentMessage = it },
+                onBack = {},
+            )
         }
 
         composeRule.onNodeWithText("Priya Shah").assertExists()
         composeRule.onNodeWithText("Liam Chen").assertExists()
         composeRule.onNodeWithText("2 entrants joined").assertExists()
+
+        composeRule.onNodeWithText("Notify waiting list").performClick()
+        composeRule.onNodeWithText("Notify 2 entrants").assertExists()
+        composeRule.onNodeWithText("Message").performTextInput("Site 12 has a new fire pit.")
+        composeRule.onNodeWithText("Send").performClick()
+
+        assertEquals("Site 12 has a new fire pit.", sentMessage)
     }
 
     @Test
-    fun emptyWaitingListShowsMessage() {
+    fun emptyWaitingListCannotBeNotified() {
         composeRule.setContent {
-            OwnerWaitingListScreen(lottery = lottery, entries = emptyList(), onBack = {})
+            OwnerWaitingListScreen(
+                lottery = lottery,
+                entries = emptyList(),
+                statusMessage = null,
+                onNotify = {},
+                onBack = {},
+            )
         }
 
         composeRule.onNodeWithText("No entrants have joined yet.").assertExists()
+        composeRule.onNodeWithText("Notify waiting list").assertIsNotEnabled()
     }
 }

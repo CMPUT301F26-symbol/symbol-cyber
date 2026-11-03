@@ -109,21 +109,36 @@ fun OwnerLotteriesRoute(
  * Owner's waiting list screen for one lottery.
  *
  * @param lottery the lottery.
+ * @param deviceId this owner's ID, used as the sender.
  * @param controller waiting list controller.
  * @param onBack called when the owner goes back.
  */
 @Composable
 fun OwnerWaitingListRoute(
     lottery: Lottery,
+    deviceId: String,
     controller: WaitingListController,
     onBack: () -> Unit,
 ) {
+    val scope = rememberCoroutineScope()
     val entries by remember(lottery.id) { controller.waitingList(lottery.id) }
         .collectAsState(initial = emptyList())
+    var message by remember { mutableStateOf<String?>(null) }
 
     OwnerWaitingListScreen(
         lottery = lottery,
         entries = entries,
+        statusMessage = message,
+        onNotify = { text ->
+            scope.launch {
+                message = try {
+                    val sent = controller.notifyWaitingList(lottery, deviceId, entries, text)
+                    "Notification sent to $sent entrants."
+                } catch (e: Exception) {
+                    "Could not send: ${e.message}"
+                }
+            }
+        },
         onBack = onBack,
     )
 }

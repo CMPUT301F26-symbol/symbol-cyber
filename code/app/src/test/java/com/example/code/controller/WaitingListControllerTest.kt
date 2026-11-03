@@ -2,8 +2,9 @@
  * WaitingListControllerTest.kt
  * Unit tests for WaitingListController: which lottery a campsite's details
  * screen shows (US 01.01.06), joining and leaving the waiting list
- * (US 01.02.01, 01.02.02), the waitlist cap, and the owner's lotteries
- * (US 02.09.01). Uses an in-memory fake repository.
+ * (US 01.02.01, 01.02.02), the waitlist cap, the owner's lotteries
+ * (US 02.09.01) and notifying the waiting list (US 02.10.01). Uses
+ * in-memory fake repositories.
  * Known issues: none.
  */
 
@@ -11,7 +12,9 @@ package com.example.code.controller
 
 import com.example.code.data.JoinResult
 import com.example.code.fakes.FakeLotteryRepository
+import com.example.code.fakes.FakeNotificationRepository
 import com.example.code.fakes.TestData
+import com.example.code.model.AppNotification
 import com.example.code.model.Lottery
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -25,8 +28,9 @@ import org.junit.Test
 class WaitingListControllerTest {
 
     private val lotteries = FakeLotteryRepository(listOf(TestData.jasperLottery, TestData.banffLottery))
+    private val notifications = FakeNotificationRepository()
     private var now = TestData.DURING_REGISTRATION
-    private val controller = WaitingListController(lotteries) { now }
+    private val controller = WaitingListController(lotteries, notifications) { now }
 
     private fun jasper(): Lottery = lotteries.lotteries.value.getValue(TestData.jasperLottery.id)
 
@@ -107,6 +111,38 @@ class WaitingListControllerTest {
 
         assertFalse(controller.leave(jasper(), TestData.priya.entrantId))
         assertEquals(1, jasper().waitingListCount)
+    }
+
+    @Test
+    fun ownerNotifiesEveryEntrant() = runBlocking {
+        val entries = listOf(TestData.priya, TestData.liam, TestData.sofia)
+
+        val sent = controller.notifyWaitingList(
+            jasper(),
+            TestData.OWNER_ID,
+            entries,
+            "  Fire ban in effect this weekend.  ",
+        )
+
+        assertEquals(3, sent)
+        assertEquals(entries.map { it.entrantId }, notifications.sent.map { it.recipientId })
+        notifications.sent.forEach {
+            assertEquals("Fire ban in effect this weekend.", it.message)
+            assertEquals(TestData.OWNER_ID, it.senderId)
+            assertEquals(TestData.jasperLottery.id, it.lotteryId)
+            assertEquals(AppNotification.TYPE_WAITLIST_MESSAGE, it.type)
+            assertEquals("Message about Jasper Riverside", it.title)
+        }
+    }
+
+    @Test
+    fun blankMessageIsRejected() {
+        assertThrows(IllegalArgumentException::class.java) {
+            runBlocking {
+                controller.notifyWaitingList(jasper(), TestData.OWNER_ID, listOf(TestData.priya), "   ")
+            }
+        }
+        assertTrue(notifications.sent.isEmpty())
     }
 
     @Test

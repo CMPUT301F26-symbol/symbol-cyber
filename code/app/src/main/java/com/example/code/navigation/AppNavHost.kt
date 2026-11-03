@@ -3,7 +3,8 @@
  * Navigation shell: top bar, bottom bar and a NavHost for the active mode.
  * Each mode gets its own NavHost, while shared application data is kept in
  * controllers above the individual mode navigation stacks.
- * Lottery screens are wired in through LotteryRoutes.kt.
+ * Lottery screens are wired in through LotteryRoutes.kt; AutomaticDraw.kt
+ * draws winners when registration ends.
  * Known issues: device-based user identification uses the raw device ID
  * until the User model is connected.
  */
@@ -36,6 +37,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.code.controller.CampsiteController
+import com.example.code.controller.DrawController
 import com.example.code.controller.WaitingListController
 import com.example.code.data.FirestoreLotteryRepository
 import com.example.code.data.FirestoreNotificationRepository
@@ -64,6 +66,7 @@ private const val OWNER_WAITING_LIST_ROUTE =
  * @param controller keeps the active user mode.
  * @param campsiteController manages campsite data shared across modes.
  * @param waitingListController manages lotteries and waiting lists.
+ * @param drawController draws winners when registration ends.
  * @param ownerId optional active user ID, shared with owner and lottery flows.
  */
 @Composable
@@ -73,11 +76,16 @@ fun AppNavHost(
     waitingListController: WaitingListController = remember {
         WaitingListController(FirestoreLotteryRepository(), FirestoreNotificationRepository())
     },
+    drawController: DrawController = remember {
+        DrawController(FirestoreLotteryRepository(), FirestoreNotificationRepository())
+    },
     ownerId: String? = null,
 ) {
     val mode by controller.activeMode.collectAsState()
     val deviceId = ownerId ?: rememberDeviceId()
     val lotteries by waitingListController.allLotteries.collectAsState(initial = emptyList())
+
+    AutomaticDraw(lotteries = lotteries, controller = drawController)
 
     key(mode) {
         ModeShell(

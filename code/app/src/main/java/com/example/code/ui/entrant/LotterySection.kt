@@ -2,7 +2,8 @@
  * LotterySection.kt
  * Lottery part of the entrant's campsite details screen (mockup E05):
  * shows the campsite's lottery and its periods (US 01.01.06) and lets the
- * entrant join or leave its waiting list (US 01.02.01, 01.02.02).
+ * entrant join or leave its waiting list (US 01.02.01, 01.02.02). After the
+ * automatic draw (US 02.05.01) it shows whether the entrant won.
  * Known issues: none.
  */
 
@@ -62,14 +63,14 @@ fun LotterySection(
 
             Text(
                 "Registration: ${formatDateTime(lottery.registrationStart)} – " +
-                        formatDateTime(lottery.registrationEnd),
+                    formatDateTime(lottery.registrationEnd),
             )
             Text("Stay: ${formatDateRange(lottery.bookingStart, lottery.bookingEnd)}")
             Text("Winners drawn: ${lottery.winnerCount}")
             Text(waitingListText(lottery))
 
             when {
-                lottery.status == Lottery.STATUS_DRAWN -> Text("Winners have been drawn.")
+                lottery.status == Lottery.STATUS_DRAWN -> Text(drawnText(myEntry))
 
                 now < lottery.registrationStart ->
                     Text("Registration opens ${formatDateTime(lottery.registrationStart)}.")
@@ -105,3 +106,10 @@ private fun waitingListText(lottery: Lottery): String =
     } else {
         "Waiting list: ${lottery.waitingListCount} of ${lottery.waitlistCapacity} spots taken"
     }
+
+/** Result text shown to the entrant once winners are drawn. */
+private fun drawnText(myEntry: WaitingListEntry?): String = when (myEntry?.status) {
+    WaitingListEntry.STATUS_WON -> "You won this lottery!"
+    WaitingListEntry.STATUS_NOT_SELECTED -> "You were not selected this time."
+    else -> "Winners have been drawn."
+}

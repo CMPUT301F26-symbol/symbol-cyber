@@ -1,6 +1,7 @@
 /*
  * LotteryRepository.kt
- * Reads lotteries and their waiting lists, and adds or removes entrants.
+ * Reads lotteries and their waiting lists, adds or removes entrants, and
+ * records the result of a draw.
  * The interface lets controllers and tests use a fake instead of Firestore;
  * FirestoreLotteryRepository is the real implementation.
  * Known issues: lotteries are listed from one collection without paging.
@@ -54,6 +55,22 @@ interface LotteryRepository {
      * @return true if the entrant was on the list.
      */
     suspend fun leaveWaitingList(lotteryId: String, entrantId: String): Boolean
+
+    /** Returns the current waiting list of [lotteryId] once. */
+    suspend fun getWaitingList(lotteryId: String): List<WaitingListEntry>
+
+    /**
+     * Marks [lotteryId] as drawn and sets each entrant's status, only if the
+     * lottery is still open.
+     *
+     * @return true if this call performed the draw; false if it was already drawn.
+     */
+    suspend fun completeDraw(
+        lotteryId: String,
+        winnerIds: List<String>,
+        notSelectedIds: List<String>,
+        drawnAt: Long,
+    ): Boolean
 }
 
 /**
@@ -131,6 +148,46 @@ class FirestoreLotteryRepository(
             } else {
                 transaction.delete(entryRef)
                 transaction.update(lotteryRef, "waitingListCount", FieldValue.increment(-1))
+                true
+            }
+        }.awaitResult()
+    }
+
+    override suspend fun getWaitingList(lotteryId: String): List<WaitingListEntry> =
+        lotteries.document(lotteryId).collection(WAITING_LIST).get().awaitResult()
+            .documents.mapNotNull { document ->
+                document.data?.let { entryFromMap(document.id, it) }
+            }
+
+    override suspend fun completeDraw(
+        lotteryId: String,
+        winnerIds: List<String>,
+        notSelectedIds: List<String>,
+        drawnAt: Long,
+    ): Boolean {
+        val lotteryRef = lotteries.document(lotteryId)
+        val waitingList = lotteryRef.collection(WAITING_LIST)
+        // Transaction: if two devices try to draw at once, only the first one
+        // sees status OPEN; the second returns false and changes nothing.
+        return db.runTransaction { transaction ->
+            val status = transaction.get(lotteryRef).getString("status") ?: Lottery.STATUS_OPEN
+            if (status != Lottery.STATUS_OPEN) {
+                false
+            } else {
+                transaction.update(
+                    lotteryRef,
+                    mapOf("status" to Lottery.STATUS_DRAWN, "drawnAt" to drawnAt),
+                )
+                winnerIds.forEach {
+                    transaction.update(waitingList.document(it), "status", WaitingListEntry.STATUS_WON)
+                }
+                notSelectedIds.forEach {
+                    transaction.update(
+                        waitingList.document(it),
+                        "status",
+                        WaitingListEntry.STATUS_NOT_SELECTED,
+                    )
+                }
                 true
             }
         }.awaitResult()

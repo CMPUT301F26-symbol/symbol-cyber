@@ -1,7 +1,7 @@
 /*
  * LotteryControllerTest.kt
  * Unit tests for LotteryController: when registration is open, when the
- * waiting list has room.
+ * waiting list has room, and the name shown for an entrant.
  * Known issues: none.
  */
 
@@ -9,6 +9,8 @@ package com.example.code.controller
 
 import com.example.code.fakes.TestData
 import com.example.code.model.Lottery
+import com.example.code.model.WaitingListEntry
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -49,5 +51,21 @@ class LotteryControllerTest {
     @Test
     fun uncappedListAlwaysHasRoom() {
         assertTrue(LotteryController.hasRoom(TestData.banffLottery.copy(waitingListCount = 500)))
+    }
+
+    @Test
+    fun displayNameUsesTheEntrantsName() {
+        assertEquals("Priya Shah", LotteryController.entrantDisplayName(TestData.priya))
+    }
+
+    @Test
+    fun displayNameFallsBackToShortDeviceId() {
+        val entry = WaitingListEntry(entrantId = "a1b2c3d4e5f6", entrantName = "  ")
+        assertEquals("Entrant a1b2c3", LotteryController.entrantDisplayName(entry))
+    }
+
+    @Test
+    fun newEntryIsWaiting() {
+        assertEquals(WaitingListEntry.STATUS_WAITING, TestData.liam.status)
     }
 }

@@ -1,12 +1,13 @@
 /*
  * TestData.kt
- * Realistic sample lotteries and times shared by the unit tests.
+ * Realistic sample lotteries, entrants and times shared by the unit tests.
  * Known issues: none.
  */
 
 package com.example.code.fakes
 
 import com.example.code.model.Lottery
+import com.example.code.model.WaitingListEntry
 
 /** Sample data used across tests. Times are Mountain time (UTC-6), 2026. */
 object TestData {
@@ -57,4 +58,10 @@ object TestData {
         winnerCount = 1,
         waitlistCapacity = null,
     )
+
+    /** Entrants on a waiting list. */
+    val priya = WaitingListEntry("device-priya-01", "Priya Shah", REGISTRATION_START + 60_000)
+    val liam = WaitingListEntry("device-liam-02", "Liam Chen", REGISTRATION_START + 120_000)
+    val sofia = WaitingListEntry("device-sofia-03", "Sofia Martins", REGISTRATION_START + 180_000)
+    val noah = WaitingListEntry("device-noah-04", "Noah Tremblay", REGISTRATION_START + 240_000)
 }

@@ -1,7 +1,8 @@
 /*
  * WaitingListIntentTest.kt
  * UI (intent) tests for the lottery card on the entrant's campsite details
- * screen (US 01.01.06). Screens get canned data, so no Firestore is needed.
+ * screen: seeing the active lottery (US 01.01.06) and joining its waiting
+ * list (US 01.02.01). Screens get canned data, so no Firestore is needed.
  * Known issues: none.
  */
 
@@ -9,9 +10,12 @@ package com.example.code.ui
 
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.code.model.Lottery
+import com.example.code.model.WaitingListEntry
 import com.example.code.ui.entrant.LotterySection
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -38,30 +42,90 @@ class WaitingListIntentTest {
         waitingListCount = 2,
     )
 
+    private val priya = WaitingListEntry("device-priya-01", "Priya Shah", 1793545260000L)
+
     @Test
-    fun detailsShowTheActiveLottery() {
+    fun entrantJoinsWaitingListFromDetails() {
+        var joined = false
         composeRule.setContent {
-            LotterySection(lottery = lottery, now = duringRegistration)
+            LotterySection(
+                lottery = lottery,
+                myEntry = null,
+                now = duringRegistration,
+                busy = false,
+                statusMessage = null,
+                onJoin = { joined = true },
+            )
         }
 
         composeRule.onNodeWithText("Winners drawn: 2").assertExists()
         composeRule.onNodeWithText("Waiting list: 2 of 4 spots taken").assertExists()
-        composeRule.onNodeWithText("Registration is open.").assertExists()
+        composeRule.onNodeWithText("Join Waiting List").performClick()
+        assertTrue(joined)
     }
 
     @Test
-    fun lotteryNotYetOpenSaysWhenItOpens() {
+    fun joinedEntrantSeesTheyAreOnTheList() {
         composeRule.setContent {
-            LotterySection(lottery = lottery, now = 1793469600000L) // Oct 31
+            LotterySection(
+                lottery = lottery,
+                myEntry = priya,
+                now = duringRegistration,
+                busy = false,
+                statusMessage = "You joined the waiting list.",
+                onJoin = {},
+            )
         }
 
-        composeRule.onNodeWithText("Registration is open.").assertDoesNotExist()
+        composeRule.onNodeWithText("You are on the waiting list.").assertExists()
+        composeRule.onNodeWithText("You joined the waiting list.").assertExists()
+        composeRule.onNodeWithText("Join Waiting List").assertDoesNotExist()
+    }
+
+    @Test
+    fun fullWaitingListHasNoJoinButton() {
+        composeRule.setContent {
+            LotterySection(
+                lottery = lottery.copy(waitingListCount = 4),
+                myEntry = null,
+                now = duringRegistration,
+                busy = false,
+                statusMessage = null,
+                onJoin = {},
+            )
+        }
+
+        composeRule.onNodeWithText("The waiting list is full.").assertExists()
+        composeRule.onNodeWithText("Join Waiting List").assertDoesNotExist()
+    }
+
+    @Test
+    fun lotteryNotYetOpenHasNoJoinButton() {
+        composeRule.setContent {
+            LotterySection(
+                lottery = lottery,
+                myEntry = null,
+                now = 1793469600000L, // Oct 31
+                busy = false,
+                statusMessage = null,
+                onJoin = {},
+            )
+        }
+
+        composeRule.onNodeWithText("Join Waiting List").assertDoesNotExist()
     }
 
     @Test
     fun campsiteWithoutLotteryShowsMessage() {
         composeRule.setContent {
-            LotterySection(lottery = null, now = duringRegistration)
+            LotterySection(
+                lottery = null,
+                myEntry = null,
+                now = duringRegistration,
+                busy = false,
+                statusMessage = null,
+                onJoin = {},
+            )
         }
 
         composeRule.onNodeWithText("This campsite has no lottery yet.").assertExists()

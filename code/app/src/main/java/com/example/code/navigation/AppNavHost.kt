@@ -35,7 +35,7 @@ import com.example.code.controller.CampsiteController
 import com.example.code.ui.admin.AdminCampsitesScreen
 import com.example.code.ui.common.PlaceholderScreen
 import com.example.code.ui.common.ProfileScreen
-import com.example.code.ui.entrant.CampsiteDetailsScreen
+import com.example.code.ui.entrant.CampsiteDetailsDestination
 import com.example.code.ui.entrant.ExploreScreen
 import com.example.code.ui.owner.OwnerCampsitesScreen
 import com.example.code.ui.owner.RegisterCampsiteScreen
@@ -86,6 +86,8 @@ private fun ModeShell(
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
     val campsites by campsiteController.campsites.collectAsState()
+    val isLoading by campsiteController.isLoading.collectAsState()
+    val loadError by campsiteController.errorMessage.collectAsState()
 
     Scaffold(
         topBar = {
@@ -154,21 +156,14 @@ private fun ModeShell(
                         detailsEntry.arguments
                             ?.getString("campsiteId")
 
-                    val campsite =
-                        campsites.firstOrNull {
-                            it.id == campsiteId
-                        }
-
-                    if (campsite == null) {
-                        Text("Campsite not found")
-                    } else {
-                        CampsiteDetailsScreen(
-                            campsite = campsite,
-                            onBack = {
-                                navController.popBackStack()
-                            },
-                        )
-                    }
+                    CampsiteDetailsDestination(
+                        campsiteId = campsiteId,
+                        campsites = campsites,
+                        isLoading = isLoading,
+                        errorMessage = loadError,
+                        onRetry = campsiteController::retryLoading,
+                        onBack = { navController.popBackStack() },
+                    )
                 }
             }
         }

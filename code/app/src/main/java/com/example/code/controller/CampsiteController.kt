@@ -11,7 +11,6 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import com.example.code.model.Campsite
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.GeoPoint
 import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -126,60 +125,7 @@ class CampsiteController : ViewModel() {
                 try {
                     val data = document.data ?: return@mapNotNull null
 
-                    val storedLocation = data["location"]
-
-                    val locationText =
-                        when (storedLocation) {
-                            is String -> storedLocation
-
-                            is GeoPoint ->
-                                "${storedLocation.latitude}, ${storedLocation.longitude}"
-
-                            else -> ""
-                        }
-
-                    val latitude =
-                        (data["latitude"] as? Number)?.toDouble()
-                            ?: (storedLocation as? GeoPoint)?.latitude
-                            ?: 0.0
-
-                    val longitude =
-                        (data["longitude"] as? Number)?.toDouble()
-                            ?: (storedLocation as? GeoPoint)?.longitude
-                            ?: 0.0
-
-                    val description =
-                        data["description"] as? String
-                            ?: data["amenities"] as? String
-                            ?: ""
-
-                    val rating =
-                        (data["rating"] as? Number)?.toDouble()
-                            ?: (data["averageRating"] as? Number)?.toDouble()
-
-                    val maxOccupancy =
-                        (data["maxOccupancy"] as? Number)?.toInt()
-                            ?: (data["maximumOccupancy"] as? Number)?.toInt()
-                            ?: 0
-
-                    val tags =
-                        (data["tags"] as? List<*>)
-                            ?.filterIsInstance<String>()
-                            ?: emptyList()
-
-                    Campsite(
-                        id = document.id,
-                        ownerId = data["ownerId"] as? String ?: "",
-                        name = data["name"] as? String ?: "",
-                        location = locationText,
-                        description = description,
-                        maxOccupancy = maxOccupancy,
-                        latitude = latitude,
-                        longitude = longitude,
-                        rating = rating,
-                        imageUrl = data["imageUrl"] as? String,
-                        tags = tags,
-                    )
+                    campsiteFromDocument(document.id, data)
                 } catch (exception: Exception) {
                     Log.e(
                         "CampsiteController",

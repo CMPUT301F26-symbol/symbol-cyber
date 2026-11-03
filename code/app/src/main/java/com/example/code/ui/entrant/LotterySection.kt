@@ -37,6 +37,8 @@ import com.example.code.ui.common.formatDateTime
  * @param statusMessage result of the last action, or null.
  * @param onJoin called when the entrant taps "Join Waiting List".
  * @param onLeave called when the entrant taps "Leave Waiting List".
+ * @param drawnContent extra content shown after the draw (e.g. accepting a win);
+ * receives [myEntry].
  */
 @Composable
 fun LotterySection(
@@ -48,6 +50,7 @@ fun LotterySection(
     onJoin: () -> Unit,
     onLeave: () -> Unit,
     modifier: Modifier = Modifier,
+    drawnContent: @Composable (WaitingListEntry?) -> Unit = {},
 ) {
     Card(modifier = modifier.fillMaxWidth()) {
         Column(
@@ -70,7 +73,10 @@ fun LotterySection(
             Text(waitingListText(lottery))
 
             when {
-                lottery.status == Lottery.STATUS_DRAWN -> Text(drawnText(myEntry))
+                lottery.status == Lottery.STATUS_DRAWN -> {
+                    Text(drawnText(myEntry))
+                    drawnContent(myEntry)
+                }
 
                 now < lottery.registrationStart ->
                     Text("Registration opens ${formatDateTime(lottery.registrationStart)}.")

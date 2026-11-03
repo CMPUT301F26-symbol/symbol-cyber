@@ -18,6 +18,7 @@ import androidx.compose.runtime.setValue
 import com.example.code.controller.WaitingListController
 import com.example.code.data.JoinResult
 import com.example.code.model.Lottery
+import com.example.code.model.WaitingListEntry
 import com.example.code.ui.entrant.LotterySection
 import com.example.code.ui.owner.OwnerLotteriesScreen
 import com.example.code.ui.owner.OwnerWaitingListScreen
@@ -30,12 +31,15 @@ import kotlinx.coroutines.launch
  * @param lottery the campsite's lottery, or null.
  * @param deviceId this entrant's ID.
  * @param controller waiting list controller.
+ * @param drawnContent extra content shown after the draw; receives this
+ * entrant's waiting list entry.
  */
 @Composable
 fun EntrantLotteryCard(
     lottery: Lottery?,
     deviceId: String,
     controller: WaitingListController,
+    drawnContent: @Composable (WaitingListEntry?) -> Unit = {},
 ) {
     val scope = rememberCoroutineScope()
     val entries by remember(lottery?.id) {
@@ -83,6 +87,7 @@ fun EntrantLotteryCard(
                 busy = false
             }
         },
+        drawnContent = drawnContent,
     )
 }
 

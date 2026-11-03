@@ -7,11 +7,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -19,9 +21,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.code.model.Campsite
+import com.example.code.model.CampsiteFilters
+import com.example.code.model.filterCampsites
 import com.example.code.model.searchCampsites
 
-/** Browses and searches the latest campsites without discarding the query on return. */
+/**
+ * Browses the latest records using search and the applied filter state.
+ * Filter controls supply [filters]; date availability is resolved by their lottery lookup.
+ */
 @Composable
 fun ExploreScreen(
     campsites: List<Campsite>,
@@ -30,9 +37,13 @@ fun ExploreScreen(
     isLoading: Boolean = false,
     errorMessage: String? = null,
     onRetry: () -> Unit = {},
+    filters: CampsiteFilters = CampsiteFilters(),
+    onClearFilters: (() -> Unit)? = null,
 ) {
     var query by rememberSaveable { mutableStateOf("") }
-    val results = searchCampsites(campsites, query)
+    val results = filterCampsites(searchCampsites(campsites, query), filters)
+    val listState = rememberLazyListState()
+    LaunchedEffect(query, filters) { listState.scrollToItem(0) }
 
     Column(
         modifier = modifier.fillMaxSize().padding(16.dp),
@@ -51,6 +62,16 @@ fun ExploreScreen(
             },
             modifier = Modifier.fillMaxWidth(),
         )
+        if (filters.isActive) {
+            Text(buildList {
+                if (filters.location.isNotBlank()) add("Location: ${filters.location.trim()}")
+                filters.guestCount?.let { add("Guests: $it") }
+                if (filters.availableCampsiteIds != null) add("Dates applied")
+            }.joinToString(" • "))
+            if (onClearFilters != null) {
+                TextButton(onClick = onClearFilters) { Text("Clear filters") }
+            }
+        }
         when {
             isLoading -> {
                 CircularProgressIndicator()
@@ -61,15 +82,20 @@ fun ExploreScreen(
                 TextButton(onClick = onRetry) { Text("Retry") }
             }
             results.isEmpty() -> Text(
-                if (query.isBlank()) "No campsites available yet."
+                if (filters.isActive) "No campsites match your current filters."
+                else if (query.isBlank()) "No campsites available yet."
                 else "No results found. Try another name or location."
             )
-            else -> LazyColumn(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                items(items = results, key = { it.id }) { campsite ->
-                    CampsiteCard(campsite = campsite, onClick = { onCampsiteClick(campsite) })
+            else -> {
+                Text("${results.size} campsite${if (results.size == 1) "" else "s"} found")
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    items(items = results, key = { it.id }) { campsite ->
+                        CampsiteCard(campsite = campsite, onClick = { onCampsiteClick(campsite) })
+                    }
                 }
             }
         }

@@ -362,6 +362,11 @@ private fun DestinationContent(
             deviceId = deviceId,
         )
 
+        Destination.OWNER_RESERVATIONS -> OwnerReservationsRoute(
+            reservations = reservations,
+            deviceId = deviceId,
+        )
+
         Destination.ADMIN_CAMPSITES ->
             AdminCampsitesScreen()
 

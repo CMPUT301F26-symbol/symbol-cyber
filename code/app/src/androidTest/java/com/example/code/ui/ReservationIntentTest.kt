@@ -2,8 +2,8 @@
  * ReservationIntentTest.kt
  * UI (intent) tests for the result of the automatic draw (US 02.05.01): the
  * entrant sees on the campsite's lottery card whether they won, a winner
- * accepts the reservation, and the entrant sees active reservations
- * (US 01.06.01).
+ * accepts the reservation, the entrant sees active reservations
+ * (US 01.06.01) and the owner sees active reservations (US 02.07.01).
  * Screens get canned data, so no Firestore is needed.
  * Known issues: none.
  */
@@ -21,6 +21,7 @@ import com.example.code.ui.common.formatDateRange
 import com.example.code.ui.entrant.EntrantReservationsScreen
 import com.example.code.ui.entrant.LotterySection
 import com.example.code.ui.entrant.WinnerReservationCard
+import com.example.code.ui.owner.OwnerReservationsScreen
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -198,5 +199,25 @@ class ReservationIntentTest {
         }
 
         composeRule.onNodeWithText("You have no active reservations.").assertExists()
+    }
+
+    @Test
+    fun ownerSeesActiveReservations() {
+        composeRule.setContent {
+            OwnerReservationsScreen(reservations = listOf(reservation))
+        }
+
+        composeRule.onNodeWithText("Priya Shah").assertExists()
+        composeRule.onNodeWithText("Jasper Riverside").assertExists()
+        composeRule.onNodeWithText(formatDateRange(bookingStart, bookingEnd)).assertExists()
+    }
+
+    @Test
+    fun ownerWithoutReservationsSeesMessage() {
+        composeRule.setContent {
+            OwnerReservationsScreen(reservations = emptyList())
+        }
+
+        composeRule.onNodeWithText("No active reservations.").assertExists()
     }
 }

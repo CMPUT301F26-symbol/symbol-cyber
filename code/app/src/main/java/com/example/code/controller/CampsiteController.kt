@@ -12,6 +12,7 @@ import androidx.lifecycle.ViewModel
 import com.example.code.model.Campsite
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.GeoPoint
+import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -37,6 +38,23 @@ class CampsiteController : ViewModel() {
      * Most recent Firestore error, or null if no error is present.
      */
     val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
+
+    private var listener: ListenerRegistration? = null
+    private val _isLoading = MutableStateFlow(true)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
+    /** Restarts a failed subscription, preserving the screen's current search. */
+    fun retryLoading() {
+        listener?.remove()
+        _isLoading.value = true
+        _errorMessage.value = null
+        listenForCampsites()
+    }
+
+    override fun onCleared() {
+        listener?.remove()
+        super.onCleared()
+    }
 
     init {
         listenForCampsites()
@@ -84,7 +102,8 @@ class CampsiteController : ViewModel() {
      * converted manually instead of directly using Firestore's toObject().
      */
     private fun listenForCampsites() {
-        campsiteCollection.addSnapshotListener { snapshot, exception ->
+        listener = campsiteCollection.addSnapshotListener { snapshot, exception ->
+            _isLoading.value = false
 
             if (exception != null) {
                 _errorMessage.value =

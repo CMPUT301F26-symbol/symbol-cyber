@@ -250,9 +250,15 @@ private fun DestinationContent(
 ) {
     val campsites by campsiteController.campsites.collectAsState()
 
+    val isLoading by campsiteController.isLoading.collectAsState()
+    val loadError by campsiteController.errorMessage.collectAsState()
+
     when (destination) {
         Destination.ENTRANT_EXPLORE -> ExploreScreen(
             campsites = campsites,
+            isLoading = isLoading,
+            errorMessage = loadError,
+            onRetry = campsiteController::retryLoading,
             onCampsiteClick = { campsite ->
                 navController.navigate(
                     "entrant/campsite/${campsite.id}"

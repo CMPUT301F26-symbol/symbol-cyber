@@ -93,11 +93,9 @@ fun EntrantReservationsRoute(reservations: List<Reservation>, deviceId: String) 
  */
 @Composable
 fun OwnerReservationsRoute(reservations: List<Reservation>, deviceId: String) {
+    val now = System.currentTimeMillis()
     OwnerReservationsScreen(
-        reservations = ReservationController.activeForOwner(
-            reservations,
-            deviceId,
-            System.currentTimeMillis(),
-        ),
+        bookedDates = ReservationController.bookedDates(reservations, deviceId, now),
+        reservations = ReservationController.activeForOwner(reservations, deviceId, now),
     )
 }

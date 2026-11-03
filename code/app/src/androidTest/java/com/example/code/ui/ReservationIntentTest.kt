@@ -3,17 +3,21 @@
  * UI (intent) tests for the result of the automatic draw (US 02.05.01): the
  * entrant sees on the campsite's lottery card whether they won, a winner
  * accepts the reservation, the entrant sees active reservations
- * (US 01.06.01) and the owner sees active reservations (US 02.07.01).
+ * (US 01.06.01) and the owner sees booked dates and active reservations
+ * (US 02.06.01, 02.07.01).
  * Screens get canned data, so no Firestore is needed.
  * Known issues: none.
  */
 
 package com.example.code.ui
 
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.example.code.controller.BookedDates
 import com.example.code.model.Lottery
 import com.example.code.model.Reservation
 import com.example.code.model.WaitingListEntry
@@ -202,22 +206,28 @@ class ReservationIntentTest {
     }
 
     @Test
-    fun ownerSeesActiveReservations() {
+    fun ownerSeesBookedDatesAndActiveReservations() {
         composeRule.setContent {
-            OwnerReservationsScreen(reservations = listOf(reservation))
+            OwnerReservationsScreen(
+                bookedDates = listOf(BookedDates("Jasper Riverside", listOf(bookingStart to bookingEnd))),
+                reservations = listOf(reservation),
+            )
         }
 
+        composeRule.onNodeWithText("Booked dates").assertExists()
         composeRule.onNodeWithText("Priya Shah").assertExists()
-        composeRule.onNodeWithText("Jasper Riverside").assertExists()
-        composeRule.onNodeWithText(formatDateRange(bookingStart, bookingEnd)).assertExists()
+        // Campsite name and stay appear once under booked dates and once on the reservation.
+        composeRule.onAllNodesWithText("Jasper Riverside").assertCountEquals(2)
+        composeRule.onAllNodesWithText(formatDateRange(bookingStart, bookingEnd)).assertCountEquals(2)
     }
 
     @Test
-    fun ownerWithoutReservationsSeesMessage() {
+    fun ownerWithoutReservationsSeesMessages() {
         composeRule.setContent {
-            OwnerReservationsScreen(reservations = emptyList())
+            OwnerReservationsScreen(bookedDates = emptyList(), reservations = emptyList())
         }
 
+        composeRule.onNodeWithText("No dates are booked.").assertExists()
         composeRule.onNodeWithText("No active reservations.").assertExists()
     }
 }

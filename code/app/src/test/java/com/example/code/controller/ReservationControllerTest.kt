@@ -1,7 +1,8 @@
 /*
  * ReservationControllerTest.kt
  * Unit tests for ReservationController: a winner accepts a reservation and
- * entrants and owners see active reservations (US 01.06.01, 02.07.01).
+ * entrants and owners see active reservations (US 01.06.01, 02.07.01), and
+ * owners see booked dates (US 02.06.01).
  * Known issues: none.
  */
 
@@ -17,6 +18,7 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ReservationControllerTest {
@@ -88,6 +90,41 @@ class ReservationControllerTest {
         )
 
         assertEquals(listOf(TestData.priyaReservation, TestData.liamReservation), active)
+    }
+
+    @Test
+    fun bookedDatesAreGroupedByCampsite() {
+        val secondJasper = TestData.liamReservation.copy(
+            id = "y",
+            campsiteId = "camp-jasper-riverside",
+            campsiteName = "Jasper Riverside",
+        )
+        val all = listOf(secondJasper, TestData.priyaReservation, TestData.liamReservation)
+
+        val booked = ReservationController.bookedDates(
+            all,
+            TestData.OWNER_ID,
+            TestData.AFTER_REGISTRATION,
+        )
+
+        assertEquals(listOf("Banff Tunnel Mountain", "Jasper Riverside"), booked.map { it.campsiteName })
+        assertEquals(
+            listOf(
+                TestData.BOOKING_START to TestData.BOOKING_END,
+                TestData.LATER_START to TestData.LATER_END,
+            ),
+            booked[1].stays,
+        )
+    }
+
+    @Test
+    fun noReservationsMeansNoBookedDates() {
+        val booked = ReservationController.bookedDates(
+            emptyList(),
+            TestData.OWNER_ID,
+            TestData.AFTER_REGISTRATION,
+        )
+        assertTrue(booked.isEmpty())
     }
 
     @Test

@@ -1,8 +1,8 @@
 /*
  * WaitingListControllerTest.kt
  * Unit tests for WaitingListController: which lottery a campsite's details
- * screen shows (US 01.01.06), joining the waiting list (US 01.02.01) and the
- * waitlist cap. Uses an in-memory fake repository.
+ * screen shows (US 01.01.06), joining and leaving the waiting list
+ * (US 01.02.01, 01.02.02) and the waitlist cap. Uses an in-memory fake repository.
  * Known issues: none.
  */
 
@@ -15,8 +15,10 @@ import com.example.code.model.Lottery
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertThrows
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class WaitingListControllerTest {
@@ -81,6 +83,29 @@ class WaitingListControllerTest {
         assertThrows(IllegalArgumentException::class.java) {
             runBlocking { controller.join(jasper(), " ", "No Device") }
         }
+    }
+
+    @Test
+    fun entrantLeavesDuringRegistration() = runBlocking {
+        controller.join(jasper(), TestData.priya.entrantId, "Priya Shah")
+
+        assertTrue(controller.leave(jasper(), TestData.priya.entrantId))
+        assertTrue(controller.waitingList(TestData.jasperLottery.id).first().isEmpty())
+        assertEquals(0, jasper().waitingListCount)
+    }
+
+    @Test
+    fun leavingWhenNotJoinedReturnsFalse() = runBlocking {
+        assertFalse(controller.leave(jasper(), TestData.liam.entrantId))
+    }
+
+    @Test
+    fun cannotLeaveAfterRegistrationCloses() = runBlocking {
+        controller.join(jasper(), TestData.priya.entrantId, "Priya Shah")
+        now = TestData.AFTER_REGISTRATION
+
+        assertFalse(controller.leave(jasper(), TestData.priya.entrantId))
+        assertEquals(1, jasper().waitingListCount)
     }
 
     @Test

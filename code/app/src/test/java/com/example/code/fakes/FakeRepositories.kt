@@ -41,7 +41,7 @@ class FakeLotteryRepository(lotteries: List<Lottery> = emptyList()) : LotteryRep
             else -> {
                 waitingLists.value = waitingLists.value + (lotteryId to list + entry)
                 lotteries.value = lotteries.value +
-                        (lotteryId to lottery.copy(waitingListCount = lottery.waitingListCount + 1))
+                    (lotteryId to lottery.copy(waitingListCount = lottery.waitingListCount + 1))
                 JoinResult.JOINED
             }
         }
@@ -53,7 +53,31 @@ class FakeLotteryRepository(lotteries: List<Lottery> = emptyList()) : LotteryRep
         waitingLists.value = waitingLists.value + (lotteryId to list.filter { it.entrantId != entrantId })
         val lottery = lotteries.value.getValue(lotteryId)
         lotteries.value = lotteries.value +
-                (lotteryId to lottery.copy(waitingListCount = lottery.waitingListCount - 1))
+            (lotteryId to lottery.copy(waitingListCount = lottery.waitingListCount - 1))
+        return true
+    }
+
+    override suspend fun getWaitingList(lotteryId: String): List<WaitingListEntry> =
+        waitingLists.value[lotteryId].orEmpty()
+
+    override suspend fun completeDraw(
+        lotteryId: String,
+        winnerIds: List<String>,
+        notSelectedIds: List<String>,
+        drawnAt: Long,
+    ): Boolean {
+        val lottery = lotteries.value.getValue(lotteryId)
+        if (lottery.status != Lottery.STATUS_OPEN) return false
+        lotteries.value = lotteries.value + (lotteryId to lottery.copy(status = Lottery.STATUS_DRAWN))
+        waitingLists.value = waitingLists.value + (
+            lotteryId to waitingLists.value[lotteryId].orEmpty().map {
+                when (it.entrantId) {
+                    in winnerIds -> it.copy(status = WaitingListEntry.STATUS_WON)
+                    in notSelectedIds -> it.copy(status = WaitingListEntry.STATUS_NOT_SELECTED)
+                    else -> it
+                }
+            }
+        )
         return true
     }
 }

@@ -2,8 +2,6 @@
  * OwnerCampsitesScreen.kt
  * Campsite owner entry screen (mockup O01): displays the owner's campsites
  * and provides navigation to campsite registration.
- * Known issues: owner filtering will be added after the real User model and
- * Firestore persistence are integrated.
  */
 
 package com.example.code.ui.owner
@@ -29,12 +27,14 @@ import com.example.code.model.Campsite
  *
  * @param campsites campsites currently registered by the owner.
  * @param onRegisterCampsite called when the owner taps "+ Register campsite".
+ * @param onCampsiteClick opens the selected owner's stored details.
  */
 @Composable
 fun OwnerCampsitesScreen(
     campsites: List<Campsite>,
     onRegisterCampsite: () -> Unit,
     modifier: Modifier = Modifier,
+    onCampsiteClick: (Campsite) -> Unit = {},
 ) {
     Column(
         modifier = modifier
@@ -67,7 +67,7 @@ fun OwnerCampsitesScreen(
                     items = campsites,
                     key = { campsite -> campsite.id.ifBlank { campsite.name } },
                 ) { campsite ->
-                    OwnerCampsiteCard(campsite)
+                    OwnerCampsiteCard(campsite, onClick = { onCampsiteClick(campsite) })
                 }
             }
         }
@@ -78,8 +78,9 @@ fun OwnerCampsitesScreen(
  * Displays basic information about one campsite owned by the user.
  */
 @Composable
-private fun OwnerCampsiteCard(campsite: Campsite) {
+private fun OwnerCampsiteCard(campsite: Campsite, onClick: () -> Unit) {
     Card(
+        onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
     ) {
         Column(

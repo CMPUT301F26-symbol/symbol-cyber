@@ -2,7 +2,6 @@
  * CampsiteController.kt
  * Manages campsite data shared between owner and entrant screens.
  * Campsites are persisted in Cloud Firestore and exposed to the UI as StateFlow.
- * Known issues: owner-specific filtering and richer error UI are not implemented yet.
  */
 
 package com.example.code.controller
@@ -52,7 +51,6 @@ class CampsiteController : ViewModel() {
 
     override fun onCleared() {
         listener?.remove()
-        super.onCleared()
     }
 
     init {

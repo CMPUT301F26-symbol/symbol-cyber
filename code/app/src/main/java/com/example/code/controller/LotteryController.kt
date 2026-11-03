@@ -14,6 +14,39 @@ import com.example.code.model.WaitingListEntry
 /** Rules for lotteries. */
 object LotteryController {
 
+    //Following function for drawWinners is from GPT6-Sol "Please add in a drawing N winners function"-11-03-2026
+    fun drawWinners(
+        lottery: Lottery,
+        waitingList: List<WaitingListEntry>,
+        now: Long = System.currentTimeMillis()
+    ): Lottery {
+        if (lottery.status == Lottery.STATUS_DRAWN) {
+            return lottery
+        }
+
+        check(lottery.status == Lottery.STATUS_OPEN) {
+            "Lottery is not available for drawing."
+        }
+
+        check(now >= lottery.registrationEnd) {
+            "Registration has not ended."
+        }
+
+        require(lottery.winnerCount > 0) {
+            "Winner count must be greater than zero."
+        }
+
+        val selectedIds = waitingList
+            .map { it.entrantId }
+            .distinct()
+            .shuffled()
+            .take(lottery.winnerCount)
+
+        return lottery.copy(
+            winnerIds = selectedIds,
+            status = Lottery.STATUS_DRAWN
+        )
+    }
     /**
      * Returns true if entrants can join or leave the waiting list of
      * [lottery] at [now]: it is not drawn and [now] is inside the

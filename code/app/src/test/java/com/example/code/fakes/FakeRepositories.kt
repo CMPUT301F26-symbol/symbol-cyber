@@ -10,6 +10,8 @@ package com.example.code.fakes
 import com.example.code.controller.LotteryController
 import com.example.code.data.JoinResult
 import com.example.code.data.LotteryRepository
+import com.example.code.data.NotificationRepository
+import com.example.code.model.AppNotification
 import com.example.code.model.Lottery
 import com.example.code.model.WaitingListEntry
 import kotlinx.coroutines.flow.Flow
@@ -53,5 +55,16 @@ class FakeLotteryRepository(lotteries: List<Lottery> = emptyList()) : LotteryRep
         lotteries.value = lotteries.value +
                 (lotteryId to lottery.copy(waitingListCount = lottery.waitingListCount - 1))
         return true
+    }
+}
+
+/** [NotificationRepository] that records what was sent. */
+class FakeNotificationRepository : NotificationRepository {
+
+    /** Every notification sent so far. */
+    val sent = mutableListOf<AppNotification>()
+
+    override suspend fun sendAll(notifications: List<AppNotification>) {
+        sent += notifications
     }
 }

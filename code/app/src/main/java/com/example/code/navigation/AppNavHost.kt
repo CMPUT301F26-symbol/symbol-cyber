@@ -36,6 +36,7 @@ import androidx.navigation.navArgument
 import com.example.code.controller.CampsiteController
 import com.example.code.controller.WaitingListController
 import com.example.code.data.FirestoreLotteryRepository
+import com.example.code.data.FirestoreNotificationRepository
 import com.example.code.model.Lottery
 import com.example.code.ui.admin.AdminCampsitesScreen
 import com.example.code.ui.common.PlaceholderScreen
@@ -63,7 +64,7 @@ fun AppNavHost(
     controller: ModeController = viewModel(),
     campsiteController: CampsiteController = viewModel(),
     waitingListController: WaitingListController = remember {
-        WaitingListController(FirestoreLotteryRepository())
+        WaitingListController(FirestoreLotteryRepository(), FirestoreNotificationRepository())
     },
 ) {
     val mode by controller.activeMode.collectAsState()
@@ -222,6 +223,7 @@ private fun ModeShell(
                     } else {
                         OwnerWaitingListRoute(
                             lottery = lottery,
+                            deviceId = deviceId,
                             controller = waitingListController,
                             onBack = { navController.popBackStack() },
                         )

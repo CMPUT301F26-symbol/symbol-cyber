@@ -3,8 +3,9 @@
  * Navigation shell: top bar, bottom bar and a NavHost for the active mode.
  * Each mode gets its own NavHost, while shared application data is kept in
  * controllers above the individual mode navigation stacks.
- * Lottery screens are wired in through LotteryRoutes.kt; AutomaticDraw.kt
- * draws winners when registration ends.
+ * Lottery screens are wired in through LotteryRoutes.kt, reservation screens
+ * through ReservationRoutes.kt, and AutomaticDraw.kt draws winners when
+ * registration ends.
  * Known issues: device-based user identification uses the raw device ID
  * until the User model is connected.
  */
@@ -38,10 +39,13 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.code.controller.CampsiteController
 import com.example.code.controller.DrawController
+import com.example.code.controller.ReservationController
 import com.example.code.controller.WaitingListController
 import com.example.code.data.FirestoreLotteryRepository
 import com.example.code.data.FirestoreNotificationRepository
+import com.example.code.data.FirestoreReservationRepository
 import com.example.code.model.Lottery
+import com.example.code.model.Reservation
 import com.example.code.model.ownedCampsites
 import com.example.code.ui.admin.AdminCampsitesScreen
 import com.example.code.ui.common.PlaceholderScreen
@@ -68,6 +72,7 @@ private const val OWNER_WAITING_LIST_ROUTE =
  * @param waitingListController manages lotteries and waiting lists.
  * @param drawController draws winners when registration ends.
  * @param ownerId optional active user ID, shared with owner and lottery flows.
+ * @param reservationController manages reservations.
  */
 @Composable
 fun AppNavHost(
@@ -78,6 +83,9 @@ fun AppNavHost(
     },
     drawController: DrawController = remember {
         DrawController(FirestoreLotteryRepository(), FirestoreNotificationRepository())
+    },
+    reservationController: ReservationController = remember {
+        ReservationController(FirestoreReservationRepository())
     },
     ownerId: String? = null,
 ) {
@@ -94,6 +102,7 @@ fun AppNavHost(
             onSwitchMode = { controller.switchTo(it) },
             campsiteController = campsiteController,
             waitingListController = waitingListController,
+            reservationController = reservationController,
             lotteries = lotteries,
             deviceId = deviceId,
         )
@@ -108,6 +117,7 @@ fun AppNavHost(
  * @param onSwitchMode called when the user chooses another mode.
  * @param campsiteController shared controller for campsite data.
  * @param waitingListController shared controller for lotteries and waiting lists.
+ * @param reservationController shared controller for reservations.
  * @param lotteries all lotteries, loaded once for every mode.
  * @param deviceId this device's ID.
  */
@@ -119,6 +129,7 @@ private fun ModeShell(
     onSwitchMode: (AppMode) -> Unit,
     campsiteController: CampsiteController,
     waitingListController: WaitingListController,
+    reservationController: ReservationController,
     lotteries: List<Lottery>,
     deviceId: String,
 ) {
@@ -128,6 +139,8 @@ private fun ModeShell(
     val campsites by campsiteController.campsites.collectAsState()
     val isLoading by campsiteController.isLoading.collectAsState()
     val loadError by campsiteController.errorMessage.collectAsState()
+    val reservations by reservationController.allReservations
+        .collectAsState(initial = emptyList())
 
     Scaffold(
         topBar = {
@@ -180,6 +193,7 @@ private fun ModeShell(
                             navController = navController,
                             campsiteController = campsiteController,
                             lotteries = lotteries,
+                            reservations = reservations,
                             deviceId = deviceId,
                         )
                     }
@@ -215,6 +229,9 @@ private fun ModeShell(
                         detailsEntry.arguments
                             ?.getString("campsiteId")
 
+                    val lottery = WaitingListController.lotteryForCampsite(
+                        lotteries, campsiteId.orEmpty(),
+                    )
                     CampsiteDetailsDestination(
                         campsiteId = campsiteId,
                         campsites = campsites,
@@ -224,11 +241,19 @@ private fun ModeShell(
                         onBack = { navController.popBackStack() },
                         lotteryContent = {
                             EntrantLotteryCard(
-                                lottery = WaitingListController.lotteryForCampsite(
-                                    lotteries, campsiteId.orEmpty(),
-                                ),
+                                lottery = lottery,
                                 deviceId = deviceId,
                                 controller = waitingListController,
+                                drawnContent = { myEntry ->
+                                    if (lottery != null) {
+                                        WinnerReservationContent(
+                                            lottery = lottery,
+                                            myEntry = myEntry,
+                                            reservations = reservations,
+                                            controller = reservationController,
+                                        )
+                                    }
+                                },
                             )
                         },
                     )
@@ -273,6 +298,7 @@ private fun DestinationContent(
     navController: NavHostController,
     campsiteController: CampsiteController,
     lotteries: List<Lottery>,
+    reservations: List<Reservation>,
     deviceId: String,
 ) {
     val campsites by campsiteController.campsites.collectAsState()
@@ -329,6 +355,11 @@ private fun DestinationContent(
             onOpenWaitingList = { lottery ->
                 navController.navigate("owner/lottery/${lottery.id}/waiting-list")
             },
+        )
+
+        Destination.ENTRANT_RESERVATIONS -> EntrantReservationsRoute(
+            reservations = reservations,
+            deviceId = deviceId,
         )
 
         Destination.ADMIN_CAMPSITES ->

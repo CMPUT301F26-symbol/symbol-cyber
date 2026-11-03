@@ -11,8 +11,10 @@ import com.example.code.controller.LotteryController
 import com.example.code.data.JoinResult
 import com.example.code.data.LotteryRepository
 import com.example.code.data.NotificationRepository
+import com.example.code.data.ReservationRepository
 import com.example.code.model.AppNotification
 import com.example.code.model.Lottery
+import com.example.code.model.Reservation
 import com.example.code.model.WaitingListEntry
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -90,5 +92,21 @@ class FakeNotificationRepository : NotificationRepository {
 
     override suspend fun sendAll(notifications: List<AppNotification>) {
         sent += notifications
+    }
+}
+
+/** [ReservationRepository] that keeps reservations in memory. */
+class FakeReservationRepository(reservations: List<Reservation> = emptyList()) : ReservationRepository {
+
+    /** Current reservations by ID. */
+    val reservations = MutableStateFlow(reservations.associateBy { it.id })
+
+    override fun observeReservations(): Flow<List<Reservation>> =
+        reservations.map { it.values.toList() }
+
+    override suspend fun create(reservation: Reservation): Boolean {
+        if (reservation.id in reservations.value) return false
+        reservations.value = reservations.value + (reservation.id to reservation)
+        return true
     }
 }

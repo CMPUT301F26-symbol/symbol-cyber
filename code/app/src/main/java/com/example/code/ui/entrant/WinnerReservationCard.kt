@@ -1,7 +1,7 @@
 /*
  * WinnerReservationCard.kt
  * Shown on the campsite details lottery card after the draw: a winner
- * accepts their reservation, then sees it confirmed.
+ * accepts their reservation, then sees it confirmed or rejected.
  * Known issues: declining a win (US 01.04.03) is not available yet.
  */
 
@@ -44,6 +44,9 @@ fun WinnerReservationCard(
             reservation == null -> Button(onClick = onAccept, enabled = !busy) {
                 Text("Accept reservation")
             }
+
+            reservation.status == Reservation.STATUS_REJECTED ->
+                Text("The owner rejected this reservation: ${reservation.rejectionReason}")
 
             else ->
                 Text("Reserved: ${formatDateRange(reservation.startDate, reservation.endDate)}")

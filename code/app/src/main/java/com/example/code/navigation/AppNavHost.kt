@@ -194,6 +194,7 @@ private fun ModeShell(
                             campsiteController = campsiteController,
                             lotteries = lotteries,
                             reservations = reservations,
+                            reservationController = reservationController,
                             deviceId = deviceId,
                         )
                     }
@@ -299,6 +300,7 @@ private fun DestinationContent(
     campsiteController: CampsiteController,
     lotteries: List<Lottery>,
     reservations: List<Reservation>,
+    reservationController: ReservationController,
     deviceId: String,
 ) {
     val campsites by campsiteController.campsites.collectAsState()
@@ -365,6 +367,7 @@ private fun DestinationContent(
         Destination.OWNER_RESERVATIONS -> OwnerReservationsRoute(
             reservations = reservations,
             deviceId = deviceId,
+            controller = reservationController,
         )
 
         Destination.ADMIN_CAMPSITES ->

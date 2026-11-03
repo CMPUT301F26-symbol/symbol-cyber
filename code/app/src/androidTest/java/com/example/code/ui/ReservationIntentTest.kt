@@ -3,8 +3,8 @@
  * UI (intent) tests for the result of the automatic draw (US 02.05.01): the
  * entrant sees on the campsite's lottery card whether they won, a winner
  * accepts the reservation, the entrant sees active reservations
- * (US 01.06.01) and the owner sees booked dates and active reservations
- * (US 02.06.01, 02.07.01).
+ * (US 01.06.01), and the owner sees booked dates and active reservations
+ * and rejects one (US 02.06.01, 02.07.01, 02.08.01).
  * Screens get canned data, so no Firestore is needed.
  * Known issues: none.
  */
@@ -16,6 +16,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.code.controller.BookedDates
 import com.example.code.model.Lottery
@@ -26,6 +27,7 @@ import com.example.code.ui.entrant.EntrantReservationsScreen
 import com.example.code.ui.entrant.LotterySection
 import com.example.code.ui.entrant.WinnerReservationCard
 import com.example.code.ui.owner.OwnerReservationsScreen
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -211,6 +213,8 @@ class ReservationIntentTest {
             OwnerReservationsScreen(
                 bookedDates = listOf(BookedDates("Jasper Riverside", listOf(bookingStart to bookingEnd))),
                 reservations = listOf(reservation),
+                statusMessage = null,
+                onReject = { _, _ -> },
             )
         }
 
@@ -224,10 +228,55 @@ class ReservationIntentTest {
     @Test
     fun ownerWithoutReservationsSeesMessages() {
         composeRule.setContent {
-            OwnerReservationsScreen(bookedDates = emptyList(), reservations = emptyList())
+            OwnerReservationsScreen(
+                bookedDates = emptyList(),
+                reservations = emptyList(),
+                statusMessage = null,
+                onReject = { _, _ -> },
+            )
         }
 
         composeRule.onNodeWithText("No dates are booked.").assertExists()
         composeRule.onNodeWithText("No active reservations.").assertExists()
+    }
+
+    @Test
+    fun ownerRejectsReservationWithReason() {
+        var rejected: Pair<Reservation, String>? = null
+        composeRule.setContent {
+            OwnerReservationsScreen(
+                bookedDates = emptyList(),
+                reservations = listOf(reservation),
+                statusMessage = null,
+                onReject = { r, reason -> rejected = r to reason },
+            )
+        }
+
+        composeRule.onNodeWithText("Reject").performClick()
+        composeRule.onNodeWithText("Reject reservation?").assertExists()
+        composeRule.onNodeWithText("Reason").performTextInput("Site closed for bear activity")
+        composeRule.onNodeWithText("Reject reservation").performClick()
+
+        assertEquals(reservation to "Site closed for bear activity", rejected)
+    }
+
+    @Test
+    fun entrantSeesRejectedReservation() {
+        composeRule.setContent {
+            WinnerReservationCard(
+                myEntry = priyaWon,
+                reservation = reservation.copy(
+                    status = Reservation.STATUS_REJECTED,
+                    rejectionReason = "Site closed for bear activity",
+                ),
+                busy = false,
+                statusMessage = null,
+                onAccept = {},
+            )
+        }
+
+        composeRule.onNodeWithText(
+            "The owner rejected this reservation: Site closed for bear activity",
+        ).assertExists()
     }
 }

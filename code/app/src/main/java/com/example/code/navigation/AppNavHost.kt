@@ -48,6 +48,9 @@ import com.example.code.ui.owner.RegisterCampsiteScreen
 private const val CAMPSITE_DETAILS_ROUTE =
     "entrant/campsite/{campsiteId}"
 
+private const val OWNER_WAITING_LIST_ROUTE =
+    "owner/lottery/{lotteryId}/waiting-list"
+
 /**
  * Root composable of the app.
  *
@@ -157,6 +160,8 @@ private fun ModeShell(
                             onSwitchMode = onSwitchMode,
                             navController = navController,
                             campsiteController = campsiteController,
+                            lotteries = lotteries,
+                            deviceId = deviceId,
                         )
                     }
                 }
@@ -201,6 +206,28 @@ private fun ModeShell(
                     }
                 }
             }
+
+            if (mode == AppMode.OWNER) {
+                composable(
+                    route = OWNER_WAITING_LIST_ROUTE,
+                    arguments = listOf(
+                        navArgument("lotteryId") { type = NavType.StringType }
+                    ),
+                ) { entry ->
+                    val lotteryId = entry.arguments?.getString("lotteryId")
+                    val lottery = lotteries.firstOrNull { it.id == lotteryId }
+
+                    if (lottery == null) {
+                        Text("Lottery not found")
+                    } else {
+                        OwnerWaitingListRoute(
+                            lottery = lottery,
+                            controller = waitingListController,
+                            onBack = { navController.popBackStack() },
+                        )
+                    }
+                }
+            }
         }
     }
 }
@@ -216,6 +243,8 @@ private fun DestinationContent(
     onSwitchMode: (AppMode) -> Unit,
     navController: NavHostController,
     campsiteController: CampsiteController,
+    lotteries: List<Lottery>,
+    deviceId: String,
 ) {
     val campsites by campsiteController.campsites.collectAsState()
 
@@ -248,6 +277,14 @@ private fun DestinationContent(
                     navController.popBackStack()
                 },
             )
+
+        Destination.OWNER_LOTTERIES -> OwnerLotteriesRoute(
+            lotteries = lotteries,
+            deviceId = deviceId,
+            onOpenWaitingList = { lottery ->
+                navController.navigate("owner/lottery/${lottery.id}/waiting-list")
+            },
+        )
 
         Destination.ADMIN_CAMPSITES ->
             AdminCampsitesScreen()

@@ -1,8 +1,9 @@
 /*
  * WaitingListController.kt
  * Controller for lottery waiting lists: finds the lottery shown on a
- * campsite's details screen (US 01.01.06) and lets entrants join and leave
- * its waiting list (US 01.02.01, 01.02.02).
+ * campsite's details screen (US 01.01.06), lets entrants join and leave
+ * its waiting list (US 01.02.01, 01.02.02) and lists an owner's lotteries
+ * so they can see who joined (US 02.09.01).
  * Known issues: the entrant ID is the device ID until the User model
  * (US 01.09.01) is connected.
  */
@@ -73,5 +74,9 @@ class WaitingListController(
             return forCampsite.firstOrNull { it.status == Lottery.STATUS_OPEN }
                 ?: forCampsite.maxByOrNull { it.registrationEnd }
         }
+
+        /** Returns the lotteries created by owner [ownerId], newest first. */
+        fun lotteriesOfOwner(all: List<Lottery>, ownerId: String): List<Lottery> =
+            all.filter { it.ownerId == ownerId }.sortedByDescending { it.registrationEnd }
     }
 }

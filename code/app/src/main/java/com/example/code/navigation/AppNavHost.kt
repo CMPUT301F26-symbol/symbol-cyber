@@ -3,12 +3,11 @@
  * Navigation shell: top bar, bottom bar and a NavHost for the active mode.
  * Each mode gets its own NavHost, while shared application data is kept in
  * controllers above the individual mode navigation stacks.
- * Known issues: Firebase persistence and device-based user identification
- * are not connected yet.
  */
 
 package com.example.code.navigation
 
+import android.net.Uri
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
@@ -32,13 +31,17 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.code.controller.CampsiteController
+import com.example.code.model.ownedCampsites
 import com.example.code.ui.admin.AdminCampsitesScreen
 import com.example.code.ui.common.PlaceholderScreen
 import com.example.code.ui.common.ProfileScreen
 import com.example.code.ui.entrant.CampsiteDetailsDestination
 import com.example.code.ui.entrant.ExploreScreen
 import com.example.code.ui.owner.OwnerCampsitesScreen
+import com.example.code.ui.owner.OwnerCampsiteDetailsDestination
 import com.example.code.ui.owner.RegisterCampsiteScreen
+
+private const val OWNER_CAMPSITE_DETAILS_ROUTE = "owner/campsite/{campsiteId}"
 
 private const val CAMPSITE_DETAILS_ROUTE =
     "entrant/campsite/{campsiteId}"
@@ -48,11 +51,13 @@ private const val CAMPSITE_DETAILS_ROUTE =
  *
  * @param controller keeps the active user mode.
  * @param campsiteController manages campsite data shared across modes.
+ * @param ownerId active user's device ID; supplied by the application's identity layer.
  */
 @Composable
 fun AppNavHost(
     controller: ModeController = viewModel(),
     campsiteController: CampsiteController = viewModel(),
+    ownerId: String = "",
 ) {
     val mode by controller.activeMode.collectAsState()
 
@@ -62,6 +67,7 @@ fun AppNavHost(
             availableModes = controller.availableModes,
             onSwitchMode = { controller.switchTo(it) },
             campsiteController = campsiteController,
+            ownerId = ownerId,
         )
     }
 }
@@ -73,6 +79,7 @@ fun AppNavHost(
  * @param availableModes modes shown on the Profile mode switch.
  * @param onSwitchMode called when the user chooses another mode.
  * @param campsiteController shared controller for campsite data.
+ * @param ownerId identity used to scope owner detail navigation.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -81,6 +88,7 @@ private fun ModeShell(
     availableModes: List<AppMode>,
     onSwitchMode: (AppMode) -> Unit,
     campsiteController: CampsiteController,
+    ownerId: String,
 ) {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
@@ -139,9 +147,27 @@ private fun ModeShell(
                             onSwitchMode = onSwitchMode,
                             navController = navController,
                             campsiteController = campsiteController,
+                            ownerId = ownerId,
                         )
                     }
                 }
+
+            if (mode == AppMode.OWNER) {
+                composable(
+                    route = OWNER_CAMPSITE_DETAILS_ROUTE,
+                    arguments = listOf(navArgument("campsiteId") { type = NavType.StringType }),
+                ) { detailsEntry ->
+                    OwnerCampsiteDetailsDestination(
+                        campsiteId = detailsEntry.arguments?.getString("campsiteId"),
+                        ownerId = ownerId,
+                        campsites = campsites,
+                        isLoading = isLoading,
+                        errorMessage = loadError,
+                        onRetry = campsiteController::retryLoading,
+                        onBack = { navController.popBackStack() },
+                    )
+                }
+            }
 
             if (mode == AppMode.ENTRANT) {
                 composable(
@@ -181,11 +207,19 @@ private fun DestinationContent(
     onSwitchMode: (AppMode) -> Unit,
     navController: NavHostController,
     campsiteController: CampsiteController,
+    ownerId: String,
 ) {
     val campsites by campsiteController.campsites.collectAsState()
 
     val isLoading by campsiteController.isLoading.collectAsState()
     val loadError by campsiteController.errorMessage.collectAsState()
+
+    if (ownerId.isBlank() && destination in listOf(
+            Destination.OWNER_CAMPSITES, Destination.OWNER_REGISTER_CAMPSITE,
+        )) {
+        Text("Your device identity is unavailable. Please reopen the app.")
+        return
+    }
 
     when (destination) {
         Destination.ENTRANT_EXPLORE -> ExploreScreen(
@@ -195,13 +229,16 @@ private fun DestinationContent(
             onRetry = campsiteController::retryLoading,
             onCampsiteClick = { campsite ->
                 navController.navigate(
-                    "entrant/campsite/${campsite.id}"
+                    "entrant/campsite/${Uri.encode(campsite.id)}"
                 )
             },
         )
 
         Destination.OWNER_CAMPSITES -> OwnerCampsitesScreen(
-            campsites = campsites,
+            campsites = ownedCampsites(campsites, ownerId),
+            onCampsiteClick = { campsite ->
+                navController.navigate("owner/campsite/${Uri.encode(campsite.id)}")
+            },
             onRegisterCampsite = {
                 navController.navigate(
                     Destination.OWNER_REGISTER_CAMPSITE.route
@@ -212,7 +249,7 @@ private fun DestinationContent(
         Destination.OWNER_REGISTER_CAMPSITE ->
             RegisterCampsiteScreen(
                 onRegister = { campsite ->
-                    campsiteController.addCampsite(campsite)
+                    campsiteController.addCampsite(campsite.copy(ownerId = ownerId))
                     navController.popBackStack()
                 },
                 onBack = {

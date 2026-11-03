@@ -26,6 +26,9 @@ interface ReservationRepository {
      * @return false if a reservation with that ID already exists.
      */
     suspend fun create(reservation: Reservation): Boolean
+
+    /** Marks reservation [reservationId] as rejected with [reason]. */
+    suspend fun reject(reservationId: String, reason: String)
 }
 
 /** [ReservationRepository] backed by Cloud Firestore. */
@@ -59,6 +62,12 @@ class FirestoreReservationRepository(
                 true
             }
         }.awaitResult()
+    }
+
+    override suspend fun reject(reservationId: String, reason: String) {
+        reservations.document(reservationId)
+            .update(mapOf("status" to Reservation.STATUS_REJECTED, "rejectionReason" to reason))
+            .awaitResult()
     }
 
     companion object {

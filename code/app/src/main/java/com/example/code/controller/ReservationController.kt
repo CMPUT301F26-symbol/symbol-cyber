@@ -1,11 +1,11 @@
 /*
  * ReservationController.kt
  * Controller for reservations: a lottery winner accepts a reservation,
- * entrants see their active reservations (US 01.06.01), and owners see
- * active reservations (US 02.07.01) and booked dates (US 02.06.01) for
- * their campsites.
- * Known issues: entrants and owners are identified by the device ID until
- * the User model (US 01.09.01) is connected.
+ * entrants see their active reservations (US 01.06.01), owners see active
+ * reservations (US 02.07.01) and booked dates (US 02.06.01) for their
+ * campsites, and can reject a reservation (US 02.08.01).
+ * Known issues: the owner is identified by the device ID until the User
+ * model (US 01.09.01) is connected.
  */
 
 package com.example.code.controller
@@ -65,6 +65,19 @@ class ReservationController(
             createdAt = clock(),
         )
         return if (reservations.create(reservation)) reservation else null
+    }
+
+    /**
+     * Rejects [reservation] with the owner's [reason] (US 02.08.01).
+     *
+     * @throws IllegalArgumentException if [reason] is blank or the
+     * reservation is not active.
+     */
+    suspend fun reject(reservation: Reservation, reason: String) {
+        val text = reason.trim()
+        require(text.isNotEmpty()) { "A reason is required" }
+        require(reservation.status == Reservation.STATUS_ACTIVE) { "Reservation is not active" }
+        reservations.reject(reservation.id, text)
     }
 
     companion object {

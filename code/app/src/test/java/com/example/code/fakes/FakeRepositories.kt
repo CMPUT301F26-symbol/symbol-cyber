@@ -109,4 +109,13 @@ class FakeReservationRepository(reservations: List<Reservation> = emptyList()) :
         reservations.value = reservations.value + (reservation.id to reservation)
         return true
     }
+
+    override suspend fun reject(reservationId: String, reason: String) {
+        val reservation = reservations.value.getValue(reservationId)
+        val rejected = reservation.copy(
+            status = Reservation.STATUS_REJECTED,
+            rejectionReason = reason,
+        )
+        reservations.value = reservations.value + (reservationId to rejected)
+    }
 }

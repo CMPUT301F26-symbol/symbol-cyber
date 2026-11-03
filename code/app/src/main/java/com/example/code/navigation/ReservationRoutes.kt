@@ -90,12 +90,31 @@ fun EntrantReservationsRoute(reservations: List<Reservation>, deviceId: String) 
  *
  * @param reservations all reservations.
  * @param deviceId this owner's ID.
+ * @param controller reservation controller.
  */
 @Composable
-fun OwnerReservationsRoute(reservations: List<Reservation>, deviceId: String) {
+fun OwnerReservationsRoute(
+    reservations: List<Reservation>,
+    deviceId: String,
+    controller: ReservationController,
+) {
+    val scope = rememberCoroutineScope()
+    var message by remember { mutableStateOf<String?>(null) }
     val now = System.currentTimeMillis()
+
     OwnerReservationsScreen(
         bookedDates = ReservationController.bookedDates(reservations, deviceId, now),
         reservations = ReservationController.activeForOwner(reservations, deviceId, now),
+        statusMessage = message,
+        onReject = { reservation, reason ->
+            scope.launch {
+                message = try {
+                    controller.reject(reservation, reason)
+                    "Reservation for ${reservation.campsiteName} rejected."
+                } catch (e: Exception) {
+                    "Could not reject: ${e.message}"
+                }
+            }
+        },
     )
 }

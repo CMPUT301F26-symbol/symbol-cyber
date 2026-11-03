@@ -4,7 +4,8 @@
  * Each mode gets its own NavHost, while shared application data is kept in
  * controllers above the individual mode navigation stacks.
  * Lottery screens are wired in through LotteryRoutes.kt.
- * Known issues: device-based user identification is not connected yet.
+ * Known issues: device-based user identification uses the raw device ID
+ * until the User model is connected.
  */
 
 package com.example.code.navigation
@@ -63,6 +64,7 @@ fun AppNavHost(
     },
 ) {
     val mode by controller.activeMode.collectAsState()
+    val deviceId = rememberDeviceId()
     val lotteries by waitingListController.allLotteries.collectAsState(initial = emptyList())
 
     key(mode) {
@@ -71,7 +73,9 @@ fun AppNavHost(
             availableModes = controller.availableModes,
             onSwitchMode = { controller.switchTo(it) },
             campsiteController = campsiteController,
+            waitingListController = waitingListController,
             lotteries = lotteries,
+            deviceId = deviceId,
         )
     }
 }
@@ -83,7 +87,9 @@ fun AppNavHost(
  * @param availableModes modes shown on the Profile mode switch.
  * @param onSwitchMode called when the user chooses another mode.
  * @param campsiteController shared controller for campsite data.
+ * @param waitingListController shared controller for lotteries and waiting lists.
  * @param lotteries all lotteries, loaded once for every mode.
+ * @param deviceId this device's ID.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -92,7 +98,9 @@ private fun ModeShell(
     availableModes: List<AppMode>,
     onSwitchMode: (AppMode) -> Unit,
     campsiteController: CampsiteController,
+    waitingListController: WaitingListController,
     lotteries: List<Lottery>,
+    deviceId: String,
 ) {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
@@ -185,6 +193,8 @@ private fun ModeShell(
                                         lotteries,
                                         campsite.id,
                                     ),
+                                    deviceId = deviceId,
+                                    controller = waitingListController,
                                 )
                             },
                         )

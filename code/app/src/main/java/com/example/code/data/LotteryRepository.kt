@@ -1,7 +1,8 @@
 /*
  * LotteryRepository.kt
- * Reads lotteries from Firestore (lotteries/{id}). The interface lets
- * controllers and tests use a fake instead of Firestore;
+ * Reads lotteries and their waiting lists, and adds entrants to a
+ * waiting list.
+ * The interface lets controllers and tests use a fake instead of Firestore;
  * FirestoreLotteryRepository is the real implementation.
  * Known issues: lotteries are listed from one collection without paging.
  */
@@ -9,23 +10,51 @@
 package com.example.code.data
 
 import android.util.Log
+import com.example.code.controller.LotteryController
 import com.example.code.model.Lottery
+import com.example.code.model.WaitingListEntry
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 
-/** Access to lotteries. */
+/** Result of trying to join a waiting list. */
+enum class JoinResult {
+    /** The entrant was added. */
+    JOINED,
+
+    /** The entrant was already on the waiting list. */
+    ALREADY_JOINED,
+
+    /** The waiting list has reached its capacity. */
+    FULL,
+
+    /** Registration is not open. */
+    CLOSED,
+}
+
+/** Access to lotteries and their waiting lists. */
 interface LotteryRepository {
 
     /** Emits all lotteries whenever any of them changes. */
     fun observeLotteries(): Flow<List<Lottery>>
+
+    /** Emits the waiting list of lottery [lotteryId] whenever it changes. */
+    fun observeWaitingList(lotteryId: String): Flow<List<WaitingListEntry>>
+
+    /**
+     * Adds [entry] to the waiting list of [lotteryId], respecting the
+     * lottery's capacity.
+     */
+    suspend fun joinWaitingList(lotteryId: String, entry: WaitingListEntry): JoinResult
 }
 
 /**
  * [LotteryRepository] backed by Cloud Firestore.
  *
- * Collection: `lotteries/{lotteryId}`.
+ * Collections: `lotteries/{lotteryId}` and
+ * `lotteries/{lotteryId}/waitingList/{entrantId}`.
  */
 class FirestoreLotteryRepository(
     private val db: FirebaseFirestore = FirebaseFirestore.getInstance(),
@@ -47,9 +76,52 @@ class FirestoreLotteryRepository(
         awaitClose { registration.remove() }
     }
 
+    override fun observeWaitingList(lotteryId: String): Flow<List<WaitingListEntry>> =
+        callbackFlow {
+            val registration = lotteries.document(lotteryId)
+                .collection(WAITING_LIST)
+                .addSnapshotListener { snapshot, error ->
+                    if (error != null) {
+                        Log.e(TAG, "Failed to load waiting list $lotteryId", error)
+                        return@addSnapshotListener
+                    }
+                    val list = snapshot?.documents.orEmpty().mapNotNull { document ->
+                        document.data?.let { entryFromMap(document.id, it) }
+                    }
+                    trySend(list.sortedBy { it.joinedAt })
+                }
+            awaitClose { registration.remove() }
+        }
+
+    override suspend fun joinWaitingList(
+        lotteryId: String,
+        entry: WaitingListEntry,
+    ): JoinResult {
+        val lotteryRef = lotteries.document(lotteryId)
+        val entryRef = lotteryRef.collection(WAITING_LIST).document(entry.entrantId)
+        // Transaction: the capacity check and the count update happen together,
+        // so two entrants cannot both take the last spot.
+        return db.runTransaction { transaction ->
+            val lotterySnapshot = transaction.get(lotteryRef)
+            val lottery = lotteryFromMap(lotteryId, lotterySnapshot.data ?: emptyMap())
+            when {
+                transaction.get(entryRef).exists() -> JoinResult.ALREADY_JOINED
+                !LotteryController.hasRoom(lottery) -> JoinResult.FULL
+                else -> {
+                    transaction.set(entryRef, entryToMap(entry))
+                    transaction.update(lotteryRef, "waitingListCount", FieldValue.increment(1))
+                    JoinResult.JOINED
+                }
+            }
+        }.awaitResult()
+    }
+
     companion object {
         /** Name of the lotteries collection. */
         const val LOTTERIES = "lotteries"
+
+        /** Name of each lottery's waiting list subcollection. */
+        const val WAITING_LIST = "waitingList"
 
         private const val TAG = "LotteryRepository"
     }
@@ -72,4 +144,19 @@ fun lotteryFromMap(id: String, data: Map<String, Any?>): Lottery = Lottery(
     waitlistCapacity = (data["waitlistCapacity"] as? Number)?.toInt(),
     waitingListCount = (data["waitingListCount"] as? Number)?.toInt() ?: 0,
     status = data["status"] as? String ?: Lottery.STATUS_OPEN,
+)
+
+/** Builds a [WaitingListEntry] from Firestore document [data]. */
+fun entryFromMap(id: String, data: Map<String, Any?>): WaitingListEntry = WaitingListEntry(
+    entrantId = id,
+    entrantName = data["entrantName"] as? String ?: "",
+    joinedAt = (data["joinedAt"] as? Number)?.toLong() ?: 0L,
+    status = data["status"] as? String ?: WaitingListEntry.STATUS_WAITING,
+)
+
+/** Converts [entry] to the fields stored in Firestore. */
+fun entryToMap(entry: WaitingListEntry): Map<String, Any> = mapOf(
+    "entrantName" to entry.entrantName,
+    "joinedAt" to entry.joinedAt,
+    "status" to entry.status,
 )

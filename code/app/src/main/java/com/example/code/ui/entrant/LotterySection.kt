@@ -1,9 +1,9 @@
 /*
  * LotterySection.kt
  * Lottery part of the entrant's campsite details screen (mockup E05):
- * shows the campsite's lottery, its periods and whether registration is
- * open (US 01.01.06).
- * Known issues: the Join Waiting List button is added with US 01.02.01.
+ * shows the campsite's lottery and its periods (US 01.01.06) and lets the
+ * entrant join its waiting list (US 01.02.01).
+ * Known issues: leaving the waiting list is added with US 01.02.02.
  */
 
 package com.example.code.ui.entrant
@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -20,19 +21,28 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.code.controller.LotteryController
 import com.example.code.model.Lottery
+import com.example.code.model.WaitingListEntry
 import com.example.code.ui.common.formatDateRange
 import com.example.code.ui.common.formatDateTime
 
 /**
- * Shows [lottery] on the campsite details screen.
+ * Shows [lottery] and the entrant's place on its waiting list.
  *
  * @param lottery the campsite's lottery, or null if it has none.
+ * @param myEntry this entrant's waiting list entry, or null if not joined.
  * @param now current time in milliseconds.
+ * @param busy true while a join request is running.
+ * @param statusMessage result of the last action, or null.
+ * @param onJoin called when the entrant taps "Join Waiting List".
  */
 @Composable
 fun LotterySection(
     lottery: Lottery?,
+    myEntry: WaitingListEntry?,
     now: Long,
+    busy: Boolean,
+    statusMessage: String?,
+    onJoin: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Card(modifier = modifier.fillMaxWidth()) {
@@ -64,9 +74,17 @@ fun LotterySection(
                 now >= lottery.registrationEnd ->
                     Text("Registration is closed. Winners are being drawn.")
 
+                myEntry != null -> Text("You are on the waiting list.")
+
                 !LotteryController.hasRoom(lottery) -> Text("The waiting list is full.")
 
-                else -> Text("Registration is open.")
+                else -> Button(onClick = onJoin, enabled = !busy) {
+                    Text("Join Waiting List")
+                }
+            }
+
+            if (statusMessage != null) {
+                Text(statusMessage, style = MaterialTheme.typography.bodySmall)
             }
         }
     }

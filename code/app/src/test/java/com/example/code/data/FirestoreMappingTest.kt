@@ -1,6 +1,7 @@
 /*
  * FirestoreMappingTest.kt
- * Unit tests for converting lotteries to and from Firestore fields.
+ * Unit tests for converting lotteries and waiting list entries to and from
+ * Firestore fields.
  * Known issues: none.
  */
 
@@ -39,5 +40,11 @@ class FirestoreMappingTest {
         assertEquals(1, lottery.winnerCount)
         assertNull(lottery.waitlistCapacity)
         assertEquals(Lottery.STATUS_OPEN, lottery.status)
+    }
+
+    @Test
+    fun waitingListEntryRoundTrips() {
+        val entry = TestData.sofia
+        assertEquals(entry, entryFromMap(entry.entrantId, entryToMap(entry)))
     }
 }

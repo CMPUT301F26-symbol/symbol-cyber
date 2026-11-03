@@ -1,12 +1,14 @@
 /*
  * WaitingListControllerTest.kt
  * Unit tests for WaitingListController: which lottery a campsite's details
- * screen shows (US 01.01.06). Uses an in-memory fake repository.
+ * screen shows (US 01.01.06), joining the waiting list (US 01.02.01) and the
+ * waitlist cap. Uses an in-memory fake repository.
  * Known issues: none.
  */
 
 package com.example.code.controller
 
+import com.example.code.data.JoinResult
 import com.example.code.fakes.FakeLotteryRepository
 import com.example.code.fakes.TestData
 import com.example.code.model.Lottery
@@ -14,17 +16,71 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertThrows
 import org.junit.Test
 
 class WaitingListControllerTest {
 
     private val lotteries = FakeLotteryRepository(listOf(TestData.jasperLottery, TestData.banffLottery))
-    private val controller = WaitingListController(lotteries)
+    private var now = TestData.DURING_REGISTRATION
+    private val controller = WaitingListController(lotteries) { now }
+
+    private fun jasper(): Lottery = lotteries.lotteries.value.getValue(TestData.jasperLottery.id)
 
     @Test
     fun lotteriesComeFromTheRepository() = runBlocking {
         val loaded = controller.allLotteries.first()
         assertEquals(setOf("lottery-jasper-nov", "lottery-banff-nov"), loaded.map { it.id }.toSet())
+    }
+
+    @Test
+    fun entrantJoinsDuringRegistration() = runBlocking {
+        val result = controller.join(jasper(), TestData.priya.entrantId, "Priya Shah")
+
+        assertEquals(JoinResult.JOINED, result)
+        val list = controller.waitingList(TestData.jasperLottery.id).first()
+        assertEquals(listOf("Priya Shah"), list.map { it.entrantName })
+        assertEquals(now, list.single().joinedAt)
+        assertEquals(1, jasper().waitingListCount)
+    }
+
+    @Test
+    fun joiningTwiceIsReported() = runBlocking {
+        controller.join(jasper(), TestData.priya.entrantId, "Priya Shah")
+        val second = controller.join(jasper(), TestData.priya.entrantId, "Priya Shah")
+
+        assertEquals(JoinResult.ALREADY_JOINED, second)
+        assertEquals(1, jasper().waitingListCount)
+    }
+
+    @Test
+    fun cannotJoinBeforeRegistrationOpens() = runBlocking {
+        now = TestData.BEFORE_REGISTRATION
+        assertEquals(JoinResult.CLOSED, controller.join(jasper(), TestData.liam.entrantId, "Liam Chen"))
+    }
+
+    @Test
+    fun cannotJoinAfterRegistrationCloses() = runBlocking {
+        now = TestData.AFTER_REGISTRATION
+        assertEquals(JoinResult.CLOSED, controller.join(jasper(), TestData.liam.entrantId, "Liam Chen"))
+    }
+
+    @Test
+    fun fifthEntrantIsRefusedWhenCapIsFour() = runBlocking {
+        listOf(TestData.priya, TestData.liam, TestData.sofia, TestData.noah).forEach {
+            assertEquals(JoinResult.JOINED, controller.join(jasper(), it.entrantId, it.entrantName))
+        }
+        val result = controller.join(jasper(), "device-emma-05", "Emma Roy")
+
+        assertEquals(JoinResult.FULL, result)
+        assertEquals(4, jasper().waitingListCount)
+    }
+
+    @Test
+    fun blankEntrantIdIsRejected() {
+        assertThrows(IllegalArgumentException::class.java) {
+            runBlocking { controller.join(jasper(), " ", "No Device") }
+        }
     }
 
     @Test

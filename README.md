@@ -79,7 +79,7 @@ the issue, Project board, and wiki backlog aligned as stories finish.
 | Individual peer review (Canvas) | October 21, 2026, 5:00 PM |
 | Part 3 halfway checkpoint | November 6, 2026 |
 
-## AI Tool Use Disclosure
+## AI Tool Use Disclosure (Part 2)
 
 **AI tool used:** ChatGPT (OpenAI).
 
@@ -109,6 +109,8 @@ Claude (Anthropic) was used to help with the UI mockup images, screen descriptio
 "Help me develop UI mockups and the flow of storyboard sequences based on the information I provided. Make sure the screens connect logically to the user stories. I will review the results and provide further direction. Also, suggest any changes that could improve the mockups and storyboards." Claude, Anthropic, 8 Oct. 2026, claude.ai. (40%)
   
 "Review the user story-to-screen traceability table and check whether each user story is connected to the correct screens. Identify missing connections, inconsistencies, or improvements, and suggest changes for me to review." Claude, Anthropic, 19 Oct. 2026, claude.ai. (20%)
+
+## AI Tool Use Disclosure (Part 3)
 
 ---
 

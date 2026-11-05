@@ -1,7 +1,8 @@
 /*
  * BottomBar.kt
  * Bottom navigation bar. Shows the tabs of the active mode (mockups E02, O01, A01).
- * Known issues: the Scan icon is a stand-in until the QR spike (T7) picks a library.
+ * Known issues: the Scan tab is a placeholder; QR scanning (US 01.12.01) is
+ * planned after the halfway checkpoint.
  */
 package com.example.code.navigation
 

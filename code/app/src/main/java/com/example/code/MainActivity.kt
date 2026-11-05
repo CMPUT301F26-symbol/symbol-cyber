@@ -1,8 +1,7 @@
 /*
  * MainActivity.kt
  * Single activity of the app. Hosts the Compose UI and the navigation shell.
- * Known issues: no device check yet; the app opens in Entrant mode until the
- * User model (T3, US 01.09.01) is ready.
+ * Device identity is shared by owner and lottery flows inside the navigation shell.
  */
 package com.example.code
 

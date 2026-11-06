@@ -14,6 +14,7 @@ import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertSame
 import org.junit.Test
+import org.junit.Assert.assertTrue
 
 class UserControllerTest {
 
@@ -75,6 +76,73 @@ class UserControllerTest {
         assertEquals(0, repository.createCalls)
     }
 
+    @Test
+    fun updateProfile_validInput_updatesAndPersistsUser() = runBlocking {
+        val existingUser =
+            User(
+                deviceId = "device-123",
+                name = "Old Name",
+                email = "old@example.com",
+                phoneNumber = "7805550000",
+                roles = setOf(UserRole.ENTRANT),
+            )
+
+        val repository =
+            FakeUserRepository(existingUser = existingUser)
+
+        val controller = UserController(repository)
+
+        controller.loadOrCreateUser("device-123")
+
+        val result =
+            controller.updateProfile(
+                name = "Amr Soliman",
+                email = "amr@example.com",
+                phoneNumber = "7805551234",
+            )
+
+        assertTrue(result)
+        assertEquals("Amr Soliman", controller.currentUser.value?.name)
+        assertEquals("amr@example.com", controller.currentUser.value?.email)
+        assertEquals("7805551234", controller.currentUser.value?.phoneNumber)
+        assertEquals(1, repository.updateCalls)
+        assertNull(controller.errorMessage.value)
+    }
+
+    @Test
+    fun updateProfile_invalidEmail_doesNotSave() = runBlocking {
+        val existingUser =
+            User(
+                deviceId = "device-123",
+                name = "Amr",
+                email = "old@example.com",
+                phoneNumber = "7805550000",
+                roles = setOf(UserRole.ENTRANT),
+            )
+
+        val repository =
+            FakeUserRepository(existingUser = existingUser)
+
+        val controller = UserController(repository)
+
+        controller.loadOrCreateUser("device-123")
+
+        val result =
+            controller.updateProfile(
+                name = "Amr Soliman",
+                email = "invalid-email",
+                phoneNumber = "7805551234",
+            )
+
+        assertFalse(result)
+        assertEquals("old@example.com", controller.currentUser.value?.email)
+        assertEquals(0, repository.updateCalls)
+        assertEquals(
+            "Please enter a valid email address.",
+            controller.errorMessage.value,
+        )
+    }
+
     private class FakeUserRepository(
         private val existingUser: User? = null,
     ) : UserRepository {
@@ -92,6 +160,12 @@ class UserControllerTest {
                 deviceId = deviceId,
                 roles = setOf(UserRole.ENTRANT),
             )
+        }
+
+        var updateCalls = 0
+
+        override suspend fun updateUser(user: User) {
+            updateCalls++
         }
     }
 }

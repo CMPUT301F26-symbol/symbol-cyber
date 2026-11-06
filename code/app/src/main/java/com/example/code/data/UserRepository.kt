@@ -1,7 +1,7 @@
 /*
  * UserRepository.kt
- * Loads and creates user profiles in Cloud Firestore using device ID.
- * This supports US 01.09.01 device-based identification.
+ * Loads, creates, and updates user profiles in Cloud Firestore using device ID.
+ * Supports device-based identification and editable user profile information.
  */
 
 package com.example.code.data
@@ -28,6 +28,11 @@ interface UserRepository {
      * @return the newly created user.
      */
     suspend fun createUser(deviceId: String): User
+
+    /**
+     * Stores the current editable information for [user].
+     */
+    suspend fun updateUser(user: User)
 }
 
 /**
@@ -96,6 +101,23 @@ class FirestoreUserRepository(
             .awaitResult()
 
         return user
+    }
+
+    override suspend fun updateUser(user: User) {
+        val updates =
+            mapOf(
+                "name" to user.name,
+                "email" to user.email,
+                "phoneNumber" to user.phoneNumber,
+                "profilePhotoUrl" to user.profilePhotoUrl,
+                "notificationsEnabled" to user.notificationsEnabled,
+                "roles" to user.roles.map { it.name },
+            )
+
+        db.collection(USERS)
+            .document(user.deviceId)
+            .update(updates)
+            .awaitResult()
     }
 
     companion object {

@@ -2,7 +2,7 @@
  * ProfileScreen.kt
  * Profile screen shared by all app modes.
  * Allows the user to edit personal information and switch between available modes.
- * Known issues: available modes are not yet tied to the real user's roles.
+ * Available modes are derived from the loaded user's assigned roles.
  */
 
 package com.example.code.ui.common

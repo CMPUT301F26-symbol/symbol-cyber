@@ -1,0 +1,31 @@
+classDiagram
+    direction LR
+    class ReservationController {
+        +Flow allReservations
+        +acceptWin(lottery, entry) Reservation?
+        +reject(reservation, reason)
+        +isActive(reservation, now) Boolean
+        +activeForEntrant(all, entrantId, now) List
+        +activeForOwner(all, ownerId, now) List
+        +bookedDates(all, ownerId, now) List
+    }
+    class ReservationRepository {
+        <<interface>>
+        +observeReservations() Flow
+        +create(reservation) Boolean
+        +reject(reservationId, reason)
+    }
+    class FirestoreReservationRepository
+    class BookedDates {
+        +String campsiteName
+        +List stays
+    }
+    class Reservation
+    class Lottery
+    class WaitingListEntry
+    ReservationController --> ReservationRepository
+    FirestoreReservationRepository ..|> ReservationRepository
+    ReservationController ..> Lottery : accepts drawn lottery
+    ReservationController ..> WaitingListEntry : requires winner
+    ReservationController ..> Reservation : creates and filters
+    ReservationController ..> BookedDates : groups active stays

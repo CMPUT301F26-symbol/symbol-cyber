@@ -1,0 +1,34 @@
+classDiagram
+    direction TB
+    class CampsiteQrController {
+        +generate(campsite, ownerId, size) CampsiteQrPixels
+    }
+    class CampsiteQrPixels {
+        +String payload
+        +Int width
+        +IntArray pixels
+    }
+    class CampsiteQrLink {
+        <<object>>
+        +encode(campsiteId) String
+        +decode(payload) String?
+    }
+    class CampsiteScanController {
+        +resolve(payload) CampsiteScanResult
+    }
+    class CampsiteLookup {
+        <<interface>>
+        +exists(campsiteId) Boolean
+    }
+    class FirestoreCampsiteLookup
+    class CampsiteScanResult {
+        <<interface>>
+    }
+    class Campsite
+    CampsiteQrController ..> Campsite : verifies saved ID and owner
+    CampsiteQrController ..> CampsiteQrLink : encodes stable link
+    CampsiteQrController ..> CampsiteQrPixels : generates image
+    CampsiteScanController ..> CampsiteQrLink : validates decoded payload
+    CampsiteScanController --> CampsiteLookup : verifies target
+    CampsiteScanController ..> CampsiteScanResult : found or error outcome
+    FirestoreCampsiteLookup ..|> CampsiteLookup

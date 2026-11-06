@@ -59,6 +59,9 @@ import com.example.code.ui.entrant.CampsiteScanRoute
 import com.example.code.ui.owner.OwnerCampsitesScreen
 import com.example.code.ui.owner.OwnerCampsiteDetailsDestination
 import com.example.code.ui.owner.RegisterCampsiteScreen
+import androidx.compose.runtime.LaunchedEffect
+import com.example.code.controller.UserController
+import com.example.code.data.FirestoreUserRepository
 
 private const val OWNER_CAMPSITE_DETAILS_ROUTE = "owner/campsite/{campsiteId}"
 
@@ -73,6 +76,8 @@ private const val OWNER_WAITING_LIST_ROUTE =
 /**
  * Root composable of the app.
  *
+ * Loads or creates the device-based user profile before showing the main app.
+ *
  * @param controller keeps the active user mode.
  * @param campsiteController manages campsite data shared across modes.
  * @param waitingListController manages lotteries and waiting lists.
@@ -86,23 +91,55 @@ fun AppNavHost(
     controller: ModeController = viewModel(),
     campsiteController: CampsiteController = viewModel(),
     waitingListController: WaitingListController = remember {
-        WaitingListController(FirestoreLotteryRepository(), FirestoreNotificationRepository())
+        WaitingListController(
+            FirestoreLotteryRepository(),
+            FirestoreNotificationRepository(),
+        )
     },
     drawController: DrawController = remember {
-        DrawController(FirestoreLotteryRepository(), FirestoreNotificationRepository())
+        DrawController(
+            FirestoreLotteryRepository(),
+            FirestoreNotificationRepository(),
+        )
     },
     reservationController: ReservationController = remember {
         ReservationController(FirestoreReservationRepository())
     },
     ownerId: String? = null,
-    lotteryCreationRepository: LotteryCreationRepository = remember { FirestoreLotteryRepository() },
+    lotteryCreationRepository: LotteryCreationRepository =
+        remember { FirestoreLotteryRepository() },
 ) {
+    val userController = remember {
+        UserController(FirestoreUserRepository())
+    }
+
+    val rawDeviceId = ownerId ?: rememberDeviceId()
+
+    LaunchedEffect(rawDeviceId) {
+        userController.loadOrCreateUser(rawDeviceId)
+    }
+
+    val currentUser by userController.currentUser.collectAsState()
+    val userError by userController.errorMessage.collectAsState()
+
+    if (currentUser == null) {
+        Text(
+            text = userError ?: "Loading user profile...",
+        )
+        return
+    }
+
+    val deviceId = currentUser!!.deviceId
     val mode by controller.activeMode.collectAsState()
-    val deviceId = ownerId ?: rememberDeviceId()
-    val lotterySnapshot by waitingListController.allLotteries.collectAsState(initial = null)
+
+    val lotterySnapshot by
+    waitingListController.allLotteries.collectAsState(initial = null)
     val lotteries = lotterySnapshot.orEmpty()
 
-    AutomaticDraw(lotteries = lotteries, controller = drawController)
+    AutomaticDraw(
+        lotteries = lotteries,
+        controller = drawController,
+    )
 
     key(mode) {
         ModeShell(
@@ -397,7 +434,13 @@ private fun DestinationContent(
                     // Only go back once it's saved
                     campsiteController.addCampsite(
                         campsite.copy(ownerId = deviceId),
-                        onSuccess = { navController.popBackStack() },
+                        // Close only the register screen, in case they already pressed Back
+                        onSuccess = {
+                            navController.popBackStack(
+                                Destination.OWNER_REGISTER_CAMPSITE.route,
+                                inclusive = true,
+                            )
+                        },
                         onFailure = { message -> showError(message) },
                     )
                 },

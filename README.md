@@ -132,10 +132,24 @@ ChatGPT6-Sol was used to writing the majority of the code for the above user sto
 
 "Please create a basic set of UI intent tests for my lottery files" prompt. ChatGPT, model GPT-6.1 Sol, OpenAI, 6 Nov. 2026, chatgpt.com. (10%)
 
+**AI Tool Use in User.kt file** (90%)
+"Based on my CRC card for the User class, create the code for the class. Also note that Admin can switch between both User and Admin roles"prompt. ChatGPT, model GPT-6.1 Sol, OpenAI, 27 Oct. 2026, chatgpt.com. (90%)
+
 **AI Tool Use US 02.05.01, 01.06.01, 02.07.01, 02.06.01, 02.08.01 (80%)**
 Claude (Anthropic) was used to write code for these user stories (models, controllers, repositories, screens), their unit and intent tests, it also helped in merge-conflict fixes . We reviewed, tested, and committed all code ourselves.
 
-“Help me write the code for test cases for my user stories. Also help me check whether what I have done matches the part 3 requirement . Also check the model and controller behaviour and help me fix it in case it incorrect. ." prompt. Claude, Anthropic, 3 Nov. 2026, claude.ai.
+“Check whether what I have done matches the part 3 requirement . Also check the model and controller behaviour and help me fix it in case it incorrect." prompt. Claude, Anthropic, 3 Nov. 2026, claude.ai.
+
+“Help me write the code for test cases for my user stories." prompt. Claude, Anthropic, 3 Nov. 2026, claude.ai.
+
+**AI Tool Use in US 01.01.06, 01.02.01, 01.02.02, 02.09.01, 02.10.01 (75%)**
+Claude (Anthropic) was used to write the majority of the code for the above user stories , their unit and intent tests, and the fix that refreshes the lottery time so the Join button appears when registration opens. 
+
+"Create the code for the Sprint 2 user stories US 01.01.06, 01.02.01, 01.02.02, 02.09.01 and 02.10.01. Create a model class that stores all the data related to that class but put the behaviour in a controller class." prompt. Claude, Anthropic, 3 Nov. 2026, claude.ai. (40%)
+
+"Write unit tests for the model and controller classes and intent tests for each user story, using realistic test data." prompt. Claude, Anthropic, 3 Nov. 2026, claude.ai. (30%)
+
+"The entrant can view the lottery from campsite details but can't join it. Fix it." prompt. Claude, Anthropic, 5 Nov. 2026, claude.ai. (5%)
 
 ---
 

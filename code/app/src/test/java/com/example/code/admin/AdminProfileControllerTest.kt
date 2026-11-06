@@ -62,4 +62,22 @@ class AdminProfileControllerTest {
         assertEquals(AdminRemovalResult.FAILED, controller.remove("device-avery"))
         assertEquals(1, repo.rows.value.size)
     }
+
+    @Test fun failedListingClearsDataAndANewSubscriptionCanRetry() = runBlocking {
+        var failRead = true
+        val repo = object : AdminProfileRepository {
+            override fun observeProfiles(): Flow<List<AdminProfile>> = kotlinx.coroutines.flow.flow {
+                if (failRead) error("permission or connection failure")
+                emit(listOf(AdminProfile("device-avery", "Avery Chen")))
+            }
+            override suspend fun removeProfile(profileId: String): Boolean = false
+        }
+        val controller = AdminProfileController(repo, { true }, "admin-device")
+        val failure = controller.observe().first { !it.loading }
+        assertNotNull(failure.error)
+        assertTrue(failure.profiles.isEmpty())
+        failRead = false
+        assertEquals(1, controller.observe().first { !it.loading }.profiles.size)
+    }
+
 }

@@ -1,0 +1,41 @@
+classDiagram
+    direction LR
+    class UserController {
+        +StateFlow currentUser
+        +StateFlow isLoading
+        +StateFlow errorMessage
+        +loadOrCreateUser(deviceId)
+        +updateProfile(name, email, phoneNumber) Boolean
+    }
+    class UserRepository {
+        <<interface>>
+        +getUser(deviceId) User?
+        +createUser(deviceId) User
+        +updateUser(user)
+    }
+    class FirestoreUserRepository
+    class User {
+        +String deviceId
+        +Set~UserRole~ roles
+        +canUseRole(role) Boolean
+    }
+    class UserRole {
+        <<enumeration>>
+        ENTRANT
+        CAMPSITE_OWNER
+        ADMIN
+    }
+    class ModeController {
+        +StateFlow availableModes
+        +StateFlow activeMode
+        +setAvailableModes(modes)
+        +canSwitchTo(mode) Boolean
+        +switchTo(mode) Boolean
+        +tabs() List
+        +startRoute() String
+    }
+    UserController --> UserRepository : loads and saves
+    UserController --> User : current profile
+    FirestoreUserRepository ..|> UserRepository
+    User --> UserRole : roles
+    ModeController ..> UserRole : roles mapped by navigation

@@ -1,0 +1,79 @@
+classDiagram
+    direction TB
+    class User {
+        +String deviceId
+        +String name
+        +String email
+        +String phoneNumber
+        +Boolean notificationsEnabled
+        +Set~UserRole~ roles
+        +updateProfile(name, email, phoneNumber, profilePhotoUrl)
+        +updateNotificationPreference(enabled)
+        +canUseRole(role) Boolean
+    }
+    class Campsite {
+        +String id
+        +String ownerId
+        +String name
+        +String location
+        +String description
+        +Int maxOccupancy
+        +Double latitude
+        +Double longitude
+        +String? imageUrl
+        +List~String~ tags
+    }
+    class Lottery {
+        +String id
+        +String campsiteId
+        +String ownerId
+        +Long registrationStart
+        +Long registrationEnd
+        +Long bookingStart
+        +Long bookingEnd
+        +Int winnerCount
+        +Int? waitlistCapacity
+        +List~String~ winnerIds
+        +String status
+    }
+    class WaitingListEntry {
+        +String entrantId
+        +String entrantName
+        +Long joinedAt
+        +String status
+    }
+    class Reservation {
+        +String id
+        +String lotteryId
+        +String campsiteId
+        +String entrantId
+        +String ownerId
+        +Long startDate
+        +Long endDate
+        +String status
+        +String rejectionReason
+    }
+    class AppNotification {
+        +String id
+        +String recipientId
+        +String senderId
+        +String lotteryId
+        +String type
+        +String title
+        +String message
+    }
+    class DrawResult {
+        +List~WaitingListEntry~ winners
+        +List~WaitingListEntry~ notSelected
+    }
+    Campsite --> User : ownerId
+    Lottery --> Campsite : campsiteId
+    Lottery --> User : ownerId
+    Lottery "1" *-- "0..*" WaitingListEntry : stored waitingList
+    WaitingListEntry --> User : entrantId
+    Reservation --> Lottery : lotteryId
+    Reservation --> Campsite : campsiteId
+    Reservation --> User : entrantId and ownerId
+    AppNotification --> User : recipientId and senderId
+    AppNotification --> Lottery : lotteryId
+    DrawResult --> WaitingListEntry : partitions entries

@@ -9,7 +9,6 @@ package com.example.code.controller
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import com.example.code.model.Campsite
-import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -59,29 +58,25 @@ class CampsiteController : ViewModel() {
     }
 
     /**
-     * Saves a new campsite to Firestore under the signed-in owner.
+     * Saves a new campsite to Firestore under its owner.
      *
-     * The owner id comes from Firebase sign-in, not from the form. If nobody
-     * is signed in, or Firestore fails, the campsite is not saved.
+     * If the campsite has no owner, or Firestore fails, the campsite is not saved.
      *
-     * @param campsite the campsite filled in by the owner
+     * @param campsite the campsite filled in by the owner, with their device id as ownerId
      * @param onSuccess called once Firestore has saved the campsite
      * @param onFailure called with an error message if the campsite was not saved
      */
     fun addCampsite(campsite: Campsite, onSuccess: () -> Unit, onFailure: (String) -> Unit) {
-        // Get the person who is signed in
-        val ownerId = FirebaseAuth.getInstance().currentUser?.uid
-
-        // Nobody signed in, so don't save
-        if (ownerId == null) {
-            onFailure("You need to be signed in.")
+        // Don't save a campsite that doesn't belong to anyone
+        if (campsite.ownerId.isBlank()) {
+            onFailure("Your device identity is unavailable.")
             return
         }
 
         val documentReference = campsiteCollection.document()
 
-        // Add the new id and the owner to the campsite
-        val campsiteToSave = campsite.copy(id = documentReference.id, ownerId = ownerId)
+        // Add the new id to the campsite
+        val campsiteToSave = campsite.copy(id = documentReference.id)
 
         documentReference.set(campsiteToSave)
             .addOnSuccessListener { onSuccess() }

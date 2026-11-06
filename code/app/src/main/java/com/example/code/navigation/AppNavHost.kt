@@ -6,14 +6,11 @@
  * Lottery screens are wired in through LotteryRoutes.kt, reservation screens
  * through ReservationRoutes.kt, and AutomaticDraw.kt draws winners when
  * registration ends.
- * Known issues: device-based user identification uses the raw device ID
- * until the User model is connected.
  */
 
 package com.example.code.navigation
 
 import android.net.Uri
-
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
@@ -24,10 +21,12 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -37,14 +36,17 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.code.User
 import com.example.code.controller.CampsiteController
 import com.example.code.controller.DrawController
 import com.example.code.controller.LotteryController
 import com.example.code.controller.ReservationController
+import com.example.code.controller.UserController
 import com.example.code.controller.WaitingListController
 import com.example.code.data.FirestoreLotteryRepository
 import com.example.code.data.FirestoreNotificationRepository
 import com.example.code.data.FirestoreReservationRepository
+import com.example.code.data.FirestoreUserRepository
 import com.example.code.data.LotteryCreationRepository
 import com.example.code.model.Lottery
 import com.example.code.model.Reservation
@@ -54,14 +56,12 @@ import com.example.code.ui.admin.AdminProfileRemovalRoute
 import com.example.code.ui.common.PlaceholderScreen
 import com.example.code.ui.common.ProfileScreen
 import com.example.code.ui.entrant.CampsiteDetailsDestination
-import com.example.code.ui.entrant.ExploreScreen
 import com.example.code.ui.entrant.CampsiteScanRoute
-import com.example.code.ui.owner.OwnerCampsitesScreen
+import com.example.code.ui.entrant.ExploreScreen
 import com.example.code.ui.owner.OwnerCampsiteDetailsDestination
+import com.example.code.ui.owner.OwnerCampsitesScreen
 import com.example.code.ui.owner.RegisterCampsiteScreen
-import androidx.compose.runtime.LaunchedEffect
-import com.example.code.controller.UserController
-import com.example.code.data.FirestoreUserRepository
+import kotlinx.coroutines.launch
 
 private const val OWNER_CAMPSITE_DETAILS_ROUTE = "owner/campsite/{campsiteId}"
 
@@ -109,10 +109,12 @@ fun AppNavHost(
     lotteryCreationRepository: LotteryCreationRepository =
         remember { FirestoreLotteryRepository() },
 ) {
-    val userController = remember {
-        UserController(FirestoreUserRepository())
-    }
+    val userController =
+        remember {
+            UserController(FirestoreUserRepository())
+        }
 
+    val coroutineScope = rememberCoroutineScope()
     val rawDeviceId = ownerId ?: rememberDeviceId()
 
     LaunchedEffect(rawDeviceId) {
@@ -120,6 +122,7 @@ fun AppNavHost(
     }
 
     val currentUser by userController.currentUser.collectAsState()
+    val userIsLoading by userController.isLoading.collectAsState()
     val userError by userController.errorMessage.collectAsState()
 
     if (currentUser == null) {
@@ -129,11 +132,13 @@ fun AppNavHost(
         return
     }
 
-    val deviceId = currentUser!!.deviceId
+    val user = currentUser!!
+    val deviceId = user.deviceId
     val mode by controller.activeMode.collectAsState()
 
     val lotterySnapshot by
     waitingListController.allLotteries.collectAsState(initial = null)
+
     val lotteries = lotterySnapshot.orEmpty()
 
     AutomaticDraw(
@@ -146,6 +151,18 @@ fun AppNavHost(
             mode = mode,
             availableModes = controller.availableModes,
             onSwitchMode = { controller.switchTo(it) },
+            user = user,
+            userIsSaving = userIsLoading,
+            userError = userError,
+            onSaveProfile = { name, email, phoneNumber ->
+                coroutineScope.launch {
+                    userController.updateProfile(
+                        name = name,
+                        email = email,
+                        phoneNumber = phoneNumber,
+                    )
+                }
+            },
             campsiteController = campsiteController,
             waitingListController = waitingListController,
             reservationController = reservationController,
@@ -159,16 +176,6 @@ fun AppNavHost(
 
 /**
  * Scaffold and NavHost for one mode.
- *
- * @param mode the active mode.
- * @param availableModes modes shown on the Profile mode switch.
- * @param onSwitchMode called when the user chooses another mode.
- * @param campsiteController shared controller for campsite data.
- * @param waitingListController shared controller for lotteries and waiting lists.
- * @param reservationController shared controller for reservations.
- * @param lotteries all lotteries, loaded once for every mode.
- * @param deviceId this device's ID.
- * @param lotteryCreationRepository persistence for the owner's creation form.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -176,6 +183,10 @@ private fun ModeShell(
     mode: AppMode,
     availableModes: List<AppMode>,
     onSwitchMode: (AppMode) -> Unit,
+    user: User,
+    userIsSaving: Boolean,
+    userError: String?,
+    onSaveProfile: (String, String, String) -> Unit,
     campsiteController: CampsiteController,
     waitingListController: WaitingListController,
     reservationController: ReservationController,
@@ -187,11 +198,14 @@ private fun ModeShell(
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
+
     val campsites by campsiteController.campsites.collectAsState()
     val isLoading by campsiteController.isLoading.collectAsState()
     val loadError by campsiteController.errorMessage.collectAsState()
-    val reservationSnapshot by reservationController.allReservations
-        .collectAsState(initial = null)
+
+    val reservationSnapshot by
+    reservationController.allReservations.collectAsState(initial = null)
+
     val reservations = reservationSnapshot.orEmpty()
 
     Scaffold(
@@ -203,7 +217,7 @@ private fun ModeShell(
                         IconButton(
                             onClick = {
                                 navController.navigate(
-                                    Destination.ADMIN_PROFILE.route
+                                    Destination.ADMIN_PROFILE.route,
                                 ) {
                                     launchSingleTop = true
                                 }
@@ -242,11 +256,17 @@ private fun ModeShell(
                             mode = mode,
                             availableModes = availableModes,
                             onSwitchMode = onSwitchMode,
+                            user = user,
+                            userIsSaving = userIsSaving,
+                            userError = userError,
+                            onSaveProfile = onSaveProfile,
                             navController = navController,
                             campsiteController = campsiteController,
                             lotteries = lotteries,
                             reservations = reservations,
-                            availabilityReady = lotteriesReady && reservationSnapshot != null,
+                            availabilityReady =
+                                lotteriesReady &&
+                                        reservationSnapshot != null,
                             reservationController = reservationController,
                             deviceId = deviceId,
                         )
@@ -256,10 +276,17 @@ private fun ModeShell(
             if (mode == AppMode.OWNER) {
                 composable(
                     route = OWNER_CAMPSITE_DETAILS_ROUTE,
-                    arguments = listOf(navArgument("campsiteId") { type = NavType.StringType }),
+                    arguments =
+                        listOf(
+                            navArgument("campsiteId") {
+                                type = NavType.StringType
+                            },
+                        ),
                 ) { detailsEntry ->
                     OwnerCampsiteDetailsDestination(
-                        campsiteId = detailsEntry.arguments?.getString("campsiteId"),
+                        campsiteId =
+                            detailsEntry.arguments
+                                ?.getString("campsiteId"),
                         ownerId = deviceId,
                         campsites = campsites,
                         isLoading = isLoading,
@@ -268,7 +295,10 @@ private fun ModeShell(
                         onBack = { navController.popBackStack() },
                         onPublishLottery = { campsite, settings ->
                             LotteryController.publishLottery(
-                                lotteryCreationRepository, campsite, deviceId, settings,
+                                lotteryCreationRepository,
+                                campsite,
+                                deviceId,
+                                settings,
                             )
                         },
                     )
@@ -278,19 +308,23 @@ private fun ModeShell(
             if (mode == AppMode.ENTRANT) {
                 composable(
                     route = CAMPSITE_DETAILS_ROUTE,
-                    arguments = listOf(
-                        navArgument("campsiteId") {
-                            type = NavType.StringType
-                        }
-                    ),
+                    arguments =
+                        listOf(
+                            navArgument("campsiteId") {
+                                type = NavType.StringType
+                            },
+                        ),
                 ) { detailsEntry ->
                     val campsiteId =
                         detailsEntry.arguments
                             ?.getString("campsiteId")
 
-                    val lottery = WaitingListController.lotteryForCampsite(
-                        lotteries, campsiteId.orEmpty(),
-                    )
+                    val lottery =
+                        WaitingListController.lotteryForCampsite(
+                            lotteries,
+                            campsiteId.orEmpty(),
+                        )
+
                     CampsiteDetailsDestination(
                         campsiteId = campsiteId,
                         campsites = campsites,
@@ -309,7 +343,8 @@ private fun ModeShell(
                                             lottery = lottery,
                                             myEntry = myEntry,
                                             reservations = reservations,
-                                            controller = reservationController,
+                                            controller =
+                                                reservationController,
                                         )
                                     }
                                 },
@@ -322,11 +357,17 @@ private fun ModeShell(
             if (mode == AppMode.ADMIN) {
                 composable(
                     route = ADMIN_CAMPSITE_DETAILS_ROUTE,
-                    arguments = listOf(navArgument("campsiteId") { type = NavType.StringType }),
+                    arguments =
+                        listOf(
+                            navArgument("campsiteId") {
+                                type = NavType.StringType
+                            },
+                        ),
                 ) { detailsEntry ->
-                    // Same details the entrant sees, without the lottery card
                     CampsiteDetailsDestination(
-                        campsiteId = detailsEntry.arguments?.getString("campsiteId"),
+                        campsiteId =
+                            detailsEntry.arguments
+                                ?.getString("campsiteId"),
                         campsites = campsites,
                         isLoading = isLoading,
                         errorMessage = loadError,
@@ -339,12 +380,20 @@ private fun ModeShell(
             if (mode == AppMode.OWNER) {
                 composable(
                     route = OWNER_WAITING_LIST_ROUTE,
-                    arguments = listOf(
-                        navArgument("lotteryId") { type = NavType.StringType }
-                    ),
+                    arguments =
+                        listOf(
+                            navArgument("lotteryId") {
+                                type = NavType.StringType
+                            },
+                        ),
                 ) { entry ->
-                    val lotteryId = entry.arguments?.getString("lotteryId")
-                    val lottery = lotteries.firstOrNull { it.id == lotteryId }
+                    val lotteryId =
+                        entry.arguments?.getString("lotteryId")
+
+                    val lottery =
+                        lotteries.firstOrNull {
+                            it.id == lotteryId
+                        }
 
                     if (lottery == null) {
                         Text("Lottery not found")
@@ -353,7 +402,9 @@ private fun ModeShell(
                             lottery = lottery,
                             deviceId = deviceId,
                             controller = waitingListController,
-                            onBack = { navController.popBackStack() },
+                            onBack = {
+                                navController.popBackStack()
+                            },
                         )
                     }
                 }
@@ -371,6 +422,10 @@ private fun DestinationContent(
     mode: AppMode,
     availableModes: List<AppMode>,
     onSwitchMode: (AppMode) -> Unit,
+    user: User,
+    userIsSaving: Boolean,
+    userError: String?,
+    onSaveProfile: (String, String, String) -> Unit,
     navController: NavHostController,
     campsiteController: CampsiteController,
     lotteries: List<Lottery>,
@@ -384,64 +439,86 @@ private fun DestinationContent(
     val isLoading by campsiteController.isLoading.collectAsState()
     val loadError by campsiteController.errorMessage.collectAsState()
 
-    if (deviceId.isBlank() && destination in listOf(
-            Destination.OWNER_CAMPSITES, Destination.OWNER_REGISTER_CAMPSITE,
-        )) {
-        Text("Your device identity is unavailable. Please reopen the app.")
+    if (
+        deviceId.isBlank() &&
+        destination in
+        listOf(
+            Destination.OWNER_CAMPSITES,
+            Destination.OWNER_REGISTER_CAMPSITE,
+        )
+    ) {
+        Text(
+            "Your device identity is unavailable. Please reopen the app.",
+        )
         return
     }
 
     when (destination) {
-        Destination.ENTRANT_EXPLORE -> ExploreScreen(
-            campsites = campsites,
-            lotteries = lotteries,
-            reservations = reservations,
-            availabilityReady = availabilityReady,
-            isLoading = isLoading,
-            errorMessage = loadError,
-            onRetry = campsiteController::retryLoading,
-            onCampsiteClick = { campsite ->
-                navController.navigate(
-                    "entrant/campsite/${Uri.encode(campsite.id)}"
-                )
-            },
-        )
+        Destination.ENTRANT_EXPLORE ->
+            ExploreScreen(
+                campsites = campsites,
+                lotteries = lotteries,
+                reservations = reservations,
+                availabilityReady = availabilityReady,
+                isLoading = isLoading,
+                errorMessage = loadError,
+                onRetry = campsiteController::retryLoading,
+                onCampsiteClick = { campsite ->
+                    navController.navigate(
+                        "entrant/campsite/${Uri.encode(campsite.id)}",
+                    )
+                },
+            )
 
-        Destination.ENTRANT_SCAN -> CampsiteScanRoute(
-            onOpenCampsite = { campsiteId ->
-                navController.navigate("entrant/campsite/${Uri.encode(campsiteId)}") { launchSingleTop = true }
-            },
-        )
+        Destination.ENTRANT_SCAN ->
+            CampsiteScanRoute(
+                onOpenCampsite = { campsiteId ->
+                    navController.navigate(
+                        "entrant/campsite/${Uri.encode(campsiteId)}",
+                    ) {
+                        launchSingleTop = true
+                    }
+                },
+            )
 
-        Destination.OWNER_CAMPSITES -> OwnerCampsitesScreen(
-            campsites = ownedCampsites(campsites, deviceId),
-            isLoading = isLoading,
-            errorMessage = loadError,
-            onRetry = campsiteController::retryLoading,
-            onCampsiteClick = { campsite ->
-                navController.navigate("owner/campsite/${Uri.encode(campsite.id)}")
-            },
-            onRegisterCampsite = {
-                navController.navigate(
-                    Destination.OWNER_REGISTER_CAMPSITE.route
-                )
-            },
-        )
+        Destination.OWNER_CAMPSITES ->
+            OwnerCampsitesScreen(
+                campsites =
+                    ownedCampsites(
+                        campsites,
+                        deviceId,
+                    ),
+                isLoading = isLoading,
+                errorMessage = loadError,
+                onRetry = campsiteController::retryLoading,
+                onCampsiteClick = { campsite ->
+                    navController.navigate(
+                        "owner/campsite/${Uri.encode(campsite.id)}",
+                    )
+                },
+                onRegisterCampsite = {
+                    navController.navigate(
+                        Destination.OWNER_REGISTER_CAMPSITE.route,
+                    )
+                },
+            )
 
         Destination.OWNER_REGISTER_CAMPSITE ->
             RegisterCampsiteScreen(
                 onRegister = { campsite, showError ->
-                    // Only go back once it's saved
                     campsiteController.addCampsite(
-                        campsite.copy(ownerId = deviceId),
-                        // Close only the register screen, in case they already pressed Back
+                        campsite.copy(
+                            ownerId = deviceId,
+                        ),
                         onSuccess = {
                             navController.popBackStack(
                                 Destination.OWNER_REGISTER_CAMPSITE.route,
                                 inclusive = true,
                             )
                         },
-                        onFailure = { message -> showError(message) },
+                        onFailure = { message ->
+                            showError(message)
+                        },
                     )
                 },
                 onBack = {
@@ -449,50 +526,67 @@ private fun DestinationContent(
                 },
             )
 
-        Destination.OWNER_LOTTERIES -> OwnerLotteriesRoute(
-            lotteries = lotteries,
-            deviceId = deviceId,
-            onOpenWaitingList = { lottery ->
-                navController.navigate("owner/lottery/${lottery.id}/waiting-list")
-            },
-        )
+        Destination.OWNER_LOTTERIES ->
+            OwnerLotteriesRoute(
+                lotteries = lotteries,
+                deviceId = deviceId,
+                onOpenWaitingList = { lottery ->
+                    navController.navigate(
+                        "owner/lottery/${lottery.id}/waiting-list",
+                    )
+                },
+            )
 
-        Destination.ENTRANT_RESERVATIONS -> EntrantReservationsRoute(
-            reservations = reservations,
-            deviceId = deviceId,
-        )
+        Destination.ENTRANT_RESERVATIONS ->
+            EntrantReservationsRoute(
+                reservations = reservations,
+                deviceId = deviceId,
+            )
 
-        Destination.OWNER_RESERVATIONS -> OwnerReservationsRoute(
-            reservations = reservations,
-            deviceId = deviceId,
-            controller = reservationController,
-        )
+        Destination.OWNER_RESERVATIONS ->
+            OwnerReservationsRoute(
+                reservations = reservations,
+                deviceId = deviceId,
+                controller = reservationController,
+            )
 
-        Destination.ADMIN_PROFILES -> AdminProfileRemovalRoute(currentProfileId = deviceId)
+        Destination.ADMIN_PROFILES ->
+            AdminProfileRemovalRoute(
+                currentProfileId = deviceId,
+            )
 
-        Destination.ADMIN_CAMPSITES -> AdminCampsitesScreen(
-            campsites = campsites,
-            isLoading = isLoading,
-            errorMessage = loadError,
-            onRetry = campsiteController::retryLoading,
-            onCampsiteClick = { campsite ->
-                navController.navigate("admin/campsite/${Uri.encode(campsite.id)}")
-            },
-            onRemoveCampsite = { campsite, showError ->
-                campsiteController.removeCampsite(
-                    campsite,
-                    onSuccess = {},
-                    onFailure = { message -> showError(message) },
-                )
-            },
-        )
+        Destination.ADMIN_CAMPSITES ->
+            AdminCampsitesScreen(
+                campsites = campsites,
+                isLoading = isLoading,
+                errorMessage = loadError,
+                onRetry = campsiteController::retryLoading,
+                onCampsiteClick = { campsite ->
+                    navController.navigate(
+                        "admin/campsite/${Uri.encode(campsite.id)}",
+                    )
+                },
+                onRemoveCampsite = { campsite, showError ->
+                    campsiteController.removeCampsite(
+                        campsite,
+                        onSuccess = {},
+                        onFailure = { message ->
+                            showError(message)
+                        },
+                    )
+                },
+            )
 
         Destination.ENTRANT_PROFILE,
         Destination.OWNER_PROFILE,
         Destination.ADMIN_PROFILE ->
             ProfileScreen(
+                user = user,
                 activeMode = mode,
                 availableModes = availableModes,
+                isSaving = userIsSaving,
+                errorMessage = userError,
+                onSaveProfile = onSaveProfile,
                 onSwitchMode = onSwitchMode,
             )
 
@@ -509,7 +603,9 @@ private fun NavHostController.openTab(
     mode: AppMode,
 ) {
     navigate(tab.route) {
-        popUpTo(Destination.startFor(mode).route) {
+        popUpTo(
+            Destination.startFor(mode).route,
+        ) {
             saveState = true
         }
 

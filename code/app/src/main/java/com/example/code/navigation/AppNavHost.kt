@@ -50,6 +50,7 @@ import com.example.code.model.Lottery
 import com.example.code.model.Reservation
 import com.example.code.model.ownedCampsites
 import com.example.code.ui.admin.AdminCampsitesScreen
+import com.example.code.ui.admin.AdminProfileRemovalRoute
 import com.example.code.ui.common.PlaceholderScreen
 import com.example.code.ui.common.ProfileScreen
 import com.example.code.ui.entrant.CampsiteDetailsDestination
@@ -385,6 +386,8 @@ private fun DestinationContent(
             deviceId = deviceId,
             controller = reservationController,
         )
+
+        Destination.ADMIN_PROFILES -> AdminProfileRemovalRoute(currentProfileId = deviceId)
 
         Destination.ADMIN_CAMPSITES ->
             AdminCampsitesScreen()

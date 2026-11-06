@@ -16,7 +16,11 @@ import java.util.Calendar
 import java.util.Locale
 import java.util.TimeZone
 
-/** A requested inclusive stay, in milliseconds since the epoch. */
+/**
+ * A requested inclusive stay, in milliseconds since the epoch.
+ * @property start first requested calendar day.
+ * @property end last requested calendar day.
+ */
 data class FilterStay(val start: Long, val end: Long)
 
 /**

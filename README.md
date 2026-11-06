@@ -111,6 +111,15 @@ Claude (Anthropic) was used to help with the UI mockup images, screen descriptio
 "Review the user story-to-screen traceability table and check whether each user story is connected to the correct screens. Identify missing connections, inconsistencies, or improvements, and suggest changes for me to review." Claude, Anthropic, 19 Oct. 2026, claude.ai. (20%)
 
 ## AI Tool Use Disclosure (Part 3)
+**AI Tool Use in US-02.04.01,03, 04,and 07 (75%)**
+ChatGPT6-Sol was used to writing the majority of the code for the above user stories as well as to help in creating the Unit and Intent Testing files cases for these User Stories. 
+
+“Based on the required project specifications provided and the existing code, I need help adding in code for US 2.04.01, 03,04, 05, and 07. Ensure that the new added features for the lottery do not interfere with the reservation, waitingList, etc. Also, understand from the specifications that many other classes will also depend on new features of the Lottery. Currently, there is a model class, controller, and a LOtteryRepository"prompt. ChatGPT, model GPT-6.1 Sol, OpenAI, 6 Nov. 2026, chatgpt.com. (40%)
+
+"As part of my project requirements, I need develop unit tests for my files. Please create tests for the new LotteryCreation file"prompt. ChatGPT, model GPT-6.1 Sol, OpenAI, 6 Nov. 2026, chatgpt.com. (25%)
+
+"Please create a basic set of UI intent tests for my lottery files" prompt. ChatGPT, model GPT-6.1 Sol, OpenAI, 6 Nov. 2026, chatgpt.com. (10%)
+
 
 ---
 

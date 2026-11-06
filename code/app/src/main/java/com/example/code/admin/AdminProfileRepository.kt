@@ -16,8 +16,9 @@ import kotlinx.coroutines.flow.callbackFlow
  * @property id authoritative Firestore document ID, not a client-supplied field.
  * @property name display name, possibly blank for a newly recognized device.
  * @property email contact address, if provided.
+ * @property phone phone number, if provided.
  */
-data class AdminProfile(val id: String, val name: String = "", val email: String = "")
+data class AdminProfile(val id: String, val name: String = "", val email: String = "", val phone: String = "")
 
 /** Persistence boundary for profile removal; acceptance tests use an in-memory implementation. */
 interface AdminProfileRepository {
@@ -37,7 +38,12 @@ class FirestoreAdminProfileRepository(
             val rows = snapshot?.documents.orEmpty().mapNotNull { doc ->
                 val fields = doc.data ?: return@mapNotNull null
                 if (fields["isActive"] == false || fields["deletedAt"] != null) return@mapNotNull null
-                AdminProfile(doc.id, fields["name"] as? String ?: "", fields["email"] as? String ?: "")
+                AdminProfile(
+                    doc.id,
+                    fields["name"] as? String ?: "",
+                    fields["email"] as? String ?: "",
+                    fields["phoneNumber"] as? String ?: "",
+                )
             }.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.name.ifBlank { it.id } })
             trySend(rows)
         }

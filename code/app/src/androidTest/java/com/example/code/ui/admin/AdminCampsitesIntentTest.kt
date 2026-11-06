@@ -1,4 +1,5 @@
 // Intent tests for the admin opening campsite details and removed campsites disappearing from the app.
+// AI use: Claude (Anthropic) added the open details and Back flow test.
 package com.example.code.ui.admin
 
 import androidx.compose.runtime.getValue

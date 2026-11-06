@@ -537,6 +537,20 @@ private fun DestinationContent(
                 },
             )
 
+        Destination.ENTRANT_NOTIFICATIONS ->
+            EntrantNotificationsRoute(
+                deviceId = deviceId,
+                repository = remember {
+                    FirestoreNotificationRepository()
+                },
+                onOpenReservations = {
+                    navController.navigate(
+                        Destination.ENTRANT_RESERVATIONS.route,
+                    ) {
+                        launchSingleTop = true
+                    }
+                },
+            )
         Destination.ENTRANT_RESERVATIONS ->
             EntrantReservationsRoute(
                 reservations = reservations,

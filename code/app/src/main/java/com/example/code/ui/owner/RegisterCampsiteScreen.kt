@@ -1,4 +1,5 @@
 // Form where an owner registers a new campsite. Known issues: image is a link, not an upload.
+// AI use: Claude (Anthropic) helped find and fix the double-tap duplicate save bug (isSaving).
 
 package com.example.code.ui.owner
 
@@ -21,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.example.code.model.Campsite
+import com.example.code.model.campsiteFromForm
 
 /**
  * Displays the campsite registration form.
@@ -118,40 +120,15 @@ fun RegisterCampsiteScreen(
 
         Button(
             onClick = {
-                val occupancyValue = maxOccupancy.toIntOrNull()
-                val latitudeValue = latitude.toDoubleOrNull()
-                val longitudeValue = longitude.toDoubleOrNull()
+                val campsite = campsiteFromForm(
+                    name, location, description, maxOccupancy,
+                    latitude, longitude, tags, imageUrl,
+                )
 
-                if (
-                    name.isBlank() ||
-                    location.isBlank() ||
-                    description.isBlank() ||
-                    occupancyValue == null ||
-                    occupancyValue <= 0 ||
-                    latitudeValue == null ||
-                    longitudeValue == null ||
-                    latitudeValue !in -90.0..90.0 || // latitude must be a real place
-                    longitudeValue !in -180.0..180.0 // longitude must be a real place
-                ) {
+                if (campsite == null) {
                     errorMessage = "Please complete all required fields with valid values."
                 } else {
                     errorMessage = null
-
-                    val campsite = Campsite(
-                        name = name.trim(),
-                        location = location.trim(),
-                        description = description.trim(),
-                        maxOccupancy = occupancyValue,
-                        latitude = latitudeValue,
-                        longitude = longitudeValue,
-                        tags = tags
-                            .split(",")
-                            .map { it.trim() }
-                            .filter { it.isNotEmpty() },
-                        // Leave it empty if no image was given
-                        imageUrl = imageUrl.trim().ifBlank { null },
-                    )
-
                     isSaving = true
 
                     // Show the error if saving fails and let them try again

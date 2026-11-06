@@ -14,6 +14,8 @@ All deliverables are maintained in the repository's **GitHub Wiki**.
 | UI Mockups and Storyboards | Wiki: [UI Mockups](https://github.com/CMPUT301F26-symbol/symbol-cyber/wiki/UI-Mockups) and [Storyboards](https://github.com/CMPUT301F26-symbol/symbol-cyber/wiki/Storyboards) | Aalok Mishra, Abhishek Mishra |
 | CRC Cards | Wiki: [CRC Cards](https://github.com/CMPUT301F26-symbol/symbol-cyber/wiki/CRC-Cards) | Noor Alam |
 | Wiki Structure and Tool Use | Wiki: [Tool Use](https://github.com/CMPUT301F26-symbol/symbol-cyber/wiki/Tool-Use) | Dean Elbery |
+| Sprint Planning and Reviews | Wiki: [Sprint Planning and Reviews](https://github.com/CMPUT301F26-symbol/symbol-cyber/wiki/Sprint-Planning-and-Reviews) | Dean Elbery; all members supply weekly story evidence |
+| Project Part 2 Feedback | Wiki: [Project Part 2 Feedback](https://github.com/CMPUT301F26-symbol/symbol-cyber/wiki/Project-Part-2-Feedback) | Dean Elbery; relevant deliverable owners |
 
 **[Open the Wiki Home page](https://github.com/CMPUT301F26-symbol/symbol-cyber/wiki/CMPUT-301-%E2%80%90-Symbol)**  
 **[GitHub Project board](https://github.com/orgs/CMPUT301F26-symbol/projects/2)**
@@ -34,10 +36,17 @@ See the [weekly record index](doc/sprints/README.md),
 
 The [Sprint 1 wiki](https://github.com/CMPUT301F26-symbol/symbol-cyber/wiki/Sprint-1)
 records the October 27 stories and owners, dependencies, progress, the
-October 27 demo checks, and **Part 2 feedback addressed**. A versioned copy is
+October 27 demo checks. Project-part feedback is maintained separately below. A versioned copy is
 kept in [doc/sprint-1.md](doc/sprint-1.md). Track process work in
 [T8 #93](https://github.com/CMPUT301F26-symbol/symbol-cyber/issues/93) and keep
 the issue, Project board, and wiki backlog aligned as stories finish.
+
+### Project Part 2 Feedback
+
+The [Project Part 2 Feedback wiki](https://github.com/CMPUT301F26-symbol/symbol-cyber/wiki/Project-Part-2-Feedback)
+contains the recorded TA comments, corrections, owners and remaining follow-ups.
+It is separate from weekly [Sprint Planning and Reviews](https://github.com/CMPUT301F26-symbol/symbol-cyber/wiki/Sprint-Planning-and-Reviews).
+The versioned copy is [doc/project-part-2-feedback.md](doc/project-part-2-feedback.md).
 
 ### Deliverable Requirements
 
@@ -150,6 +159,21 @@ Claude (Anthropic) was used to write the majority of the code for the above user
 "Write unit tests for the model and controller classes and intent tests for each user story, using realistic test data." prompt. Claude, Anthropic, 3 Nov. 2026, claude.ai. (30%)
 
 "The entrant can view the lottery from campsite details but can't join it. Fix it." prompt. Claude, Anthropic, 5 Nov. 2026, claude.ai. (5%)
+
+**AI Tool Use in US 02.01.01, 02.01.02, 02.03.01, 03.01.01, 03.04.01 and 03.05.01 (70%)**
+Claude (Anthropic) was used to help write and review the code and tests for these user stories. Specifically, it:
+- drafted the admin profile details screen and the tap-to-open details for admin campsites and profiles;
+- suggested moving the register form checks into `campsiteFromForm` and wrote its unit tests;
+- found and helped fix three register bugs (double-tap duplicate save, blank screen after Back while saving, white screen when sign-in fails);
+- helped resolve merge conflicts in `AppNavHost.kt` and debug an Android Studio Gradle sync error.
+
+All changes were reviewed, run and tested by me before committing.
+
+"Help me implement this user story in our existing Kotlin/Compose code, keep it simple, and write UI and intent tests for it." prompt. Claude, model Claude Opus 5.5, Anthropic, 6 Nov. 2026, claude.ai/code. (50%)
+
+"Review my register campsite code for bugs and help me fix them." prompt. Claude, model Claude Opus 5.5, Anthropic, 6 Nov. 2026, claude.ai/code. (10%)
+
+"Help me resolve this merge conflict and keep both changes." prompt. Claude, model Claude Opus 5.5, Anthropic, 6 Nov. 2026, claude.ai/code. (10%)
 
 ---
 

@@ -12,6 +12,7 @@ import java.util.Calendar
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 
 /** AI USAGE
@@ -161,5 +162,12 @@ internal class RecordingDrawNotifications : NotificationRepository {
 
     override suspend fun sendAll(notifications: List<AppNotification>) {
         sent += notifications
+    }
+    override fun notificationsFor(
+        recipientId: String,
+    ): Flow<List<AppNotification>> {
+        return flowOf(
+            sent.filter { it.recipientId == recipientId },
+        )
     }
 }

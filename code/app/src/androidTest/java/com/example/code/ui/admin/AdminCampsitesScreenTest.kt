@@ -1,4 +1,5 @@
 // UI tests for the admin removing campsites.
+// AI use: Claude (Anthropic) added the test for tapping a campsite to open it.
 package com.example.code.ui.admin
 
 import androidx.compose.runtime.getValue

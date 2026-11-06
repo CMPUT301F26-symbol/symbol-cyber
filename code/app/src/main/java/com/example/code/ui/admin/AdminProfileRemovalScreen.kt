@@ -1,10 +1,12 @@
 /*
  * AdminProfileRemovalScreen.kt
  * Selects and confirms removal of an existing profile, with live list/error states.
+ * Tapping a profile opens its details.
  * Known issues: production use needs an admin custom claim and reviewed server rules; no rules are deployed here.
  */
 package com.example.code.ui.admin
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -28,6 +30,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.example.code.admin.AdminProfileController
 import com.example.code.admin.AdminProfilesState
@@ -49,13 +52,30 @@ fun AdminProfileRemovalRoute(
     var busyId by remember { mutableStateOf<String?>(null) }
     var removedIds by remember { mutableStateOf(emptySet<String>()) }
     var message by remember { mutableStateOf<String?>(null) }
+    // The profile the admin tapped to view, or null to show the list
+    var openedId by rememberSaveable { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
     LaunchedEffect(controller, retry) { controller.observe().collect { state = it } }
+    val profiles = state.profiles.filterNot { it.id in removedIds }
+
+    val opened = openedId
+    if (opened != null) {
+        // The phone's Back button also returns to the list
+        BackHandler { openedId = null }
+        AdminProfileDetailsScreen(
+            profile = profiles.firstOrNull { it.id == opened },
+            isOwnProfile = opened == currentProfileId,
+            onBack = { openedId = null },
+        )
+        return
+    }
+
     AdminProfileRemovalScreen(
-        state = state.copy(profiles = state.profiles.filterNot { it.id in removedIds }),
+        state = state.copy(profiles = profiles),
         currentProfileId = currentProfileId,
         busyId = busyId,
         message = message,
+        onProfileClick = { openedId = it },
         onRefresh = { removedIds = emptySet(); message = null; retry++ },
         onConfirmRemove = { id ->
             if (busyId == null) {
@@ -75,7 +95,10 @@ fun AdminProfileRemovalRoute(
     )
 }
 
-/** Displays [state]; confirmation is cancelled if the selected profile disappears from live data. */
+/**
+ * Displays [state]; confirmation is cancelled if the selected profile disappears from live data.
+ * @param onProfileClick called with the ID of the profile the admin tapped.
+ */
 @Composable
 fun AdminProfileRemovalScreen(
     state: AdminProfilesState,
@@ -84,6 +107,7 @@ fun AdminProfileRemovalScreen(
     message: String?,
     onRefresh: () -> Unit,
     onConfirmRemove: (String) -> Unit,
+    onProfileClick: (String) -> Unit = {},
 ) {
     var pendingId by rememberSaveable { mutableStateOf<String?>(null) }
     val pending = state.profiles.firstOrNull { it.id == pendingId }
@@ -110,7 +134,10 @@ fun AdminProfileRemovalScreen(
                 if (state.profiles.isEmpty()) Text("No active profiles to review.")
                 else LazyColumn(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     items(state.profiles, key = { it.id }) { profile ->
-                        Card(Modifier.fillMaxWidth()) {
+                        Card(
+                            onClick = { onProfileClick(profile.id) },
+                            modifier = Modifier.fillMaxWidth().testTag("profileCard-${profile.id}"), // for testing
+                        ) {
                             Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                 Text(profile.name.ifBlank { "Unnamed profile" }, style = MaterialTheme.typography.titleMedium)
                                 if (profile.email.isNotBlank()) Text(profile.email)

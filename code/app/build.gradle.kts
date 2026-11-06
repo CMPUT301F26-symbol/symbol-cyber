@@ -37,6 +37,7 @@ android {
 }
 
 dependencies {
+    implementation(libs.zxing.core)
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)
     implementation(platform(libs.androidx.compose.bom))

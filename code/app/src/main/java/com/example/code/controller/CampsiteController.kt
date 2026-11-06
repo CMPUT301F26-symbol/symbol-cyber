@@ -43,7 +43,16 @@ class CampsiteController : ViewModel() {
         listenForCampsites()
     }
 
-    /** Saves the campsite under the signed-in owner. */
+    /**
+     * Saves a new campsite to Firestore under the signed-in owner.
+     *
+     * The owner id comes from Firebase sign-in, not from the form. If nobody
+     * is signed in, or Firestore fails, the campsite is not saved.
+     *
+     * @param campsite the campsite filled in by the owner
+     * @param onSuccess called once Firestore has saved the campsite
+     * @param onFailure called with an error message if the campsite was not saved
+     */
     fun addCampsite(campsite: Campsite, onSuccess: () -> Unit, onFailure: (String) -> Unit) {
         // Get the person who is signed in
         val ownerId = FirebaseAuth.getInstance().currentUser?.uid

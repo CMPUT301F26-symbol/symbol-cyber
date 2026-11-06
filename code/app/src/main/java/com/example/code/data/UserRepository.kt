@@ -55,7 +55,10 @@ class FirestoreUserRepository(
                     UserRole.entries.find { it.name == roleName }
                 }
                 ?.toSet()
-                ?: setOf(UserRole.ENTRANT)
+                .orEmpty()
+                .ifEmpty {
+                    setOf(UserRole.ENTRANT)
+                }
 
         return User(
             deviceId = deviceId,

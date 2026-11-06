@@ -99,4 +99,35 @@ class UserTest {
         assertFalse(user.canUseRole(UserRole.CAMPSITE_OWNER))
         assertFalse(user.canUseRole(UserRole.ADMIN))
     }
+
+    @Test
+    fun adminWithoutOtherRoles_cannotUseEntrantOrOwnerRole() {
+        val user =
+            User(
+                deviceId = "device-admin",
+                roles = setOf(UserRole.ADMIN),
+            )
+
+        assertTrue(user.canUseRole(UserRole.ADMIN))
+        assertFalse(user.canUseRole(UserRole.ENTRANT))
+        assertFalse(user.canUseRole(UserRole.CAMPSITE_OWNER))
+    }
+
+    @Test
+    fun adminWithMultipleRoles_canUseAllAssignedRoles() {
+        val user =
+            User(
+                deviceId = "device-admin",
+                roles =
+                    setOf(
+                        UserRole.ADMIN,
+                        UserRole.ENTRANT,
+                        UserRole.CAMPSITE_OWNER,
+                    ),
+            )
+
+        assertTrue(user.canUseRole(UserRole.ADMIN))
+        assertTrue(user.canUseRole(UserRole.ENTRANT))
+        assertTrue(user.canUseRole(UserRole.CAMPSITE_OWNER))
+    }
 }

@@ -26,7 +26,10 @@ class ModeControllerTest {
 
     @Test
     fun availableModesAreInFixedOrder() {
-        assertEquals(listOf(AppMode.ENTRANT, AppMode.OWNER), ownerAndEntrant().availableModes)
+        assertEquals(
+            listOf(AppMode.ENTRANT, AppMode.OWNER),
+            ownerAndEntrant().availableModes.value,
+        )
     }
 
     @Test
@@ -56,11 +59,35 @@ class ModeControllerTest {
     }
 
     @Test
-    fun adminCanAlsoBeEntrantAndOwner() {
-        val controller = ModeController(AppMode.entries.toSet(), AppMode.ADMIN)
-        assertTrue(controller.switchTo(AppMode.ENTRANT))
-        assertTrue(controller.switchTo(AppMode.OWNER))
-        assertTrue(controller.switchTo(AppMode.ADMIN))
+    fun userWithAllRoles_canSwitchBetweenAllModes() {
+        val controller =
+            ModeController(
+                availableModes =
+                    setOf(
+                        AppMode.ENTRANT,
+                        AppMode.OWNER,
+                        AppMode.ADMIN,
+                    ),
+                initialMode = AppMode.ADMIN,
+            )
+
+        assertTrue(
+            controller.switchTo(
+                AppMode.ENTRANT,
+            ),
+        )
+
+        assertTrue(
+            controller.switchTo(
+                AppMode.OWNER,
+            ),
+        )
+
+        assertTrue(
+            controller.switchTo(
+                AppMode.ADMIN,
+            ),
+        )
     }
 
     @Test
@@ -75,5 +102,92 @@ class ModeControllerTest {
         assertThrows(IllegalArgumentException::class.java) {
             ModeController(setOf(AppMode.ENTRANT), AppMode.ADMIN)
         }
+    }
+
+    @Test
+    fun loadedRolesReplaceInitiallyAvailableModes() {
+        val controller =
+            ModeController(
+                setOf(AppMode.ENTRANT),
+            )
+
+        controller.setAvailableModes(
+            setOf(
+                AppMode.ENTRANT,
+                AppMode.ADMIN,
+            ),
+        )
+
+        assertEquals(
+            listOf(
+                AppMode.ENTRANT,
+                AppMode.ADMIN,
+            ),
+            controller.availableModes.value,
+        )
+
+        assertTrue(
+            controller.canSwitchTo(
+                AppMode.ADMIN,
+            ),
+        )
+
+        assertFalse(
+            controller.canSwitchTo(
+                AppMode.OWNER,
+            ),
+        )
+    }
+
+    @Test
+    fun removingActiveMode_switchesToFirstAvailableMode() {
+        val controller =
+            ModeController(
+                availableModes =
+                    setOf(
+                        AppMode.ENTRANT,
+                        AppMode.ADMIN,
+                    ),
+            )
+
+        controller.switchTo(
+            AppMode.ADMIN,
+        )
+
+        controller.setAvailableModes(
+            setOf(AppMode.ENTRANT),
+        )
+
+        assertEquals(
+            AppMode.ENTRANT,
+            controller.activeMode.value,
+        )
+    }
+
+    @Test
+    fun adminOnlyProfile_hasOnlyAdminMode() {
+        val controller =
+            ModeController(
+                availableModes =
+                    setOf(AppMode.ADMIN),
+                initialMode = AppMode.ADMIN,
+            )
+
+        assertEquals(
+            listOf(AppMode.ADMIN),
+            controller.availableModes.value,
+        )
+
+        assertFalse(
+            controller.canSwitchTo(
+                AppMode.ENTRANT,
+            ),
+        )
+
+        assertFalse(
+            controller.canSwitchTo(
+                AppMode.OWNER,
+            ),
+        )
     }
 }

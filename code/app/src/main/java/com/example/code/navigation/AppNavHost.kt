@@ -121,6 +121,15 @@ fun AppNavHost(
 
     val currentUser by userController.currentUser.collectAsState()
     val userError by userController.errorMessage.collectAsState()
+    val availableModes by controller.availableModes.collectAsState()
+
+    LaunchedEffect(currentUser) {
+        currentUser?.let { user ->
+            controller.setAvailableModes(
+                modesForRoles(user.roles),
+            )
+        }
+    }
 
     if (currentUser == null) {
         Text(
@@ -144,7 +153,7 @@ fun AppNavHost(
     key(mode) {
         ModeShell(
             mode = mode,
-            availableModes = controller.availableModes,
+            availableModes = availableModes,
             onSwitchMode = { controller.switchTo(it) },
             campsiteController = campsiteController,
             waitingListController = waitingListController,

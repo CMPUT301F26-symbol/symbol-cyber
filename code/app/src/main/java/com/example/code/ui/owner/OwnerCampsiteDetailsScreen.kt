@@ -14,6 +14,7 @@ import com.example.code.ui.entrant.CampsiteDetailsDestination
 
 /**
  * Rechecks ownership on every snapshot and opens the lottery creation form.
+ *
  * [onPublishLottery] receives the actual owned campsite and the form settings.
  * Omit it in read-only previews; application navigation supplies persistence.
  */

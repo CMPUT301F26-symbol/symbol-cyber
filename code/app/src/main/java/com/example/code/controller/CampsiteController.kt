@@ -2,7 +2,6 @@
  * CampsiteController.kt
  * Manages campsite data shared between owner and entrant screens.
  * Campsites are persisted in Cloud Firestore and exposed to the UI as StateFlow.
- * Known issues: owner-specific filtering and richer error UI are not implemented yet.
  */
 
 package com.example.code.controller
@@ -12,7 +11,7 @@ import androidx.lifecycle.ViewModel
 import com.example.code.model.Campsite
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.GeoPoint
+import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -38,6 +37,22 @@ class CampsiteController : ViewModel() {
      * Most recent Firestore error, or null if no error is present.
      */
     val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
+
+    private var listener: ListenerRegistration? = null
+    private val _isLoading = MutableStateFlow(true)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
+    /** Restarts a failed subscription, preserving the screen's current search. */
+    fun retryLoading() {
+        listener?.remove()
+        _isLoading.value = true
+        _errorMessage.value = null
+        listenForCampsites()
+    }
+
+    override fun onCleared() {
+        listener?.remove()
+    }
 
     init {
         listenForCampsites()
@@ -80,7 +95,8 @@ class CampsiteController : ViewModel() {
      * converted manually instead of directly using Firestore's toObject().
      */
     private fun listenForCampsites() {
-        campsiteCollection.addSnapshotListener { snapshot, exception ->
+        listener = campsiteCollection.addSnapshotListener { snapshot, exception ->
+            _isLoading.value = false
 
             if (exception != null) {
                 _errorMessage.value =
@@ -103,60 +119,7 @@ class CampsiteController : ViewModel() {
                 try {
                     val data = document.data ?: return@mapNotNull null
 
-                    val storedLocation = data["location"]
-
-                    val locationText =
-                        when (storedLocation) {
-                            is String -> storedLocation
-
-                            is GeoPoint ->
-                                "${storedLocation.latitude}, ${storedLocation.longitude}"
-
-                            else -> ""
-                        }
-
-                    val latitude =
-                        (data["latitude"] as? Number)?.toDouble()
-                            ?: (storedLocation as? GeoPoint)?.latitude
-                            ?: 0.0
-
-                    val longitude =
-                        (data["longitude"] as? Number)?.toDouble()
-                            ?: (storedLocation as? GeoPoint)?.longitude
-                            ?: 0.0
-
-                    val description =
-                        data["description"] as? String
-                            ?: data["amenities"] as? String
-                            ?: ""
-
-                    val rating =
-                        (data["rating"] as? Number)?.toDouble()
-                            ?: (data["averageRating"] as? Number)?.toDouble()
-
-                    val maxOccupancy =
-                        (data["maxOccupancy"] as? Number)?.toInt()
-                            ?: (data["maximumOccupancy"] as? Number)?.toInt()
-                            ?: 0
-
-                    val tags =
-                        (data["tags"] as? List<*>)
-                            ?.filterIsInstance<String>()
-                            ?: emptyList()
-
-                    Campsite(
-                        id = document.id,
-                        ownerId = data["ownerId"] as? String ?: "",
-                        name = data["name"] as? String ?: "",
-                        location = locationText,
-                        description = description,
-                        maxOccupancy = maxOccupancy,
-                        latitude = latitude,
-                        longitude = longitude,
-                        rating = rating,
-                        imageUrl = data["imageUrl"] as? String,
-                        tags = tags,
-                    )
+                    campsiteFromDocument(document.id, data)
                 } catch (exception: Exception) {
                     Log.e(
                         "CampsiteController",

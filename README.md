@@ -14,6 +14,8 @@ All deliverables are maintained in the repository's **GitHub Wiki**.
 | UI Mockups and Storyboards | Wiki: [UI Mockups](https://github.com/CMPUT301F26-symbol/symbol-cyber/wiki/UI-Mockups) and [Storyboards](https://github.com/CMPUT301F26-symbol/symbol-cyber/wiki/Storyboards) | Aalok Mishra, Abhishek Mishra |
 | CRC Cards | Wiki: [CRC Cards](https://github.com/CMPUT301F26-symbol/symbol-cyber/wiki/CRC-Cards) | Noor Alam |
 | Wiki Structure and Tool Use | Wiki: [Tool Use](https://github.com/CMPUT301F26-symbol/symbol-cyber/wiki/Tool-Use) | Dean Elbery |
+| Sprint Planning and Reviews | Wiki: [Sprint Planning and Reviews](https://github.com/CMPUT301F26-symbol/symbol-cyber/wiki/Sprint-Planning-and-Reviews) | Dean Elbery; all members supply weekly story evidence |
+| Project Part 2 Feedback | Wiki: [Project Part 2 Feedback](https://github.com/CMPUT301F26-symbol/symbol-cyber/wiki/Project-Part-2-Feedback) | Dean Elbery; relevant deliverable owners |
 
 **[Open the Wiki Home page](https://github.com/CMPUT301F26-symbol/symbol-cyber/wiki/CMPUT-301-%E2%80%90-Symbol)**  
 **[GitHub Project board](https://github.com/orgs/CMPUT301F26-symbol/projects/2)**
@@ -34,10 +36,17 @@ See the [weekly record index](doc/sprints/README.md),
 
 The [Sprint 1 wiki](https://github.com/CMPUT301F26-symbol/symbol-cyber/wiki/Sprint-1)
 records the October 27 stories and owners, dependencies, progress, the
-October 27 demo checks, and **Part 2 feedback addressed**. A versioned copy is
+October 27 demo checks. Project-part feedback is maintained separately below. A versioned copy is
 kept in [doc/sprint-1.md](doc/sprint-1.md). Track process work in
 [T8 #93](https://github.com/CMPUT301F26-symbol/symbol-cyber/issues/93) and keep
 the issue, Project board, and wiki backlog aligned as stories finish.
+
+### Project Part 2 Feedback
+
+The [Project Part 2 Feedback wiki](https://github.com/CMPUT301F26-symbol/symbol-cyber/wiki/Project-Part-2-Feedback)
+contains the recorded TA comments, corrections, owners and remaining follow-ups.
+It is separate from weekly [Sprint Planning and Reviews](https://github.com/CMPUT301F26-symbol/symbol-cyber/wiki/Sprint-Planning-and-Reviews).
+The versioned copy is [doc/project-part-2-feedback.md](doc/project-part-2-feedback.md).
 
 ### Deliverable Requirements
 

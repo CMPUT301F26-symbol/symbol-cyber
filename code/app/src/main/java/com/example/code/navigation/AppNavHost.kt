@@ -386,8 +386,19 @@ private fun DestinationContent(
             controller = reservationController,
         )
 
-        Destination.ADMIN_CAMPSITES ->
-            AdminCampsitesScreen()
+        Destination.ADMIN_CAMPSITES -> AdminCampsitesScreen(
+            campsites = campsites,
+            isLoading = isLoading,
+            errorMessage = loadError,
+            onRetry = campsiteController::retryLoading,
+            onRemoveCampsite = { campsite, showError ->
+                campsiteController.removeCampsite(
+                    campsite,
+                    onSuccess = {},
+                    onFailure = { message -> showError(message) },
+                )
+            },
+        )
 
         Destination.ENTRANT_PROFILE,
         Destination.OWNER_PROFILE,

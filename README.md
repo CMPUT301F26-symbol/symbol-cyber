@@ -142,6 +142,14 @@ Claude (Anthropic) was used to write code for these user stories (models, contro
 
 “Help me write the code for test cases for my user stories." prompt. Claude, Anthropic, 3 Nov. 2026, claude.ai.
 
+**AI Tool Use in US 01.01.06, 01.02.01, 01.02.02, 02.09.01, 02.10.01 (75%)**
+Claude (Anthropic) was used to write the majority of the code for the above user stories , their unit and intent tests, and the fix that refreshes the lottery time so the Join button appears when registration opens. 
+
+"Create the code for the Sprint 2 user stories US 01.01.06, 01.02.01, 01.02.02, 02.09.01 and 02.10.01. Create a model class that stores all the data related to that class but put the behaviour in a controller class." prompt. Claude, Anthropic, 3 Nov. 2026, claude.ai. (40%)
+
+"Write unit tests for the model and controller classes and intent tests for each user story, using realistic test data." prompt. Claude, Anthropic, 3 Nov. 2026, claude.ai. (30%)
+
+"The entrant can view the lottery from campsite details but can't join it. Fix it." prompt. Claude, Anthropic, 5 Nov. 2026, claude.ai. (5%)
 
 ---
 

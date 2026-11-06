@@ -97,7 +97,8 @@ fun AppNavHost(
 ) {
     val mode by controller.activeMode.collectAsState()
     val deviceId = ownerId ?: rememberDeviceId()
-    val lotteries by waitingListController.allLotteries.collectAsState(initial = emptyList())
+    val lotterySnapshot by waitingListController.allLotteries.collectAsState(initial = null)
+    val lotteries = lotterySnapshot.orEmpty()
 
     AutomaticDraw(lotteries = lotteries, controller = drawController)
 
@@ -110,6 +111,7 @@ fun AppNavHost(
             waitingListController = waitingListController,
             reservationController = reservationController,
             lotteries = lotteries,
+            lotteriesReady = lotterySnapshot != null,
             deviceId = deviceId,
             lotteryCreationRepository = lotteryCreationRepository,
         )
@@ -139,6 +141,7 @@ private fun ModeShell(
     waitingListController: WaitingListController,
     reservationController: ReservationController,
     lotteries: List<Lottery>,
+    lotteriesReady: Boolean,
     deviceId: String,
     lotteryCreationRepository: LotteryCreationRepository,
 ) {
@@ -148,8 +151,9 @@ private fun ModeShell(
     val campsites by campsiteController.campsites.collectAsState()
     val isLoading by campsiteController.isLoading.collectAsState()
     val loadError by campsiteController.errorMessage.collectAsState()
-    val reservations by reservationController.allReservations
-        .collectAsState(initial = emptyList())
+    val reservationSnapshot by reservationController.allReservations
+        .collectAsState(initial = null)
+    val reservations = reservationSnapshot.orEmpty()
 
     Scaffold(
         topBar = {
@@ -203,6 +207,7 @@ private fun ModeShell(
                             campsiteController = campsiteController,
                             lotteries = lotteries,
                             reservations = reservations,
+                            availabilityReady = lotteriesReady && reservationSnapshot != null,
                             reservationController = reservationController,
                             deviceId = deviceId,
                         )
@@ -314,6 +319,7 @@ private fun DestinationContent(
     campsiteController: CampsiteController,
     lotteries: List<Lottery>,
     reservations: List<Reservation>,
+    availabilityReady: Boolean,
     reservationController: ReservationController,
     deviceId: String,
 ) {
@@ -332,6 +338,9 @@ private fun DestinationContent(
     when (destination) {
         Destination.ENTRANT_EXPLORE -> ExploreScreen(
             campsites = campsites,
+            lotteries = lotteries,
+            reservations = reservations,
+            availabilityReady = availabilityReady,
             isLoading = isLoading,
             errorMessage = loadError,
             onRetry = campsiteController::retryLoading,

@@ -58,6 +58,21 @@ class CampsiteController : ViewModel() {
     }
 
     /**
+     * Removes a campsite from Firestore.
+     *
+     * Once removed, it disappears from every campsite list in the app.
+     *
+     * @param campsite the campsite to remove
+     * @param onSuccess called once Firestore has removed the campsite
+     * @param onFailure called with an error message if the campsite was not removed
+     */
+    fun removeCampsite(campsite: Campsite, onSuccess: () -> Unit, onFailure: (String) -> Unit) {
+        campsiteCollection.document(campsite.id).delete()
+            .addOnSuccessListener { onSuccess() }
+            .addOnFailureListener { onFailure("Could not remove campsite. Try again.") }
+    }
+
+    /**
      * Saves a new campsite to Firestore under its owner.
      *
      * If the campsite has no owner, or Firestore fails, the campsite is not saved.

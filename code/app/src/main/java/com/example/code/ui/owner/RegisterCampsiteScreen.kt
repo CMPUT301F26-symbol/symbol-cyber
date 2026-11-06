@@ -1,4 +1,4 @@
-// Form where an owner registers a new campsite.
+// Form where an owner registers a new campsite. Known issues: image is a link, not an upload.
 
 package com.example.code.ui.owner
 
@@ -43,6 +43,9 @@ fun RegisterCampsiteScreen(
     var imageUrl by remember { mutableStateOf("") }
 
     var errorMessage by remember { mutableStateOf<String?>(null) }
+
+    // True while the campsite is being saved, so it can't be saved twice
+    var isSaving by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -149,12 +152,16 @@ fun RegisterCampsiteScreen(
                         imageUrl = imageUrl.trim().ifBlank { null },
                     )
 
-                    // Show the error if saving fails
+                    isSaving = true
+
+                    // Show the error if saving fails and let them try again
                     onRegister(campsite) { message ->
                         errorMessage = message
+                        isSaving = false
                     }
                 }
             },
+            enabled = !isSaving,
             modifier = Modifier.fillMaxWidth().testTag("registerButton"), // for testing
         ) {
             Text("Register campsite")

@@ -397,7 +397,13 @@ private fun DestinationContent(
                     // Only go back once it's saved
                     campsiteController.addCampsite(
                         campsite.copy(ownerId = deviceId),
-                        onSuccess = { navController.popBackStack() },
+                        // Close only the register screen, in case they already pressed Back
+                        onSuccess = {
+                            navController.popBackStack(
+                                Destination.OWNER_REGISTER_CAMPSITE.route,
+                                inclusive = true,
+                            )
+                        },
                         onFailure = { message -> showError(message) },
                     )
                 },

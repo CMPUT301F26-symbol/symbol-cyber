@@ -1,3 +1,8 @@
+/*
+ * OwnerCampsiteDetailsScreen.kt
+ * Resolves owned campsite details and opens the existing lottery form or promotional QR view.
+ * Known issues: uses the shared owner ID until profile identity integration is complete.
+ */
 package com.example.code.ui.owner
 
 import androidx.compose.material3.Button
@@ -38,8 +43,13 @@ fun OwnerCampsiteDetailsDestination(
 ) {
     val owned = ownedCampsites(campsites, ownerId)
     val campsite = owned.firstOrNull { it.id == campsiteId }
+    var showingQr by rememberSaveable(campsiteId, ownerId) { mutableStateOf(false) }
     var creating by rememberSaveable(campsiteId, ownerId) { mutableStateOf(false) }
     var published by rememberSaveable(campsiteId, ownerId) { mutableStateOf(false) }
+    if (showingQr && campsite != null && !isLoading && errorMessage == null) {
+        CampsiteQrScreen(campsite, ownerId, onBack = { showingQr = false })
+        return
+    }
     if (creating && campsite != null && !isLoading && errorMessage == null && onPublishLottery != null) {
         CreateLotteryScreen(
             campsite = campsite,
@@ -60,6 +70,9 @@ fun OwnerCampsiteDetailsDestination(
         onRetry = onRetry,
         onBack = onBack,
         lotteryContent = {
+            if (campsite != null) {
+                Button(onClick = { showingQr = true }) { Text("Show promotional QR code") }
+            }
             if (published) Text("Lottery published. View it in the Lotteries tab.")
             if (onPublishLottery != null && campsite != null) {
                 Button(onClick = { published = false; creating = true }) {

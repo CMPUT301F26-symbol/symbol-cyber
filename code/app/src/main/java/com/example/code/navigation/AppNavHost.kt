@@ -65,6 +65,8 @@ private const val OWNER_CAMPSITE_DETAILS_ROUTE = "owner/campsite/{campsiteId}"
 private const val CAMPSITE_DETAILS_ROUTE =
     "entrant/campsite/{campsiteId}"
 
+private const val ADMIN_CAMPSITE_DETAILS_ROUTE = "admin/campsite/{campsiteId}"
+
 private const val OWNER_WAITING_LIST_ROUTE =
     "owner/lottery/{lotteryId}/waiting-list"
 
@@ -280,6 +282,23 @@ private fun ModeShell(
                 }
             }
 
+            if (mode == AppMode.ADMIN) {
+                composable(
+                    route = ADMIN_CAMPSITE_DETAILS_ROUTE,
+                    arguments = listOf(navArgument("campsiteId") { type = NavType.StringType }),
+                ) { detailsEntry ->
+                    // Same details the entrant sees, without the lottery card
+                    CampsiteDetailsDestination(
+                        campsiteId = detailsEntry.arguments?.getString("campsiteId"),
+                        campsites = campsites,
+                        isLoading = isLoading,
+                        errorMessage = loadError,
+                        onRetry = campsiteController::retryLoading,
+                        onBack = { navController.popBackStack() },
+                    )
+                }
+            }
+
             if (mode == AppMode.OWNER) {
                 composable(
                     route = OWNER_WAITING_LIST_ROUTE,
@@ -413,6 +432,9 @@ private fun DestinationContent(
             isLoading = isLoading,
             errorMessage = loadError,
             onRetry = campsiteController::retryLoading,
+            onCampsiteClick = { campsite ->
+                navController.navigate("admin/campsite/${Uri.encode(campsite.id)}")
+            },
             onRemoveCampsite = { campsite, showError ->
                 campsiteController.removeCampsite(
                     campsite,

@@ -52,6 +52,9 @@ class AdminCampsitesScreenTest {
 
     private var retryTapped = false
 
+    // The campsite the admin tapped to open
+    private var openedCampsite: Campsite? = null
+
     // Show a fresh admin screen before every single test
     @Before
     fun setUp() {
@@ -61,6 +64,7 @@ class AdminCampsitesScreenTest {
         errorMessage = null
         removeFails = false
         retryTapped = false
+        openedCampsite = null
 
         composeTestRule.setContent {
             AdminCampsitesScreen(
@@ -68,6 +72,7 @@ class AdminCampsitesScreenTest {
                 isLoading = isLoading,
                 errorMessage = errorMessage,
                 onRetry = { retryTapped = true },
+                onCampsiteClick = { openedCampsite = it },
                 onRemoveCampsite = { campsite, showError ->
                     // Remove it like Firestore would, or show the error if removing fails
                     if (removeFails) {
@@ -88,12 +93,24 @@ class AdminCampsitesScreenTest {
     }
 
     @Test
+    fun openCampsite_cardTapped_campsiteOpened() {
+        // tap the Waterton campsite
+        composeTestRule.onNodeWithTag("campsiteCard-site-waterton").performClick()
+
+        // verify that exact campsite is opened
+        assertEquals(waterton, openedCampsite)
+    }
+
+    @Test
     fun removeCampsite_confirmed_campsiteRemoved() {
         // tap Remove on Lake Louise
         composeTestRule.onNodeWithTag("removeButton-site-lake-louise").performClick()
 
         // verify the admin is asked to confirm
         composeTestRule.onNodeWithText("Remove Lake Louise Site 12?").assertIsDisplayed()
+
+        // verify tapping Remove did not open the campsite
+        assertEquals(null, openedCampsite)
 
         // confirm the removal
         composeTestRule.onNodeWithTag("confirmRemoveButton").performClick()

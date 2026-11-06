@@ -1,4 +1,4 @@
-// Intent tests for a removed campsite disappearing from the app.
+// Intent tests for the admin opening campsite details and removed campsites disappearing from the app.
 package com.example.code.ui.admin
 
 import androidx.compose.runtime.getValue
@@ -10,9 +10,11 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.code.model.Campsite
 import com.example.code.model.ownedCampsites
+import com.example.code.ui.entrant.CampsiteDetailsDestination
 import com.example.code.ui.entrant.ExploreScreen
 import com.example.code.ui.owner.OwnerCampsitesScreen
 import org.junit.Before
@@ -31,8 +33,11 @@ class AdminCampsitesIntentTest {
     // Pretend Firestore: campsites still in the app
     private val campsites = mutableStateListOf<Campsite>()
 
-    // Which screen is showing: "admin", "explore" or "owner"
+    // Which screen is showing: "admin", "details", "explore" or "owner"
     private var screen by mutableStateOf("admin")
+
+    // The campsite the admin opened on the details screen
+    private var openedId = ""
 
     // Start on the admin screen before every single test
     @Before
@@ -45,6 +50,7 @@ class AdminCampsitesIntentTest {
                     ownerId = ownerId,
                     name = "Lake Louise Site 12",
                     location = "Banff, AB",
+                    description = "Fire pit, picnic table",
                     maxOccupancy = 6,
                 ),
                 Campsite(
@@ -57,12 +63,26 @@ class AdminCampsitesIntentTest {
             )
         )
         screen = "admin"
+        openedId = ""
 
         composeTestRule.setContent {
             when (screen) {
                 "admin" -> AdminCampsitesScreen(
                     campsites = campsites,
+                    onCampsiteClick = { campsite ->
+                        openedId = campsite.id
+                        screen = "details"
+                    },
                     onRemoveCampsite = { campsite, _ -> campsites.remove(campsite) },
+                )
+
+                "details" -> CampsiteDetailsDestination(
+                    campsiteId = openedId,
+                    campsites = campsites,
+                    isLoading = false,
+                    errorMessage = null,
+                    onRetry = {},
+                    onBack = { screen = "admin" },
                 )
 
                 "explore" -> ExploreScreen(
@@ -82,6 +102,22 @@ class AdminCampsitesIntentTest {
     private fun removeLakeLouise() {
         composeTestRule.onNodeWithTag("removeButton-site-lake-louise").performClick()
         composeTestRule.onNodeWithTag("confirmRemoveButton").performClick()
+    }
+
+    @Test
+    fun openCampsite_adminTapsCampsite_detailsShownAndBack() {
+        // the admin taps a campsite in the list
+        composeTestRule.onNodeWithTag("campsiteCard-site-lake-louise").performClick()
+
+        // verify its information is shown
+        composeTestRule.onNodeWithText("Banff, AB").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Fire pit, picnic table").performScrollTo().assertIsDisplayed()
+
+        // go back to the admin list
+        composeTestRule.onNodeWithText("Back").performScrollTo().performClick()
+
+        // verify the admin list shows again
+        composeTestRule.onNodeWithText("All campsites").assertIsDisplayed()
     }
 
     @Test

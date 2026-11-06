@@ -1,4 +1,4 @@
-// Admin screen that lists every campsite and lets the admin remove one.
+// Admin screen that lists every campsite, opens its details and lets the admin remove one.
 package com.example.code.ui.admin
 
 import androidx.compose.foundation.layout.Arrangement
@@ -26,14 +26,16 @@ import androidx.compose.ui.unit.dp
 import com.example.code.model.Campsite
 
 /**
- * Admin home: browse every campsite and remove one when needed.
+ * Admin home: browse every campsite, open one to see its details, and remove one when needed.
  *
  * The admin is asked to confirm before a campsite is removed.
  *
  * @param campsites every campsite in the app.
+ * @param modifier optional modifier for the screen.
  * @param isLoading true while campsites are still loading from Firestore.
  * @param errorMessage the loading error, or null if loading worked.
  * @param onRetry called when the admin taps Retry after an error.
+ * @param onCampsiteClick called with the campsite the admin tapped, to show its details.
  * @param onRemoveCampsite called with the campsite to remove and a way to show an error if removing fails.
  */
 @Composable
@@ -43,6 +45,7 @@ fun AdminCampsitesScreen(
     isLoading: Boolean = false,
     errorMessage: String? = null,
     onRetry: () -> Unit = {},
+    onCampsiteClick: (Campsite) -> Unit = {},
     onRemoveCampsite: (Campsite, (String) -> Unit) -> Unit = { _, _ -> },
 ) {
     // The campsite the admin tapped Remove on, waiting to be confirmed
@@ -87,6 +90,7 @@ fun AdminCampsitesScreen(
                 items(items = campsites, key = { it.id }) { campsite ->
                     AdminCampsiteCard(
                         campsite = campsite,
+                        onClick = { onCampsiteClick(campsite) },
                         onRemove = { campsiteToRemove = campsite },
                     )
                 }
@@ -130,14 +134,20 @@ fun AdminCampsitesScreen(
 }
 
 /**
- * Displays one campsite with a button to remove it.
+ * Displays one campsite that can be tapped for details, with a button to remove it.
  *
  * @param campsite the campsite to show.
+ * @param onClick called when the admin taps the card.
  * @param onRemove called when the admin taps Remove.
  */
 @Composable
-private fun AdminCampsiteCard(campsite: Campsite, onRemove: () -> Unit) {
-    Card(modifier = Modifier.fillMaxWidth()) {
+private fun AdminCampsiteCard(campsite: Campsite, onClick: () -> Unit, onRemove: () -> Unit) {
+    Card(
+        onClick = onClick,
+        modifier = Modifier
+            .fillMaxWidth()
+            .testTag("campsiteCard-${campsite.id}"), // for testing
+    ) {
         Column(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp),

@@ -38,6 +38,7 @@ android {
 
 dependencies {
     implementation(libs.zxing.core)
+    implementation(libs.zxing.embedded)
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)
     implementation(platform(libs.androidx.compose.bom))
@@ -51,10 +52,19 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.navigation.compose)
     implementation(libs.androidx.compose.material.icons.core)
+
     testImplementation(libs.junit)
+
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.espresso.core)
+
+    // Added: supports the native date/time pickers in the lottery UI tests.
+    androidTestImplementation(
+        "androidx.test.espresso:espresso-contrib:" +
+                libs.androidx.espresso.core.get().versionConstraint.requiredVersion
+    )
+
     androidTestImplementation(libs.androidx.junit)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)

@@ -1,5 +1,6 @@
 [versions]
 zxing = "3.5.4"
+zxingEmbedded = "4.3.0"
 coil = "3.2.0"
 agp = "9.4.1"
 coreKtx = "1.19.1"
@@ -14,6 +15,7 @@ navigationCompose = "2.10.2"
 
 [libraries]
 zxing-core = { group = "com.google.zxing", name = "core", version.ref = "zxing" }
+zxing-embedded = { group = "com.journeyapps", name = "zxing-android-embedded", version.ref = "zxingEmbedded" }
 coil-compose = { group = "io.coil-kt.coil3", name = "coil-compose", version.ref = "coil" }
 coil-network-okhttp = { group = "io.coil-kt.coil3", name = "coil-network-okhttp", version.ref = "coil" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }

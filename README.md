@@ -160,6 +160,21 @@ Claude (Anthropic) was used to write the majority of the code for the above user
 
 "The entrant can view the lottery from campsite details but can't join it. Fix it." prompt. Claude, Anthropic, 5 Nov. 2026, claude.ai. (5%)
 
+**AI Tool Use in US 02.01.01, 02.01.02, 02.03.01, 03.01.01, 03.04.01 and 03.05.01 (70%)**
+Claude (Anthropic) was used to help write and review the code and tests for these user stories. Specifically, it:
+- drafted the admin profile details screen and the tap-to-open details for admin campsites and profiles;
+- suggested moving the register form checks into `campsiteFromForm` and wrote its unit tests;
+- found and helped fix three register bugs (double-tap duplicate save, blank screen after Back while saving, white screen when sign-in fails);
+- helped resolve merge conflicts in `AppNavHost.kt` and debug an Android Studio Gradle sync error.
+
+All changes were reviewed, run and tested by me before committing.
+
+"Help me implement this user story in our existing Kotlin/Compose code, keep it simple, and write UI and intent tests for it." prompt. Claude, model Claude Opus 5.5, Anthropic, 6 Nov. 2026, claude.ai/code. (50%)
+
+"Review my register campsite code for bugs and help me fix them." prompt. Claude, model Claude Opus 5.5, Anthropic, 6 Nov. 2026, claude.ai/code. (10%)
+
+"Help me resolve this merge conflict and keep both changes." prompt. Claude, model Claude Opus 5.5, Anthropic, 6 Nov. 2026, claude.ai/code. (10%)
+
 ---
 
 *Project documentation is maintained collaboratively by the CMPUT 301 team.*

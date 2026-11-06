@@ -1,4 +1,5 @@
 // Unit tests for turning the register campsite form into a Campsite.
+// AI use: Claude (Anthropic) wrote these tests from the list of form rules; reviewed and run by Fahad.
 package com.example.code.model
 
 import org.junit.Assert.assertEquals

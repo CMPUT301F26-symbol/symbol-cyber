@@ -1,4 +1,5 @@
 // Form where an owner registers a new campsite. Known issues: image is a link, not an upload.
+// AI use: Claude (Anthropic) helped find and fix the double-tap duplicate save bug (isSaving).
 
 package com.example.code.ui.owner
 

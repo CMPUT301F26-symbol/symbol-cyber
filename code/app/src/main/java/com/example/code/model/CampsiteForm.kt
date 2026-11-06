@@ -1,4 +1,5 @@
 // Checks what an owner typed in the register campsite form and turns it into a Campsite.
+// AI use: Claude (Anthropic) suggested moving the form checks out of the screen into this function so they can be unit tested.
 package com.example.code.model
 
 /**

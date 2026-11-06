@@ -1,4 +1,5 @@
 // UI tests for the admin viewing one profile's information.
+// AI use: Claude (Anthropic) drafted these tests; reviewed and run by Fahad.
 package com.example.code.ui.admin
 
 import androidx.compose.runtime.getValue

@@ -1,4 +1,5 @@
 // Admin screen that shows the information of one selected profile.
+// AI use: Claude (Anthropic) wrote the first draft of this screen; reviewed and tested by Fahad.
 package com.example.code.ui.admin
 
 import androidx.compose.foundation.layout.Arrangement

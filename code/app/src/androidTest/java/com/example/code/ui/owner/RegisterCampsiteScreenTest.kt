@@ -1,4 +1,5 @@
 // UI tests for registering a campsite.
+// AI use: Claude (Anthropic) added the tapped-twice and save-fails tests.
 package com.example.code.ui.owner
 
 import androidx.compose.ui.test.assertIsEnabled

@@ -1,4 +1,5 @@
 // Intent tests for the admin browsing profiles and opening one to see its information.
+// AI use: Claude (Anthropic) drafted these flow tests using a fake profile list; reviewed and run by Fahad.
 package com.example.code.ui.admin
 
 import androidx.compose.ui.test.assertIsDisplayed

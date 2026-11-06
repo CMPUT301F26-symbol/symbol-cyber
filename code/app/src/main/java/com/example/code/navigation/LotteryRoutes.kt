@@ -9,8 +9,10 @@
 package com.example.code.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -22,6 +24,7 @@ import com.example.code.model.WaitingListEntry
 import com.example.code.ui.entrant.LotterySection
 import com.example.code.ui.owner.OwnerLotteriesScreen
 import com.example.code.ui.owner.OwnerWaitingListScreen
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 
@@ -47,11 +50,20 @@ fun EntrantLotteryCard(
     }.collectAsState(initial = emptyList())
     var busy by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf<String?>(null) }
+    // Re-read the clock every second so the Join button appears as soon as
+    // registration opens, without leaving the screen.
+    var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(1_000)
+            now = System.currentTimeMillis()
+        }
+    }
 
     LotterySection(
         lottery = lottery,
         myEntry = entries.firstOrNull { it.entrantId == deviceId },
-        now = System.currentTimeMillis(),
+        now = now,
         busy = busy,
         statusMessage = message,
         onJoin = {

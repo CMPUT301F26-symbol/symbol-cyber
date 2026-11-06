@@ -132,6 +132,9 @@ ChatGPT6-Sol was used to writing the majority of the code for the above user sto
 
 "Please create a basic set of UI intent tests for my lottery files" prompt. ChatGPT, model GPT-6.1 Sol, OpenAI, 6 Nov. 2026, chatgpt.com. (10%)
 
+**AI Tool Use in User.kt file** (90%)
+"Based on my CRC card for the User class, create the code for the class. Also note that Admin can switch between both User and Admin roles"prompt. ChatGPT, model GPT-6.1 Sol, OpenAI, 27 Oct. 2026, chatgpt.com. (90%)
+
 **AI Tool Use US 02.05.01, 01.06.01, 02.07.01, 02.06.01, 02.08.01 (80%)**
 Claude (Anthropic) was used to write code for these user stories (models, controllers, repositories, screens), their unit and intent tests, it also helped in merge-conflict fixes . We reviewed, tested, and committed all code ourselves.
 

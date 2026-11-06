@@ -30,12 +30,19 @@ class CampsiteQrController {
         require(ownerId.isNotBlank() && campsite.ownerId == ownerId) { "Only this campsite's owner can view its promotional code." }
         require(size in 128..1024) { "QR size must be between 128 and 1024 pixels." }
         val payload = CampsiteQrLink.encode(campsite.id)
-        val matrix = QRCodeWriter().encode(payload, BarcodeFormat.QR_CODE, size, size, mapOf(
+        val hints = mapOf(
             EncodeHintType.CHARACTER_SET to "UTF-8",
             EncodeHintType.ERROR_CORRECTION to ErrorCorrectionLevel.M,
             EncodeHintType.MARGIN to 4,
-        ))
-        val pixels = IntArray(size * size) { index -> if (matrix[index % size, index / size]) 0xff000000.toInt() else 0xffffffff.toInt() }
-        return CampsiteQrPixels(payload, size, pixels)
+        )
+        val writer = QRCodeWriter()
+        val first = writer.encode(payload, BarcodeFormat.QR_CODE, size, size, hints)
+        // A long payload may need more modules than the requested canvas. Keep modules readable.
+        val matrix = if (first.width > size) {
+            writer.encode(payload, BarcodeFormat.QR_CODE, first.width * 3, first.width * 3, hints)
+        } else first
+        val width = matrix.width
+        val pixels = IntArray(width * width) { index -> if (matrix[index % width, index / width]) 0xff000000.toInt() else 0xffffffff.toInt() }
+        return CampsiteQrPixels(payload, width, pixels)
     }
 }

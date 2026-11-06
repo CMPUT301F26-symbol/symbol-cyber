@@ -30,6 +30,14 @@ class CampsiteQrControllerTest {
         assertNotEquals(first.payload, controller.generate(site.copy(id = "banff-pines-2027"), site.ownerId).payload)
     }
 
+    @Test fun longIdsAreNotCroppedToASmallRequestedCanvas() {
+        val image = controller.generate(site.copy(id = "a".repeat(1500)), site.ownerId, 128)
+        assertTrue(image.width >= 128)
+        assertEquals(image.width * image.width, image.pixels.size)
+        val bitmap = BinaryBitmap(HybridBinarizer(RGBLuminanceSource(image.width, image.width, image.pixels)))
+        assertEquals(image.payload, QRCodeReader().decode(bitmap).text)
+    }
+
     @Test fun supportsEncodedDocumentIds() {
         val id = "Campsite été % north"
         assertEquals(id, CampsiteQrLink.decode(CampsiteQrLink.encode(id)))

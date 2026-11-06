@@ -58,38 +58,29 @@ class CampsiteController : ViewModel() {
     }
 
     /**
-     * Adds [campsite] to Firestore.
+     * Saves a new campsite to Firestore under its owner.
      *
-     * Firestore generates the campsite ID. The generated ID is also stored
-     * inside the campsite document.
+     * If the campsite has no owner, or Firestore fails, the campsite is not saved.
+     *
+     * @param campsite the campsite filled in by the owner, with their device id as ownerId
+     * @param onSuccess called once Firestore has saved the campsite
+     * @param onFailure called with an error message if the campsite was not saved
      */
-    fun addCampsite(campsite: Campsite) {
+    fun addCampsite(campsite: Campsite, onSuccess: () -> Unit, onFailure: (String) -> Unit) {
+        // Don't save a campsite that doesn't belong to anyone
+        if (campsite.ownerId.isBlank()) {
+            onFailure("Your device identity is unavailable.")
+            return
+        }
+
         val documentReference = campsiteCollection.document()
 
-        val campsiteWithId = campsite.copy(
-            id = documentReference.id
-        )
+        // Add the new id to the campsite
+        val campsiteToSave = campsite.copy(id = documentReference.id)
 
-        documentReference
-            .set(campsiteWithId)
-            .addOnSuccessListener {
-                _errorMessage.value = null
-
-                Log.d(
-                    "CampsiteController",
-                    "Campsite saved with ID ${documentReference.id}"
-                )
-            }
-            .addOnFailureListener { exception ->
-                _errorMessage.value =
-                    "Failed to save campsite: ${exception.message}"
-
-                Log.e(
-                    "CampsiteController",
-                    "Failed to save campsite",
-                    exception
-                )
-            }
+        documentReference.set(campsiteToSave)
+            .addOnSuccessListener { onSuccess() }
+            .addOnFailureListener { onFailure("Could not save campsite. Try again.") }
     }
 
     /**

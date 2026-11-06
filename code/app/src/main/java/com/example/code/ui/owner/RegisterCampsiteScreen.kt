@@ -1,9 +1,4 @@
-/*
- * RegisterCampsiteScreen.kt
- * Allows a campsite owner to enter the information required to register a campsite.
- * Known issues: registration is not yet persisted to Firestore and image selection
- * is not yet implemented.
- */
+// Form where an owner registers a new campsite.
 
 package com.example.code.ui.owner
 
@@ -23,18 +18,19 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.example.code.model.Campsite
 
 /**
  * Displays the campsite registration form.
  *
- * @param onRegister called with the new campsite after valid information is submitted.
- * @param onBack called when the owner chooses to return without registering.
+ * @param onRegister called with the new campsite and a way to show an error if saving fails
+ * @param onBack called when the owner goes back without registering
  */
 @Composable
 fun RegisterCampsiteScreen(
-    onRegister: (Campsite) -> Unit,
+    onRegister: (Campsite, (String) -> Unit) -> Unit,
     onBack: () -> Unit,
 ) {
     var name by remember { mutableStateOf("") }
@@ -60,49 +56,49 @@ fun RegisterCampsiteScreen(
             value = name,
             onValueChange = { name = it },
             label = { Text("Name") },
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().testTag("nameInput"), // for testing
         )
 
         OutlinedTextField(
             value = location,
             onValueChange = { location = it },
             label = { Text("Location") },
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().testTag("locationInput"), // for testing
         )
 
         OutlinedTextField(
             value = description,
             onValueChange = { description = it },
             label = { Text("Description / amenities") },
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().testTag("descriptionInput"), // for testing
         )
 
         OutlinedTextField(
             value = maxOccupancy,
             onValueChange = { maxOccupancy = it },
             label = { Text("Maximum occupancy") },
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().testTag("maxOccupancyInput"), // for testing
         )
 
         OutlinedTextField(
             value = latitude,
             onValueChange = { latitude = it },
             label = { Text("Latitude") },
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().testTag("latitudeInput"), // for testing
         )
 
         OutlinedTextField(
             value = longitude,
             onValueChange = { longitude = it },
             label = { Text("Longitude") },
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().testTag("longitudeInput"), // for testing
         )
 
         OutlinedTextField(
             value = tags,
             onValueChange = { tags = it },
             label = { Text("Tags (comma separated, optional)") },
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().testTag("tagsInput"), // for testing
         )
 
         if (errorMessage != null) {
@@ -141,17 +137,20 @@ fun RegisterCampsiteScreen(
                             .filter { it.isNotEmpty() },
                     )
 
-                    onRegister(campsite)
+                    // Show the error if saving fails
+                    onRegister(campsite) { message ->
+                        errorMessage = message
+                    }
                 }
             },
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().testTag("registerButton"), // for testing
         ) {
             Text("Register campsite")
         }
 
         Button(
             onClick = onBack,
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxWidth().testTag("backButton"), // for testing
         ) {
             Text("Back")
         }

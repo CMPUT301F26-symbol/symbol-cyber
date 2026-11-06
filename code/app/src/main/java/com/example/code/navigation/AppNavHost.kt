@@ -354,9 +354,13 @@ private fun DestinationContent(
 
         Destination.OWNER_REGISTER_CAMPSITE ->
             RegisterCampsiteScreen(
-                onRegister = { campsite ->
-                    campsiteController.addCampsite(campsite.copy(ownerId = deviceId))
-                    navController.popBackStack()
+                onRegister = { campsite, showError ->
+                    // Only go back once it's saved
+                    campsiteController.addCampsite(
+                        campsite.copy(ownerId = deviceId),
+                        onSuccess = { navController.popBackStack() },
+                        onFailure = { message -> showError(message) },
+                    )
                 },
                 onBack = {
                     navController.popBackStack()

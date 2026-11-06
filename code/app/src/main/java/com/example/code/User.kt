@@ -2,7 +2,7 @@
  * User.kt
  * Represents a device-based user profile and the roles that profile may use.
  * Stores profile information and notification preferences shared across app modes.
- * Known issues: role-based navigation is not yet connected to this model.
+ * Role-based navigation uses this profile's assigned roles.
  */
 
 package com.example.code
@@ -71,11 +71,9 @@ class User(
     }
 
     /**
-     * Returns whether this user may use [role].
-     *
-     * Administrator profiles currently have access to all application roles.
+     * Returns whether this user has [role].
      */
     fun canUseRole(role: UserRole): Boolean {
-        return role in roles || UserRole.ADMIN in roles
+        return role in roles
     }
 }

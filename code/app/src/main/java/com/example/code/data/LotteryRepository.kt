@@ -19,6 +19,7 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 
+
 /** Result of trying to join a waiting list. */
 enum class JoinResult {
     /** The entrant was added. */
@@ -79,11 +80,38 @@ interface LotteryRepository {
  * Collections: `lotteries/{lotteryId}` and
  * `lotteries/{lotteryId}/waitingList/{entrantId}`.
  */
+
+//This class for the FirestoreLotteryReposistory was generated primarily by GPT6-Sol "Based on the required project specifications provided and the existing code, I need help adding in code for US 2.04.01, 03,04, 05, and 07", 11-05-2026
 class FirestoreLotteryRepository(
     private val db: FirebaseFirestore = FirebaseFirestore.getInstance(),
-) : LotteryRepository {
+) : LotteryRepository, LotteryCreationRepository {
 
     private val lotteries = db.collection(LOTTERIES)
+
+    //Implement owner publication in the existing Firestore repository and lotteries collection.
+    override suspend fun createLottery(lottery: Lottery): String {
+        //Validate and serialize periods, winners, and optional capacity.
+        // Resolve the actual saved campsite linked to this lottery.
+        // Recheck the stored campsite so stale screens cannot publish a lottery
+        // after it has been removed or transferred to another owner.
+        val fields = newLotteryToMap(lottery)
+        val ref = lotteries.document()
+        val campsiteRef = db.collection("campsites").document(lottery.campsiteId)
+        db.runTransaction { transaction ->
+            val campsite = transaction.get(campsiteRef)
+            // US 02.04.01: Reject publication if the campsite was removed while the form was open.
+            require(campsite.exists()) { "This campsite no longer exists." }
+            // US 02.04.01: Recheck the stored campsite owner before writing the lottery.
+            require(campsite.getString("ownerId") == lottery.ownerId) {
+                "This campsite no longer belongs to you."
+            }
+            val name = campsite.getString("name").orEmpty()
+            require(name.isNotBlank()) { "The campsite needs a name." }
+            // US 02.04.01: Publish the validated settings with the latest stored campsite name.
+            transaction.set(ref, fields + ("campsiteName" to name))
+        }.awaitResult()
+        return ref.id
+    }
 
     override fun observeLotteries(): Flow<List<Lottery>> = callbackFlow {
         val registration = lotteries.addSnapshotListener { snapshot, error ->
@@ -122,8 +150,6 @@ class FirestoreLotteryRepository(
     ): JoinResult {
         val lotteryRef = lotteries.document(lotteryId)
         val entryRef = lotteryRef.collection(WAITING_LIST).document(entry.entrantId)
-        // Transaction: the capacity check and the count update happen together,
-        // so two entrants cannot both take the last spot.
         return db.runTransaction { transaction ->
             val lotterySnapshot = transaction.get(lotteryRef)
             val lottery = lotteryFromMap(lotteryId, lotterySnapshot.data ?: emptyMap())
@@ -159,6 +185,7 @@ class FirestoreLotteryRepository(
                 document.data?.let { entryFromMap(document.id, it) }
             }
 
+    // US 02.05.01: Existing draw persistence is retained; the new creation form feeds this flow.
     override suspend fun completeDraw(
         lotteryId: String,
         winnerIds: List<String>,
@@ -167,8 +194,6 @@ class FirestoreLotteryRepository(
     ): Boolean {
         val lotteryRef = lotteries.document(lotteryId)
         val waitingList = lotteryRef.collection(WAITING_LIST)
-        // Transaction: if two devices try to draw at once, only the first one
-        // sees status OPEN; the second returns false and changes nothing.
         return db.runTransaction { transaction ->
             val status = transaction.get(lotteryRef).getString("status") ?: Lottery.STATUS_OPEN
             if (status != Lottery.STATUS_OPEN) {

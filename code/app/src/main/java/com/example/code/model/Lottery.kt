@@ -39,7 +39,12 @@ data class Lottery(
     val waitlistCapacity: Int? = null,
     val waitingListCount: Int = 0,
     val status: String = STATUS_OPEN,
+    val winnerIds: List<String> = emptyList(),
 ) {
+    /**
+     * Returns an updated lottery with randomly selected winners.
+     * If fewer than winnerCount entrants exist, selects all entrants.
+     */
 
     companion object {
         /** Registration has not ended or winners have not been drawn yet. */

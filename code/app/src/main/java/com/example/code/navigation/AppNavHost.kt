@@ -39,11 +39,13 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.example.code.controller.CampsiteController
 import com.example.code.controller.DrawController
+import com.example.code.controller.LotteryController
 import com.example.code.controller.ReservationController
 import com.example.code.controller.WaitingListController
 import com.example.code.data.FirestoreLotteryRepository
 import com.example.code.data.FirestoreNotificationRepository
 import com.example.code.data.FirestoreReservationRepository
+import com.example.code.data.LotteryCreationRepository
 import com.example.code.model.Lottery
 import com.example.code.model.Reservation
 import com.example.code.model.ownedCampsites
@@ -73,6 +75,7 @@ private const val OWNER_WAITING_LIST_ROUTE =
  * @param drawController draws winners when registration ends.
  * @param ownerId optional active user ID, shared with owner and lottery flows.
  * @param reservationController manages reservations.
+ * @param lotteryCreationRepository saves owner-created lotteries in the shared collection.
  */
 @Composable
 fun AppNavHost(
@@ -88,6 +91,7 @@ fun AppNavHost(
         ReservationController(FirestoreReservationRepository())
     },
     ownerId: String? = null,
+    lotteryCreationRepository: LotteryCreationRepository = remember { FirestoreLotteryRepository() },
 ) {
     val mode by controller.activeMode.collectAsState()
     val deviceId = ownerId ?: rememberDeviceId()
@@ -105,6 +109,7 @@ fun AppNavHost(
             reservationController = reservationController,
             lotteries = lotteries,
             deviceId = deviceId,
+            lotteryCreationRepository = lotteryCreationRepository,
         )
     }
 }
@@ -120,6 +125,7 @@ fun AppNavHost(
  * @param reservationController shared controller for reservations.
  * @param lotteries all lotteries, loaded once for every mode.
  * @param deviceId this device's ID.
+ * @param lotteryCreationRepository persistence for the owner's creation form.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -132,6 +138,7 @@ private fun ModeShell(
     reservationController: ReservationController,
     lotteries: List<Lottery>,
     deviceId: String,
+    lotteryCreationRepository: LotteryCreationRepository,
 ) {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
@@ -213,6 +220,11 @@ private fun ModeShell(
                         errorMessage = loadError,
                         onRetry = campsiteController::retryLoading,
                         onBack = { navController.popBackStack() },
+                        onPublishLottery = { campsite, settings ->
+                            LotteryController.publishLottery(
+                                lotteryCreationRepository, campsite, deviceId, settings,
+                            )
+                        },
                     )
                 }
             }

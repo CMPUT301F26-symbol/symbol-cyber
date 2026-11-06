@@ -40,6 +40,7 @@ fun RegisterCampsiteScreen(
     var latitude by remember { mutableStateOf("") }
     var longitude by remember { mutableStateOf("") }
     var tags by remember { mutableStateOf("") }
+    var imageUrl by remember { mutableStateOf("") }
 
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
@@ -101,6 +102,13 @@ fun RegisterCampsiteScreen(
             modifier = Modifier.fillMaxWidth().testTag("tagsInput"), // for testing
         )
 
+        OutlinedTextField(
+            value = imageUrl,
+            onValueChange = { imageUrl = it },
+            label = { Text("Image URL (optional)") },
+            modifier = Modifier.fillMaxWidth().testTag("imageUrlInput"), // for testing
+        )
+
         if (errorMessage != null) {
             Text(errorMessage!!)
         }
@@ -118,7 +126,9 @@ fun RegisterCampsiteScreen(
                     occupancyValue == null ||
                     occupancyValue <= 0 ||
                     latitudeValue == null ||
-                    longitudeValue == null
+                    longitudeValue == null ||
+                    latitudeValue !in -90.0..90.0 || // latitude must be a real place
+                    longitudeValue !in -180.0..180.0 // longitude must be a real place
                 ) {
                     errorMessage = "Please complete all required fields with valid values."
                 } else {
@@ -135,6 +145,8 @@ fun RegisterCampsiteScreen(
                             .split(",")
                             .map { it.trim() }
                             .filter { it.isNotEmpty() },
+                        // Leave it empty if no image was given
+                        imageUrl = imageUrl.trim().ifBlank { null },
                     )
 
                     // Show the error if saving fails

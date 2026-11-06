@@ -9,6 +9,7 @@ import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.code.model.Campsite
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Rule
@@ -36,15 +37,20 @@ class RegisterCampsiteScreenTest {
         }
     }
 
-    @Test
-    fun registerCampsite_allFieldsFilled_successful() {
-        // fill in every required field
+    // Fill in every required field with valid values
+    private fun fillRequiredFields() {
         composeTestRule.onNodeWithTag("nameInput").performTextInput("Lake Louise Site 12")
         composeTestRule.onNodeWithTag("locationInput").performTextInput("Banff, AB")
         composeTestRule.onNodeWithTag("descriptionInput").performTextInput("Fire pit, picnic table")
         composeTestRule.onNodeWithTag("maxOccupancyInput").performTextInput("6")
         composeTestRule.onNodeWithTag("latitudeInput").performTextInput("51.4254")
         composeTestRule.onNodeWithTag("longitudeInput").performTextInput("-116.1773")
+    }
+
+    @Test
+    fun registerCampsite_allFieldsFilled_successful() {
+        // fill in every required field
+        fillRequiredFields()
 
         // register the campsite
         composeTestRule.onNodeWithTag("registerButton").performClick()
@@ -73,5 +79,54 @@ class RegisterCampsiteScreenTest {
         composeTestRule
             .onNodeWithText("Please complete all required fields with valid values.")
             .assertExists()
+    }
+
+    @Test
+    fun registerCampsite_allDetailsFilled_allDetailsSaved() {
+        // fill in every field, including the optional ones
+        fillRequiredFields()
+        composeTestRule.onNodeWithTag("tagsInput").performTextInput("lake, hiking")
+        composeTestRule.onNodeWithTag("imageUrlInput").performTextInput("https://example.com/lake.jpg")
+
+        // register the campsite
+        composeTestRule.onNodeWithTag("registerButton").performClick()
+
+        // verify every detail was sent to be saved
+        assertEquals("Fire pit, picnic table", savedCampsite?.description)
+        assertEquals(51.4254, savedCampsite?.latitude)
+        assertEquals(-116.1773, savedCampsite?.longitude)
+        assertEquals(listOf("lake", "hiking"), savedCampsite?.tags)
+        assertEquals("https://example.com/lake.jpg", savedCampsite?.imageUrl)
+    }
+
+    @Test
+    fun registerCampsite_imageAndTagsEmpty_savedWithoutThem() {
+        // fill in only the required fields
+        fillRequiredFields()
+
+        // register the campsite
+        composeTestRule.onNodeWithTag("registerButton").performClick()
+
+        // verify it still saved, with no image and no tags
+        assertNotNull(savedCampsite)
+        assertNull(savedCampsite?.imageUrl)
+        assertEquals(emptyList<String>(), savedCampsite?.tags)
+    }
+
+    @Test
+    fun registerCampsite_latitudeOutOfRange_blocked() {
+        // fill in the fields, but with a latitude that isn't a real place
+        composeTestRule.onNodeWithTag("nameInput").performTextInput("Lake Louise Site 12")
+        composeTestRule.onNodeWithTag("locationInput").performTextInput("Banff, AB")
+        composeTestRule.onNodeWithTag("descriptionInput").performTextInput("Fire pit, picnic table")
+        composeTestRule.onNodeWithTag("maxOccupancyInput").performTextInput("6")
+        composeTestRule.onNodeWithTag("latitudeInput").performTextInput("200")
+        composeTestRule.onNodeWithTag("longitudeInput").performTextInput("-116.1773")
+
+        // try to register the campsite
+        composeTestRule.onNodeWithTag("registerButton").performClick()
+
+        // verify nothing was saved
+        assertNull(savedCampsite)
     }
 }

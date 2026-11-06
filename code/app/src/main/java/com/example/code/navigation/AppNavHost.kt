@@ -342,6 +342,9 @@ private fun DestinationContent(
 
         Destination.OWNER_CAMPSITES -> OwnerCampsitesScreen(
             campsites = ownedCampsites(campsites, deviceId),
+            isLoading = isLoading,
+            errorMessage = loadError,
+            onRetry = campsiteController::retryLoading,
             onCampsiteClick = { campsite ->
                 navController.navigate("owner/campsite/${Uri.encode(campsite.id)}")
             },

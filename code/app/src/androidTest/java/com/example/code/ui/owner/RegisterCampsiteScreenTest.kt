@@ -1,6 +1,8 @@
 // UI tests for registering a campsite.
 package com.example.code.ui.owner
 
+import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -24,14 +26,28 @@ class RegisterCampsiteScreenTest {
 
     private var savedCampsite: Campsite? = null
 
+    // How many times the form asked to save
+    private var saveCount = 0
+
+    // Set to true to pretend Firestore failed to save
+    private var saveFails = false
+
     // Show a fresh register screen before every single test
     @Before
     fun setUp() {
         savedCampsite = null
+        saveCount = 0
+        saveFails = false
 
         composeTestRule.setContent {
             RegisterCampsiteScreen(
-                onRegister = { campsite, _ -> savedCampsite = campsite },
+                onRegister = { campsite, showError ->
+                    saveCount++
+                    savedCampsite = campsite
+                    if (saveFails) {
+                        showError("Could not save campsite. Try again.")
+                    }
+                },
                 onBack = {},
             )
         }
@@ -128,5 +144,39 @@ class RegisterCampsiteScreenTest {
 
         // verify nothing was saved
         assertNull(savedCampsite)
+    }
+
+    @Test
+    fun registerCampsite_tappedTwice_savedOnce() {
+        // fill in every required field
+        fillRequiredFields()
+
+        // tap Register twice while the first save is still going
+        composeTestRule.onNodeWithTag("registerButton").performClick()
+        composeTestRule.onNodeWithTag("registerButton").performClick()
+
+        // verify it was only sent to be saved once
+        assertEquals(1, saveCount)
+        composeTestRule.onNodeWithTag("registerButton").assertIsNotEnabled()
+    }
+
+    @Test
+    fun registerCampsite_saveFails_canTryAgain() {
+        // pretend Firestore is down
+        saveFails = true
+        fillRequiredFields()
+
+        // try to register the campsite
+        composeTestRule.onNodeWithTag("registerButton").performClick()
+
+        // verify the error shows and Register works again
+        composeTestRule.onNodeWithText("Could not save campsite. Try again.").assertExists()
+        composeTestRule.onNodeWithTag("registerButton").assertIsEnabled()
+
+        // try again
+        composeTestRule.onNodeWithTag("registerButton").performClick()
+
+        // verify it was sent to be saved a second time
+        assertEquals(2, saveCount)
     }
 }

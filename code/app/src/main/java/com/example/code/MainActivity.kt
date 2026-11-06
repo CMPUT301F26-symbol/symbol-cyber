@@ -28,6 +28,8 @@ class MainActivity : ComponentActivity() {
                 }
                 .addOnFailureListener {
                     Log.e("MainActivity", "Firebase login failed", it)
+                    // Still open the app so the user isn't stuck on a blank screen
+                    startApp()
                 }
         }
     }

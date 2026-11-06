@@ -1,4 +1,4 @@
-// Admin screen that lists every campsite, opens its details and lets the admin remove one.
+// Admin screen that lists every campsite, opens its details and lets the admin remove one. Known issues: lotteries and reservations of a removed campsite stay in Firestore.
 package com.example.code.ui.admin
 
 import androidx.compose.foundation.layout.Arrangement

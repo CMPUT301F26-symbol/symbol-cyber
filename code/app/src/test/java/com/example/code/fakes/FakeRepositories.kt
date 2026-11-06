@@ -18,6 +18,7 @@ import com.example.code.model.Reservation
 import com.example.code.model.WaitingListEntry
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 
 /** [LotteryRepository] that keeps lotteries and waiting lists in memory. */
@@ -92,6 +93,14 @@ class FakeNotificationRepository : NotificationRepository {
 
     override suspend fun sendAll(notifications: List<AppNotification>) {
         sent += notifications
+    }
+
+    override fun notificationsFor(
+        recipientId: String,
+    ): Flow<List<AppNotification>> {
+        return flowOf(
+            sent.filter { it.recipientId == recipientId },
+        )
     }
 }
 

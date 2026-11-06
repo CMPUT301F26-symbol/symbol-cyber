@@ -1,9 +1,3 @@
-/*
- * UserController.kt
- * Loads the current device-based user profile and exposes it to the app.
- * Supports US 01.09.01 device-based identification.
- */
-
 package com.example.code.controller
 
 import com.example.code.User

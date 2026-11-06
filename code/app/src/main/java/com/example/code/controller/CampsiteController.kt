@@ -2,7 +2,6 @@
  * CampsiteController.kt
  * Manages campsite data shared between owner and entrant screens.
  * Campsites are persisted in Cloud Firestore and exposed to the UI as StateFlow.
- * Known issues: owner-specific filtering and richer error UI are not implemented yet.
  */
 
 package com.example.code.controller
@@ -10,9 +9,8 @@ package com.example.code.controller
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import com.example.code.model.Campsite
-import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.GeoPoint
+import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -39,34 +37,46 @@ class CampsiteController : ViewModel() {
      */
     val errorMessage: StateFlow<String?> = _errorMessage.asStateFlow()
 
+    private var listener: ListenerRegistration? = null
+    private val _isLoading = MutableStateFlow(true)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
+    /** Restarts a failed subscription, preserving the screen's current search. */
+    fun retryLoading() {
+        listener?.remove()
+        _isLoading.value = true
+        _errorMessage.value = null
+        listenForCampsites()
+    }
+
+    override fun onCleared() {
+        listener?.remove()
+    }
+
     init {
         listenForCampsites()
     }
 
     /**
-     * Saves a new campsite to Firestore under the signed-in owner.
+     * Saves a new campsite to Firestore under its owner.
      *
-     * The owner id comes from Firebase sign-in, not from the form. If nobody
-     * is signed in, or Firestore fails, the campsite is not saved.
+     * If the campsite has no owner, or Firestore fails, the campsite is not saved.
      *
-     * @param campsite the campsite filled in by the owner
+     * @param campsite the campsite filled in by the owner, with their device id as ownerId
      * @param onSuccess called once Firestore has saved the campsite
      * @param onFailure called with an error message if the campsite was not saved
      */
     fun addCampsite(campsite: Campsite, onSuccess: () -> Unit, onFailure: (String) -> Unit) {
-        // Get the person who is signed in
-        val ownerId = FirebaseAuth.getInstance().currentUser?.uid
-
-        // Nobody signed in, so don't save
-        if (ownerId == null) {
-            onFailure("You need to be signed in.")
+        // Don't save a campsite that doesn't belong to anyone
+        if (campsite.ownerId.isBlank()) {
+            onFailure("Your device identity is unavailable.")
             return
         }
 
         val documentReference = campsiteCollection.document()
 
-        // Add the new id and the owner to the campsite
-        val campsiteToSave = campsite.copy(id = documentReference.id, ownerId = ownerId)
+        // Add the new id to the campsite
+        val campsiteToSave = campsite.copy(id = documentReference.id)
 
         documentReference.set(campsiteToSave)
             .addOnSuccessListener { onSuccess() }
@@ -80,7 +90,8 @@ class CampsiteController : ViewModel() {
      * converted manually instead of directly using Firestore's toObject().
      */
     private fun listenForCampsites() {
-        campsiteCollection.addSnapshotListener { snapshot, exception ->
+        listener = campsiteCollection.addSnapshotListener { snapshot, exception ->
+            _isLoading.value = false
 
             if (exception != null) {
                 _errorMessage.value =
@@ -103,60 +114,7 @@ class CampsiteController : ViewModel() {
                 try {
                     val data = document.data ?: return@mapNotNull null
 
-                    val storedLocation = data["location"]
-
-                    val locationText =
-                        when (storedLocation) {
-                            is String -> storedLocation
-
-                            is GeoPoint ->
-                                "${storedLocation.latitude}, ${storedLocation.longitude}"
-
-                            else -> ""
-                        }
-
-                    val latitude =
-                        (data["latitude"] as? Number)?.toDouble()
-                            ?: (storedLocation as? GeoPoint)?.latitude
-                            ?: 0.0
-
-                    val longitude =
-                        (data["longitude"] as? Number)?.toDouble()
-                            ?: (storedLocation as? GeoPoint)?.longitude
-                            ?: 0.0
-
-                    val description =
-                        data["description"] as? String
-                            ?: data["amenities"] as? String
-                            ?: ""
-
-                    val rating =
-                        (data["rating"] as? Number)?.toDouble()
-                            ?: (data["averageRating"] as? Number)?.toDouble()
-
-                    val maxOccupancy =
-                        (data["maxOccupancy"] as? Number)?.toInt()
-                            ?: (data["maximumOccupancy"] as? Number)?.toInt()
-                            ?: 0
-
-                    val tags =
-                        (data["tags"] as? List<*>)
-                            ?.filterIsInstance<String>()
-                            ?: emptyList()
-
-                    Campsite(
-                        id = document.id,
-                        ownerId = data["ownerId"] as? String ?: "",
-                        name = data["name"] as? String ?: "",
-                        location = locationText,
-                        description = description,
-                        maxOccupancy = maxOccupancy,
-                        latitude = latitude,
-                        longitude = longitude,
-                        rating = rating,
-                        imageUrl = data["imageUrl"] as? String,
-                        tags = tags,
-                    )
+                    campsiteFromDocument(document.id, data)
                 } catch (exception: Exception) {
                     Log.e(
                         "CampsiteController",

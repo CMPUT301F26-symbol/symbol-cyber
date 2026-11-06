@@ -1,7 +1,6 @@
 /*
  * Campsite.kt
  * Represents a campsite registered by an owner and viewed by entrants.
- * Known issues: Firestore persistence is not connected yet.
  */
 
 package com.example.code.model
@@ -20,6 +19,10 @@ package com.example.code.model
  * @property rating average campsite rating, or null if there are no ratings yet.
  * @property imageUrl optional promotional image URL.
  * @property tags descriptive campsite tags.
+ * @property price optional advertised price; null when unspecified.
+ * @property currency optional currency code stored with the price.
+ * @property rules campsite rules supplied by the owner.
+ * @property cancellationPolicy cancellation terms supplied by the owner.
  */
 data class Campsite(
     val id: String = "",
@@ -33,4 +36,8 @@ data class Campsite(
     val rating: Double? = null,
     val imageUrl: String? = null,
     val tags: List<String> = emptyList(),
+    val price: Double? = null,
+    val currency: String? = null,
+    val rules: String = "",
+    val cancellationPolicy: String = "",
 )

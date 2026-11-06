@@ -54,6 +54,7 @@ import com.example.code.ui.common.PlaceholderScreen
 import com.example.code.ui.common.ProfileScreen
 import com.example.code.ui.entrant.CampsiteDetailsDestination
 import com.example.code.ui.entrant.ExploreScreen
+import com.example.code.ui.entrant.CampsiteScanRoute
 import com.example.code.ui.owner.OwnerCampsitesScreen
 import com.example.code.ui.owner.OwnerCampsiteDetailsDestination
 import com.example.code.ui.owner.RegisterCampsiteScreen
@@ -337,6 +338,12 @@ private fun DestinationContent(
                 navController.navigate(
                     "entrant/campsite/${Uri.encode(campsite.id)}"
                 )
+            },
+        )
+
+        Destination.ENTRANT_SCAN -> CampsiteScanRoute(
+            onOpenCampsite = { campsiteId ->
+                navController.navigate("entrant/campsite/${Uri.encode(campsiteId)}") { launchSingleTop = true }
             },
         )
 

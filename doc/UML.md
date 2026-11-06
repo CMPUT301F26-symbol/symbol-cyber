@@ -1,5 +1,20 @@
 # UML Class Diagrams
 
+Updated November 6, 2026 with the diagram supplied by Dean.
+
+## Current UML diagram
+
+[![Updated UML class diagram](https://raw.githubusercontent.com/wiki/CMPUT301F26-symbol/symbol-cyber/images/uml/updated.drawio.svg)](https://raw.githubusercontent.com/wiki/CMPUT301F26-symbol/symbol-cyber/images/uml/updated.drawio.svg)
+
+[Open the full-size original SVG](https://raw.githubusercontent.com/wiki/CMPUT301F26-symbol/symbol-cyber/images/uml/updated.drawio.svg). The file is preserved unchanged, including its embedded draw.io data. Download it and open it in diagrams.net to edit the diagram.
+
+## Earlier implementation views
+
+The earlier code-linked diagrams are retained below as a separate implementation snapshot.
+
+<details>
+<summary>Show the earlier implementation diagrams and notes</summary>
+
 This page documents the implemented object-oriented design of Symbol. Weekly planning remains in [Sprint Planning and Reviews](https://github.com/CMPUT301F26-symbol/symbol-cyber/wiki/Sprint-Planning-and-Reviews), and milestone feedback remains in [Project Part 2 Feedback](https://github.com/CMPUT301F26-symbol/symbol-cyber/wiki/Project-Part-2-Feedback).
 
 **Design snapshot:** main [`1c98fd0`](https://github.com/CMPUT301F26-symbol/symbol-cyber/commit/1c98fd020d386731743e2c413e004393b45240fa), checked November 6, 2026. These diagrams describe existing code rather than claiming every backlog story is complete. Selected attributes and public methods are shown; signatures abbreviate parameter types, coroutine modifiers and defaults. Important nullable results are explained below each diagram.
@@ -428,3 +443,5 @@ The table maps implemented collaborators and does not certify full acceptance of
 Update this page when a model, public controller API or repository relationship changes. Editable Mermaid sources are kept with the repository's `doc/uml/` directory and the versioned page is `doc/UML.md`. Preserve the code snapshot when describing an older design. The [CRC Cards](https://github.com/CMPUT301F26-symbol/symbol-cyber/wiki/CRC-Cards) remain the analysis/design history; this page records the implementation snapshot.
 
 AI assistance: Codex (OpenAI) assisted with reading the implemented classes, organizing the diagrams and drafting this page. No new application behavior, deployment or TA acceptance is claimed by the documentation.
+
+</details>

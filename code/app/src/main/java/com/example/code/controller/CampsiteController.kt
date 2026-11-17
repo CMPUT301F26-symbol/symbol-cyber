@@ -2,6 +2,7 @@
  * CampsiteController.kt
  * Manages campsite data shared between owner and entrant screens.
  * Campsites are persisted in Cloud Firestore and exposed to the UI as StateFlow.
+ * Known issue is that updating a campsite rewrites the whole document, so old fields like amenities on very old test campsites are lost.
  */
 
 package com.example.code.controller
@@ -96,6 +97,28 @@ class CampsiteController : ViewModel() {
         documentReference.set(campsiteToSave)
             .addOnSuccessListener { onSuccess() }
             .addOnFailureListener { onFailure("Could not save campsite. Try again.") }
+    }
+
+    /**
+     * Saves an owner's changes to an existing campsite in Firestore.
+     *
+     * The whole campsite is saved again under its id, so the change shows
+     * everywhere the campsite is listed.
+     *
+     * @param campsite the edited campsite, with its id and owner kept
+     * @param onSuccess called once Firestore has saved the changes
+     * @param onFailure called with an error message if the changes were not saved
+     */
+    fun updateCampsite(campsite: Campsite, onSuccess: () -> Unit, onFailure: (String) -> Unit) {
+        // Can't update a campsite that was never saved
+        if (campsite.id.isBlank()) {
+            onFailure("Could not save changes. Try again.")
+            return
+        }
+
+        campsiteCollection.document(campsite.id).set(campsite)
+            .addOnSuccessListener { onSuccess() }
+            .addOnFailureListener { onFailure("Could not save changes. Try again.") }
     }
 
     /**

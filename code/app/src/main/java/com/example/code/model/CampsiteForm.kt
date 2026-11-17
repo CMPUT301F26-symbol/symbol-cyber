@@ -1,4 +1,4 @@
-// Checks what an owner typed in the register campsite form and turns it into a Campsite.
+// Checks what an owner typed in the register or edit campsite form and turns it into a Campsite.
 // AI use: Claude (Anthropic) suggested moving the form checks out of the screen into this function so they can be unit tested.
 package com.example.code.model
 
@@ -56,5 +56,27 @@ fun campsiteFromForm(
             .filter { it.isNotEmpty() },
         // Leave it empty if no image was given
         imageUrl = imageUrl.trim().ifBlank { null },
+    )
+}
+
+/**
+ * Copies the details changed in the form onto an existing campsite.
+ *
+ * Everything the form doesn't show (id, owner, rating, price, rules...) is kept.
+ *
+ * @param original the campsite as it was before editing
+ * @param edited the campsite built from the edit form
+ * @return the original campsite with the form's details
+ */
+fun updateFromForm(original: Campsite, edited: Campsite): Campsite {
+    return original.copy(
+        name = edited.name,
+        location = edited.location,
+        description = edited.description,
+        maxOccupancy = edited.maxOccupancy,
+        latitude = edited.latitude,
+        longitude = edited.longitude,
+        tags = edited.tags,
+        imageUrl = edited.imageUrl,
     )
 }

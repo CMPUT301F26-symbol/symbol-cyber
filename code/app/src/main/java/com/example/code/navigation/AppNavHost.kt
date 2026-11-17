@@ -176,6 +176,11 @@ fun AppNavHost(
                     )
                 }
             },
+            onNotificationPreferenceChange = { enabled ->
+                coroutineScope.launch {
+                    userController.updateNotificationPreference(enabled)
+                }
+            },
             campsiteController = campsiteController,
             waitingListController = waitingListController,
             reservationController = reservationController,
@@ -200,6 +205,7 @@ private fun ModeShell(
     userIsSaving: Boolean,
     userError: String?,
     onSaveProfile: (String, String, String) -> Unit,
+    onNotificationPreferenceChange: (Boolean) -> Unit,
     campsiteController: CampsiteController,
     waitingListController: WaitingListController,
     reservationController: ReservationController,
@@ -273,6 +279,7 @@ private fun ModeShell(
                             userIsSaving = userIsSaving,
                             userError = userError,
                             onSaveProfile = onSaveProfile,
+                            onNotificationPreferenceChange = onNotificationPreferenceChange,
                             navController = navController,
                             campsiteController = campsiteController,
                             lotteries = lotteries,
@@ -485,6 +492,7 @@ private fun DestinationContent(
     userIsSaving: Boolean,
     userError: String?,
     onSaveProfile: (String, String, String) -> Unit,
+    onNotificationPreferenceChange: (Boolean) -> Unit,
     navController: NavHostController,
     campsiteController: CampsiteController,
     lotteries: List<Lottery>,
@@ -677,6 +685,7 @@ private fun DestinationContent(
                 isSaving = userIsSaving,
                 errorMessage = userError,
                 onSaveProfile = onSaveProfile,
+                onNotificationPreferenceChange = onNotificationPreferenceChange,
                 onSwitchMode = onSwitchMode,
             )
 

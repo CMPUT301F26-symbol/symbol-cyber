@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material3.Button
@@ -21,6 +23,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.Switch
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -28,7 +31,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.example.code.User
 import com.example.code.navigation.AppMode
@@ -42,6 +48,7 @@ import com.example.code.navigation.AppMode
  * @param isSaving whether a profile save is in progress.
  * @param errorMessage validation or persistence error to display.
  * @param onSaveProfile called when the user saves profile information.
+ * @param onNotificationPreferenceChange saves a changed notification setting immediately.
  * @param onSwitchMode called when the user taps a different mode.
  */
 @Composable
@@ -54,6 +61,7 @@ fun ProfileScreen(
     onSaveProfile: (String, String, String) -> Unit,
     onSwitchMode: (AppMode) -> Unit,
     modifier: Modifier = Modifier,
+    onNotificationPreferenceChange: ((Boolean) -> Unit)? = null,
 ) {
     var name by remember(user.deviceId, user.name) {
         mutableStateOf(user.name)
@@ -71,6 +79,7 @@ fun ProfileScreen(
         modifier =
             modifier
                 .fillMaxSize()
+                .verticalScroll(rememberScrollState())
                 .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
@@ -125,6 +134,29 @@ fun ProfileScreen(
             } else {
                 Text("Save")
             }
+        }
+
+        if (onNotificationPreferenceChange != null) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text("Receive notifications")
+                Switch(
+                    checked = user.notificationsEnabled,
+                    onCheckedChange = onNotificationPreferenceChange,
+                    enabled = !isSaving,
+                    modifier = Modifier
+                        .testTag("notificationPreferenceSwitch")
+                        .semantics { contentDescription = "Receive notifications" },
+                )
+            }
+            Text(
+                text = "Saves automatically. Turning this off stops new in-app " +
+                    "notifications; existing messages remain visible.",
+                style = MaterialTheme.typography.bodySmall,
+            )
         }
 
         Text(

@@ -1,13 +1,14 @@
 /*
  * UserController.kt
  * Loads the device-based user profile and manages editable profile information.
- * Supports device identification and profile updates.
+ * Supports device identification, profile updates, and notification preferences.
  */
 
 package com.example.code.controller
 
 import com.example.code.User
 import com.example.code.data.UserRepository
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -75,6 +76,7 @@ class UserController(
         email: String,
         phoneNumber: String,
     ): Boolean {
+        if (_isLoading.value) return false
         val currentUser = _currentUser.value ?: return false
 
         if (!isValidEmail(email)) {
@@ -104,6 +106,43 @@ class UserController(
         } catch (exception: Exception) {
             _errorMessage.value =
                 "Failed to save profile: ${exception.message}"
+            false
+        } finally {
+            _isLoading.value = false
+        }
+    }
+
+    /**
+     * Saves the notification preference without changing personal information.
+     * Publishes the new setting only after persistence succeeds.
+     *
+     * @return true if saved, false if unavailable, busy, or saving failed.
+     */
+    suspend fun updateNotificationPreference(enabled: Boolean): Boolean {
+        if (_isLoading.value) return false
+        val user = _currentUser.value ?: return false
+
+        _isLoading.value = true
+        _errorMessage.value = null
+
+        return try {
+            val updatedUser = User(
+                deviceId = user.deviceId,
+                name = user.name,
+                email = user.email,
+                phoneNumber = user.phoneNumber,
+                profilePhotoUrl = user.profilePhotoUrl,
+                notificationsEnabled = enabled,
+                roles = user.roles,
+            )
+            repository.updateUser(updatedUser)
+            _currentUser.value = updatedUser
+            true
+        } catch (exception: CancellationException) {
+            throw exception
+        } catch (exception: Exception) {
+            _errorMessage.value =
+                "Failed to save notification preference: ${exception.message}"
             false
         } finally {
             _isLoading.value = false

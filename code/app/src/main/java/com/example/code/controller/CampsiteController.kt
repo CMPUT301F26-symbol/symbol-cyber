@@ -74,6 +74,21 @@ class CampsiteController : ViewModel() {
     }
 
     /**
+     * Removes the image from a campsite in Firestore, keeping the rest of the campsite.
+     *
+     * Once removed, the image disappears from the admin images list and the campsite details.
+     *
+     * @param campsite the campsite whose image should be removed
+     * @param onSuccess called once Firestore has removed the image
+     * @param onFailure called with an error message if the image was not removed
+     */
+    fun removeCampsiteImage(campsite: Campsite, onSuccess: () -> Unit, onFailure: (String) -> Unit) {
+        campsiteCollection.document(campsite.id).update("imageUrl", null)
+            .addOnSuccessListener { onSuccess() }
+            .addOnFailureListener { onFailure("Could not remove image. Try again.") }
+    }
+
+    /**
      * Saves a new campsite to Firestore under its owner.
      *
      * If the campsite has no owner, or Firestore fails, the campsite is not saved.

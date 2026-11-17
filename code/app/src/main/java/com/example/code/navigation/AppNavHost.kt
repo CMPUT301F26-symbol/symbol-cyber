@@ -53,6 +53,7 @@ import com.example.code.model.Reservation
 import com.example.code.model.ownedCampsites
 import com.example.code.model.updateFromForm
 import com.example.code.ui.admin.AdminCampsitesScreen
+import com.example.code.ui.admin.AdminImagesScreen
 import com.example.code.ui.admin.AdminProfileRemovalRoute
 import com.example.code.ui.common.PlaceholderScreen
 import com.example.code.ui.common.ProfileScreen
@@ -640,6 +641,23 @@ private fun DestinationContent(
                 },
                 onRemoveCampsite = { campsite, showError ->
                     campsiteController.removeCampsite(
+                        campsite,
+                        onSuccess = {},
+                        onFailure = { message ->
+                            showError(message)
+                        },
+                    )
+                },
+            )
+
+        Destination.ADMIN_IMAGES ->
+            AdminImagesScreen(
+                campsites = campsites,
+                isLoading = isLoading,
+                errorMessage = loadError,
+                onRetry = campsiteController::retryLoading,
+                onRemoveImage = { campsite, showError ->
+                    campsiteController.removeCampsiteImage(
                         campsite,
                         onSuccess = {},
                         onFailure = { message ->

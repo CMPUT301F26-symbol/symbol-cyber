@@ -56,13 +56,54 @@ class DrawControllerTest {
     fun winnersAreNotified() = runBlocking {
         val result = controller.drawIfDue(lottery())!!
 
-        assertEquals(result.winners.map { it.entrantId }, notifications.sent.map { it.recipientId })
-        notifications.sent.forEach {
+        val winnerNotifications = notifications.sent.filter {
+            it.type == AppNotification.TYPE_LOTTERY_WON
+        }
+        assertEquals(result.winners.map { it.entrantId }, winnerNotifications.map { it.recipientId })
+        winnerNotifications.forEach {
             assertEquals(AppNotification.TYPE_LOTTERY_WON, it.type)
             assertEquals("You won Jasper Riverside!", it.title)
             assertEquals(lotteryId, it.lotteryId)
             assertEquals(now, it.createdAt)
         }
+    }
+
+    @Test
+    fun nonWinnersReceiveTheirOwnOutcomeNotification() = runBlocking {
+        val result = controller.drawIfDue(lottery())!!
+        val nonWinnerNotifications = notifications.sent.filter {
+            it.type == AppNotification.TYPE_LOTTERY_NOT_SELECTED
+        }
+        assertEquals(result.notSelected.map { it.entrantId }, nonWinnerNotifications.map { it.recipientId })
+        nonWinnerNotifications.forEach {
+            assertEquals("Lottery result: Jasper Riverside", it.title)
+            assertEquals(
+                "You were not selected this time. You can explore other campsites and lotteries.",
+                it.message,
+            )
+            assertEquals(lotteryId, it.lotteryId)
+            assertEquals("Jasper Riverside", it.campsiteName)
+            assertEquals(now, it.createdAt)
+        }
+        val allEntrants = result.winners + result.notSelected
+        assertEquals(allEntrants.size, notifications.sent.size)
+        assertEquals(allEntrants.size, notifications.sent.map { it.recipientId }.toSet().size)
+    }
+
+    @Test
+    fun everyoneWinningProducesNoNonWinnerNotifications() = runBlocking {
+        lotteries.waitingLists.value = mapOf(lotteryId to listOf(TestData.priya))
+        val result = controller.drawIfDue(lottery())!!
+        assertTrue(result.notSelected.isEmpty())
+        assertEquals(1, notifications.sent.size)
+        assertEquals(AppNotification.TYPE_LOTTERY_WON, notifications.sent.single().type)
+    }
+
+    @Test
+    fun emptyWaitingListProducesNoNotifications() = runBlocking {
+        lotteries.waitingLists.value = mapOf(lotteryId to emptyList())
+        assertNotNull(controller.drawIfDue(lottery()))
+        assertTrue(notifications.sent.isEmpty())
     }
 
     @Test

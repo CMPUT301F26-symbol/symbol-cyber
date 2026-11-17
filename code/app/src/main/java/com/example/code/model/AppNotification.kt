@@ -17,7 +17,7 @@ package com.example.code.model
  * @property senderId device ID of the sender, or empty if the system sent it.
  * @property lotteryId lottery the notification is about.
  * @property campsiteName campsite name, for display.
- * @property type [TYPE_WAITLIST_MESSAGE] or [TYPE_LOTTERY_WON].
+ * @property type [TYPE_WAITLIST_MESSAGE], [TYPE_LOTTERY_WON], or [TYPE_LOTTERY_NOT_SELECTED].
  * @property title short heading.
  * @property message body text.
  * @property createdAt time sent, in milliseconds since the epoch.
@@ -39,5 +39,8 @@ data class AppNotification(
 
         /** Entrant was drawn as a lottery winner (US 01.03.01). */
         const val TYPE_LOTTERY_WON = "LOTTERY_WON"
+
+        /** Entrant was not selected in a lottery (US 01.03.02). */
+        const val TYPE_LOTTERY_NOT_SELECTED = "LOTTERY_NOT_SELECTED"
     }
 }

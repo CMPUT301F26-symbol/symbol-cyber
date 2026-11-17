@@ -32,6 +32,7 @@ import com.example.code.controller.LotteryController
 import com.example.code.model.Lottery
 import com.example.code.model.WaitingListEntry
 import com.example.code.ui.common.formatDateTime
+import com.example.code.ui.common.LotteryCampsiteList
 
 /**
  * Shows the entrants on [lottery]'s waiting list.
@@ -61,6 +62,7 @@ fun OwnerWaitingListScreen(
     ) {
         TextButton(onClick = onBack) { Text("Back") }
         Text("Waiting list: ${lottery.campsiteName}", style = MaterialTheme.typography.headlineSmall)
+        LotteryCampsiteList(lottery)
         Text("${entries.size} entrants joined")
 
         Button(

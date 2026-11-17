@@ -1,0 +1,51 @@
+classDiagram
+    direction TB
+    class LotteryController {
+        <<object>>
+        +publishLottery(repository, campsite, ownerId, settings) String
+        +validateCreation(lottery)
+        +isRegistrationOpen(lottery, now) Boolean
+        +hasRoom(lottery) Boolean
+    }
+    class WaitingListController {
+        +Flow allLotteries
+        +waitingList(lotteryId) Flow
+        +join(lottery, entrantId, entrantName) JoinResult
+        +leave(lottery, entrantId) Boolean
+        +notifyWaitingList(lottery, senderId, entries, message) Int
+    }
+    class DrawController {
+        +drawIfDue(lottery) DrawResult?
+        +drawAllDue(all) Int
+        +isDue(lottery, now) Boolean
+        +pickWinners(entries, winnerCount, random) DrawResult
+    }
+    class LotteryCreationRepository {
+        <<interface>>
+        +createLottery(lottery) String
+    }
+    class LotteryRepository {
+        <<interface>>
+        +observeLotteries() Flow
+        +observeWaitingList(lotteryId) Flow
+        +joinWaitingList(lotteryId, entry) JoinResult
+        +leaveWaitingList(lotteryId, entrantId) Boolean
+        +getWaitingList(lotteryId) List
+        +completeDraw(lotteryId, winnerIds, notSelectedIds, drawnAt) Boolean
+    }
+    class NotificationRepository {
+        <<interface>>
+        +sendAll(notifications)
+        +notificationsFor(recipientId) Flow
+    }
+    class FirestoreLotteryRepository
+    class FirestoreNotificationRepository
+    LotteryController ..> LotteryCreationRepository : publishes settings
+    WaitingListController --> LotteryRepository
+    WaitingListController --> NotificationRepository
+    WaitingListController ..> LotteryController : registration rules
+    DrawController --> LotteryRepository
+    DrawController --> NotificationRepository
+    FirestoreLotteryRepository ..|> LotteryRepository
+    FirestoreLotteryRepository ..|> LotteryCreationRepository
+    FirestoreNotificationRepository ..|> NotificationRepository

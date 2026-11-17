@@ -1,0 +1,46 @@
+classDiagram
+    direction TB
+    class AdminProfileController {
+        -String currentProfileId
+        +observe() Flow
+        +remove(profileId) AdminRemovalResult
+    }
+    class AdminAuthorization {
+        <<interface>>
+        +isAdmin() Boolean
+    }
+    class FirebaseAdminAuthorization
+    class AdminProfileRepository {
+        <<interface>>
+        +observeProfiles() Flow
+        +removeProfile(profileId) Boolean
+    }
+    class FirestoreAdminProfileRepository
+    class AdminProfile {
+        +String id
+        +String name
+        +String email
+        +String phone
+    }
+    class AdminProfilesState {
+        +Boolean loading
+        +Boolean authorized
+        +List~AdminProfile~ profiles
+        +String? error
+    }
+    class AdminRemovalResult {
+        <<enumeration>>
+        REMOVED
+        ALREADY_REMOVED
+        DENIED
+        INVALID
+        FAILED
+    }
+    AdminProfileController --> AdminAuthorization : verifies access
+    AdminProfileController --> AdminProfileRepository
+    AdminProfileController ..> AdminProfilesState : emits list state
+    AdminProfileController ..> AdminRemovalResult : reports outcome
+    AdminProfilesState --> AdminProfile : current rows
+    AdminProfileRepository ..> AdminProfile : reads user document view
+    FirebaseAdminAuthorization ..|> AdminAuthorization
+    FirestoreAdminProfileRepository ..|> AdminProfileRepository

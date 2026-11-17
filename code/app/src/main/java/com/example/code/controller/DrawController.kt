@@ -2,12 +2,12 @@
  * DrawController.kt
  * Runs the automatic lottery draw (US 02.05.01): once a lottery's
  * registration period has ended, picks winners from its waiting list,
- * records the result and sends each winner an in-app notification.
+ * records the result and sends winners and non-winners in-app notifications.
  * There is no server, so any device with the app open runs the draw; a
  * Firestore transaction makes sure only one of them succeeds.
  * Known issues: a lottery is drawn only when some device has the app open
- * after registration closes; entrants who were not selected get no
- * notification yet (US 01.03.02).
+ * after registration closes. Notification saves occur after the draw commits;
+ * a failed delivery is not automatically retried.
  */
 
 package com.example.code.controller
@@ -24,7 +24,7 @@ import kotlin.random.Random
  * Draws lottery winners when registration has ended.
  *
  * @param lotteries where lotteries and waiting lists are read and updated.
- * @param notifications where winner notifications are saved.
+ * @param notifications where lottery outcome notifications are saved.
  * @param clock current time in milliseconds; replaceable in tests.
  * @param random source of randomness; seeded in tests.
  */
@@ -64,6 +64,16 @@ class DrawController(
                     type = AppNotification.TYPE_LOTTERY_WON,
                     title = "You won ${lottery.campsiteName}!",
                     message = "Open the campsite to accept your reservation.",
+                    createdAt = now,
+                )
+            } + result.notSelected.map { entrant ->
+                AppNotification(
+                    recipientId = entrant.entrantId,
+                    lotteryId = lottery.id,
+                    campsiteName = lottery.campsiteName,
+                    type = AppNotification.TYPE_LOTTERY_NOT_SELECTED,
+                    title = "Lottery result: ${lottery.campsiteName}",
+                    message = "You were not selected this time. You can explore other campsites and lotteries.",
                     createdAt = now,
                 )
             },

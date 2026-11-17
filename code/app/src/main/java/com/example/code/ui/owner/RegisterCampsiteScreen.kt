@@ -1,4 +1,4 @@
-// Form where an owner registers a new campsite. Known issues: image is a link, not an upload.
+// Form where an owner registers a new campsite or edits one of theirs. Known issue is that the image is a link, not an upload.
 // AI use: Claude (Anthropic) helped find and fix the double-tap duplicate save bug (isSaving).
 
 package com.example.code.ui.owner
@@ -25,24 +25,30 @@ import com.example.code.model.Campsite
 import com.example.code.model.campsiteFromForm
 
 /**
- * Displays the campsite registration form.
+ * Displays the campsite registration form, or the edit form when a campsite is given.
  *
- * @param onRegister called with the new campsite and a way to show an error if saving fails
- * @param onBack called when the owner goes back without registering
+ * @param onRegister called with the filled-in campsite and a way to show an error if saving fails
+ * @param onBack called when the owner goes back without saving
+ * @param campsite the campsite being edited, or null to register a new one
  */
 @Composable
 fun RegisterCampsiteScreen(
     onRegister: (Campsite, (String) -> Unit) -> Unit,
     onBack: () -> Unit,
+    campsite: Campsite? = null,
 ) {
-    var name by remember { mutableStateOf("") }
-    var location by remember { mutableStateOf("") }
-    var description by remember { mutableStateOf("") }
-    var maxOccupancy by remember { mutableStateOf("") }
-    var latitude by remember { mutableStateOf("") }
-    var longitude by remember { mutableStateOf("") }
-    var tags by remember { mutableStateOf("") }
-    var imageUrl by remember { mutableStateOf("") }
+    // Start with the campsite's current details when editing
+    var name by remember { mutableStateOf(campsite?.name ?: "") }
+    var location by remember { mutableStateOf(campsite?.location ?: "") }
+    var description by remember { mutableStateOf(campsite?.description ?: "") }
+    var maxOccupancy by remember { mutableStateOf(campsite?.maxOccupancy?.toString() ?: "") }
+    var latitude by remember { mutableStateOf(campsite?.latitude?.toString() ?: "") }
+    var longitude by remember { mutableStateOf(campsite?.longitude?.toString() ?: "") }
+    var tags by remember { mutableStateOf(campsite?.tags?.joinToString(", ") ?: "") }
+    var imageUrl by remember { mutableStateOf(campsite?.imageUrl ?: "") }
+
+    val title = if (campsite == null) "Register campsite" else "Edit campsite"
+    val buttonText = if (campsite == null) "Register campsite" else "Save changes"
 
     var errorMessage by remember { mutableStateOf<String?>(null) }
 
@@ -56,7 +62,7 @@ fun RegisterCampsiteScreen(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Text("Register campsite")
+        Text(title)
 
         OutlinedTextField(
             value = name,
@@ -120,19 +126,19 @@ fun RegisterCampsiteScreen(
 
         Button(
             onClick = {
-                val campsite = campsiteFromForm(
+                val filledCampsite = campsiteFromForm(
                     name, location, description, maxOccupancy,
                     latitude, longitude, tags, imageUrl,
                 )
 
-                if (campsite == null) {
+                if (filledCampsite == null) {
                     errorMessage = "Please complete all required fields with valid values."
                 } else {
                     errorMessage = null
                     isSaving = true
 
                     // Show the error if saving fails and let them try again
-                    onRegister(campsite) { message ->
+                    onRegister(filledCampsite) { message ->
                         errorMessage = message
                         isSaving = false
                     }
@@ -141,7 +147,7 @@ fun RegisterCampsiteScreen(
             enabled = !isSaving,
             modifier = Modifier.fillMaxWidth().testTag("registerButton"), // for testing
         ) {
-            Text("Register campsite")
+            Text(buttonText)
         }
 
         Button(

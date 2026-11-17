@@ -51,6 +51,7 @@ import com.example.code.data.LotteryCreationRepository
 import com.example.code.model.Lottery
 import com.example.code.model.Reservation
 import com.example.code.model.ownedCampsites
+import com.example.code.model.updateFromForm
 import com.example.code.ui.admin.AdminCampsitesScreen
 import com.example.code.ui.admin.AdminProfileRemovalRoute
 import com.example.code.ui.common.PlaceholderScreen
@@ -64,6 +65,8 @@ import com.example.code.ui.owner.RegisterCampsiteScreen
 import kotlinx.coroutines.launch
 
 private const val OWNER_CAMPSITE_DETAILS_ROUTE = "owner/campsite/{campsiteId}"
+
+private const val OWNER_EDIT_CAMPSITE_ROUTE = "owner/campsite/{campsiteId}/edit"
 
 private const val CAMPSITE_DETAILS_ROUTE =
     "entrant/campsite/{campsiteId}"
@@ -310,7 +313,53 @@ private fun ModeShell(
                                 settings,
                             )
                         },
+                        onEditCampsite = { campsite ->
+                            navController.navigate(
+                                "owner/campsite/${Uri.encode(campsite.id)}/edit",
+                            )
+                        },
                     )
+                }
+
+                composable(
+                    route = OWNER_EDIT_CAMPSITE_ROUTE,
+                    arguments =
+                        listOf(
+                            navArgument("campsiteId") {
+                                type = NavType.StringType
+                            },
+                        ),
+                ) { editEntry ->
+                    val campsiteId =
+                        editEntry.arguments?.getString("campsiteId")
+
+                    // Only look in the owner's own campsites, so nobody else can edit it
+                    val campsite =
+                        ownedCampsites(campsites, deviceId)
+                            .firstOrNull { it.id == campsiteId }
+
+                    if (campsite == null) {
+                        Text("Campsite not found.")
+                    } else {
+                        RegisterCampsiteScreen(
+                            campsite = campsite,
+                            onRegister = { edited, showError ->
+                                campsiteController.updateCampsite(
+                                    updateFromForm(campsite, edited),
+                                    // Only go back once it's saved
+                                    onSuccess = {
+                                        navController.popBackStack()
+                                    },
+                                    onFailure = { message ->
+                                        showError(message)
+                                    },
+                                )
+                            },
+                            onBack = {
+                                navController.popBackStack()
+                            },
+                        )
+                    }
                 }
             }
 

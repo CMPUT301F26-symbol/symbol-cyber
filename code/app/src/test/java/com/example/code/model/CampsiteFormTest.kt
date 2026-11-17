@@ -1,4 +1,4 @@
-// Unit tests for turning the register campsite form into a Campsite.
+// Unit tests for turning the register or edit campsite form into a Campsite.
 // AI use: Claude (Anthropic) wrote these tests from the list of form rules; reviewed and run by Fahad.
 package com.example.code.model
 
@@ -89,5 +89,48 @@ class CampsiteFormTest {
         // verify spaces around the text are removed
         assertEquals("Lake Louise Site 12", campsite?.name)
         assertEquals("Banff, AB", campsite?.location)
+    }
+
+    // A campsite that is already saved, with fields the form doesn't show
+    private val savedCampsite = Campsite(
+        id = "site-0",
+        ownerId = "owner-device-7f3a",
+        name = "Lake Louise Site 12",
+        location = "Banff, AB",
+        description = "Fire pit, picnic table",
+        maxOccupancy = 6,
+        latitude = 51.4254,
+        longitude = -116.1773,
+        rating = 4.5,
+        price = 35.0,
+        currency = "CAD",
+        rules = "Quiet hours after 10 PM",
+    )
+
+    @Test
+    fun updateFromForm_nameAndOccupancyChanged_detailsUpdated() {
+        val edited = fillForm(name = "Lake Louise Site 14", maxOccupancy = "4", tags = "lake")!!
+
+        val updated = updateFromForm(savedCampsite, edited)
+
+        // verify the changed details were copied over
+        assertEquals("Lake Louise Site 14", updated.name)
+        assertEquals(4, updated.maxOccupancy)
+        assertEquals(listOf("lake"), updated.tags)
+    }
+
+    @Test
+    fun updateFromForm_anyChange_keepsIdOwnerAndOtherFields() {
+        val edited = fillForm(name = "Lake Louise Site 14")!!
+
+        val updated = updateFromForm(savedCampsite, edited)
+
+        // verify fields the form doesn't show are not lost
+        assertEquals("site-0", updated.id)
+        assertEquals("owner-device-7f3a", updated.ownerId)
+        assertEquals(4.5, updated.rating)
+        assertEquals(35.0, updated.price)
+        assertEquals("CAD", updated.currency)
+        assertEquals("Quiet hours after 10 PM", updated.rules)
     }
 }

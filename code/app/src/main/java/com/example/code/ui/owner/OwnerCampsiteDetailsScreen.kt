@@ -12,6 +12,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import com.example.code.model.Campsite
 import com.example.code.model.Lottery
 import com.example.code.model.ownedCampsites
@@ -40,6 +42,8 @@ fun OwnerCampsiteDetailsDestination(
      * Currently, there is a model class, controller, and a LOtteryRepository", 11-05-2026
      * */
     onPublishLottery: (suspend (Campsite, Lottery) -> String)? = null,
+    // Opens the edit form, which only the owner can reach from here
+    onEditCampsite: ((Campsite) -> Unit)? = null,
 ) {
     val owned = ownedCampsites(campsites, ownerId)
     val campsite = owned.firstOrNull { it.id == campsiteId }
@@ -70,6 +74,14 @@ fun OwnerCampsiteDetailsDestination(
         onRetry = onRetry,
         onBack = onBack,
         lotteryContent = {
+            if (onEditCampsite != null && campsite != null) {
+                Button(
+                    onClick = { onEditCampsite(campsite) },
+                    modifier = Modifier.testTag("editCampsiteButton"), // for testing
+                ) {
+                    Text("Edit campsite")
+                }
+            }
             if (campsite != null) {
                 Button(onClick = { showingQr = true }) { Text("Show promotional QR code") }
             }

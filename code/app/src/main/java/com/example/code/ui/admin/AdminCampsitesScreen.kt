@@ -4,6 +4,7 @@ package com.example.code.ui.admin
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -27,7 +28,7 @@ import androidx.compose.ui.unit.dp
 import com.example.code.model.Campsite
 
 /**
- * Admin home: browse every campsite, open one to see its details, and remove one when needed.
+ * Admin home: browse every campsite, open one to see its details or ratings, and remove one when needed.
  *
  * The admin is asked to confirm before a campsite is removed.
  *
@@ -37,6 +38,7 @@ import com.example.code.model.Campsite
  * @param errorMessage the loading error, or null if loading worked.
  * @param onRetry called when the admin taps Retry after an error.
  * @param onCampsiteClick called with the campsite the admin tapped, to show its details.
+ * @param onRatingsClick called with the campsite whose Ratings button the admin tapped.
  * @param onRemoveCampsite called with the campsite to remove and a way to show an error if removing fails.
  */
 @Composable
@@ -47,6 +49,7 @@ fun AdminCampsitesScreen(
     errorMessage: String? = null,
     onRetry: () -> Unit = {},
     onCampsiteClick: (Campsite) -> Unit = {},
+    onRatingsClick: (Campsite) -> Unit = {},
     onRemoveCampsite: (Campsite, (String) -> Unit) -> Unit = { _, _ -> },
 ) {
     // The campsite the admin tapped Remove on, waiting to be confirmed
@@ -92,6 +95,7 @@ fun AdminCampsitesScreen(
                     AdminCampsiteCard(
                         campsite = campsite,
                         onClick = { onCampsiteClick(campsite) },
+                        onRatings = { onRatingsClick(campsite) },
                         onRemove = { campsiteToRemove = campsite },
                     )
                 }
@@ -135,14 +139,20 @@ fun AdminCampsitesScreen(
 }
 
 /**
- * Displays one campsite that can be tapped for details, with a button to remove it.
+ * Displays one campsite that can be tapped for details, with buttons to see its ratings or remove it.
  *
  * @param campsite the campsite to show.
  * @param onClick called when the admin taps the card.
+ * @param onRatings called when the admin taps Ratings.
  * @param onRemove called when the admin taps Remove.
  */
 @Composable
-private fun AdminCampsiteCard(campsite: Campsite, onClick: () -> Unit, onRemove: () -> Unit) {
+private fun AdminCampsiteCard(
+    campsite: Campsite,
+    onClick: () -> Unit,
+    onRatings: () -> Unit,
+    onRemove: () -> Unit,
+) {
     Card(
         onClick = onClick,
         modifier = Modifier
@@ -159,11 +169,20 @@ private fun AdminCampsiteCard(campsite: Campsite, onClick: () -> Unit, onRemove:
 
             Text("Maximum occupancy: ${campsite.maxOccupancy}")
 
-            Button(
-                onClick = onRemove,
-                modifier = Modifier.testTag("removeButton-${campsite.id}"), // for testing
-            ) {
-                Text("Remove")
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Button(
+                    onClick = onRatings,
+                    modifier = Modifier.testTag("ratingsButton-${campsite.id}"), // for testing
+                ) {
+                    Text("Ratings")
+                }
+
+                Button(
+                    onClick = onRemove,
+                    modifier = Modifier.testTag("removeButton-${campsite.id}"), // for testing
+                ) {
+                    Text("Remove")
+                }
             }
         }
     }

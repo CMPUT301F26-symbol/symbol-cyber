@@ -40,6 +40,7 @@ import com.example.code.User
 import com.example.code.controller.CampsiteController
 import com.example.code.controller.DrawController
 import com.example.code.controller.LotteryController
+import com.example.code.controller.RatingController
 import com.example.code.controller.ReservationController
 import com.example.code.controller.UserController
 import com.example.code.controller.WaitingListController
@@ -52,6 +53,7 @@ import com.example.code.model.Lottery
 import com.example.code.model.Reservation
 import com.example.code.model.ownedCampsites
 import com.example.code.model.updateFromForm
+import com.example.code.ui.admin.AdminCampsiteRatingsScreen
 import com.example.code.ui.admin.AdminCampsitesScreen
 import com.example.code.ui.admin.AdminImagesScreen
 import com.example.code.ui.admin.AdminProfileRemovalRoute
@@ -73,6 +75,8 @@ private const val CAMPSITE_DETAILS_ROUTE =
     "entrant/campsite/{campsiteId}"
 
 private const val ADMIN_CAMPSITE_DETAILS_ROUTE = "admin/campsite/{campsiteId}"
+
+private const val ADMIN_CAMPSITE_RATINGS_ROUTE = "admin/campsite/{campsiteId}/ratings"
 
 private const val OWNER_WAITING_LIST_ROUTE =
     "owner/lottery/{lotteryId}/waiting-list"
@@ -450,6 +454,42 @@ private fun ModeShell(
                         onBack = { navController.popBackStack() },
                     )
                 }
+
+                composable(
+                    route = ADMIN_CAMPSITE_RATINGS_ROUTE,
+                    arguments =
+                        listOf(
+                            navArgument("campsiteId") {
+                                type = NavType.StringType
+                            },
+                        ),
+                ) { ratingsEntry ->
+                    // Only listens for ratings while this screen is open
+                    val ratingController: RatingController = viewModel()
+                    val ratings by ratingController.ratings.collectAsState()
+                    val ratingsLoading by ratingController.isLoading.collectAsState()
+                    val ratingsError by ratingController.errorMessage.collectAsState()
+
+                    val campsiteId = ratingsEntry.arguments?.getString("campsiteId")
+
+                    AdminCampsiteRatingsScreen(
+                        campsite = campsites.firstOrNull { it.id == campsiteId },
+                        ratings = ratings,
+                        isLoading = ratingsLoading,
+                        errorMessage = ratingsError,
+                        onRetry = ratingController::retryLoading,
+                        onBack = { navController.popBackStack() },
+                        onRemoveRating = { rating, showError ->
+                            ratingController.removeRating(
+                                rating,
+                                onSuccess = {},
+                                onFailure = { message ->
+                                    showError(message)
+                                },
+                            )
+                        },
+                    )
+                }
             }
 
             if (mode == AppMode.OWNER) {
@@ -656,6 +696,11 @@ private fun DestinationContent(
                 onCampsiteClick = { campsite ->
                     navController.navigate(
                         "admin/campsite/${Uri.encode(campsite.id)}",
+                    )
+                },
+                onRatingsClick = { campsite ->
+                    navController.navigate(
+                        "admin/campsite/${Uri.encode(campsite.id)}/ratings",
                     )
                 },
                 onRemoveCampsite = { campsite, showError ->

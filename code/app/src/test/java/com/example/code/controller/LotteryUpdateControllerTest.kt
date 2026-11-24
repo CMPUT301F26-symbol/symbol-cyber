@@ -195,9 +195,10 @@ class LotteryUpdateControllerTest {
             LotteryUpdateController.revalidate(original, original.copy(id = "other"), owner,
                 listOf(first), original, 500L)
         }
+        // Shared lotteries can keep other owners' campsites, but the creator can't pull in a new one
         assertThrows(IllegalArgumentException::class.java) {
             LotteryUpdateController.revalidate(original, original, owner,
-                listOf(first.copy(ownerId = "new-owner")), original, 500L)
+                listOf(first, second.copy(ownerId = "new-owner")), original, 500L)
         }
     }
 

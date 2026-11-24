@@ -32,6 +32,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.foundation.layout.Column
+import com.example.code.controller.LotteryController
 import com.example.code.controller.LotteryUpdateController
 import com.example.code.data.FirestoreLotteryRepository
 import com.example.code.data.LotteryUpdateRepository
@@ -156,8 +157,12 @@ fun OwnerLotteriesRoute(
                 ownerId = deviceId,
                 campsites = campsites,
                 onSave = { selected, settings ->
+                    // Keep the campsites other owners added, since only they can change them
+                    val othersCampsites = campsites.filter {
+                        it.ownerId != deviceId && LotteryController.includesCampsite(original, it.id)
+                    }
                     LotteryUpdateController.updateLottery(
-                        updateRepository, original, deviceId, selected, settings, clock,
+                        updateRepository, original, deviceId, selected + othersCampsites, settings, clock,
                     )
                 },
                 onSaved = { editing = null; message = "Lottery updated." },

@@ -62,6 +62,7 @@ import com.example.code.ui.common.PlaceholderScreen
 import com.example.code.ui.common.ProfileScreen
 import com.example.code.ui.entrant.CampsiteDetailsDestination
 import com.example.code.ui.entrant.CampsiteScanRoute
+import com.example.code.ui.entrant.CampsiteReviews
 import com.example.code.ui.entrant.ExploreScreen
 import com.example.code.ui.owner.OwnerCampsiteDetailsDestination
 import com.example.code.ui.owner.OwnerCampsitesScreen
@@ -443,6 +444,9 @@ private fun ModeShell(
                                     }
                                 },
                             )
+                            campsiteId?.takeIf { it.isNotBlank() }?.let {
+                                CampsiteReviews(it, deviceId, reservations)
+                            }
                         },
                     )
                 }

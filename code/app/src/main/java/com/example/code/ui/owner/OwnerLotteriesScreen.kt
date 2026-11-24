@@ -25,6 +25,9 @@ import com.example.code.model.Lottery
 import com.example.code.ui.common.formatDateTime
 import com.example.code.ui.common.LotteryCampsiteList
 import com.example.code.ui.common.formatDateRange
+// The following block(s) of code were generated primarily by GPt-6 Sol, "Please implement US 02.04.06 As a campsite owner, I want to update my campsite lottery listing. Include all UI elements, logic, and test cases", November 24, 2026.
+import androidx.compose.ui.platform.testTag
+import com.example.code.controller.LotteryUpdateController
 
 
 /**
@@ -37,7 +40,11 @@ import com.example.code.ui.common.formatDateRange
 fun OwnerLotteriesScreen(
     lotteries: List<Lottery>,
     onOpenWaitingList: (Lottery) -> Unit,
+    // The following block(s) of code were generated primarily by GPt-6 Sol, "Please implement US 02.04.06 As a campsite owner, I want to update my campsite lottery listing. Include all UI elements, logic, and test cases", November 24, 2026.
     modifier: Modifier = Modifier,
+    onEditLottery: ((Lottery) -> Unit)? = null,
+    statusMessage: String? = null,
+    now: Long = System.currentTimeMillis(),
 ) {
     Column(
         modifier = modifier
@@ -46,6 +53,8 @@ fun OwnerLotteriesScreen(
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Text("My lotteries", style = MaterialTheme.typography.headlineSmall)
+        // The following block(s) of code were generated primarily by GPt-6 Sol, "Please implement US 02.04.06 As a campsite owner, I want to update my campsite lottery listing. Include all UI elements, logic, and test cases", November 24, 2026.
+        statusMessage?.let { Text(it) }
 
         if (lotteries.isEmpty()) {
             Text("You have no lotteries yet.")
@@ -73,6 +82,17 @@ fun OwnerLotteriesScreen(
                         Text("Stay: ${formatDateRange(lottery.bookingStart, lottery.bookingEnd)}")
                         // === US 02.04.02: END identify included campsites and their stay period ===
                         Text("Registration closes ${formatDateTime(lottery.registrationEnd)}")
+                        // The following block(s) of code were generated primarily by GPt-6 Sol, "Please implement US 02.04.06 As a campsite owner, I want to update my campsite lottery listing. Include all UI elements, logic, and test cases", November 24, 2026.
+                        Text("Registration opens ${formatDateTime(lottery.registrationStart)}")
+                        Text("Winners: ${lottery.winnerCount}")
+                        Text("Waiting-list capacity: ${lottery.waitlistCapacity?.toString() ?: "Unlimited"}")
+                        if (onEditLottery != null) {
+                            OutlinedButton(
+                                onClick = { onEditLottery(lottery) },
+                                enabled = LotteryUpdateController.canEdit(lottery, now),
+                                modifier = Modifier.testTag("edit-lottery-${lottery.id}"),
+                            ) { Text("Edit lottery") }
+                        }
                         Text(if (lottery.status == Lottery.STATUS_DRAWN) "Winners drawn" else "Open")
                         OutlinedButton(onClick = { onOpenWaitingList(lottery) }) {
                             Text("Waiting list (${lottery.waitingListCount})")

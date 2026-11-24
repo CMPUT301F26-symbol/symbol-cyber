@@ -68,11 +68,21 @@ class AdminProfileController(
      * Removes a confirmed [profileId] after a fresh authorization check.
      * A missing identity, invalid ID or self-removal cannot reach persistence.
      */
-    suspend fun remove(profileId: String): AdminRemovalResult {
+    suspend fun remove(profileId: String): AdminRemovalResult =
+        moderate(profileId, repository::removeProfile)
+
+    /** Revokes the owner role for a confirmed target after rechecking authorization. */
+    suspend fun revokeOwner(profileId: String): AdminRemovalResult =
+        moderate(profileId, repository::revokeOwner)
+
+    private suspend fun moderate(
+        profileId: String,
+        operation: suspend (String) -> Boolean,
+    ): AdminRemovalResult {
         if (currentProfileId.isBlank() || profileId.isBlank() || '/' in profileId || profileId == currentProfileId) return AdminRemovalResult.INVALID
         return try {
             if (!authorization.isAdmin()) AdminRemovalResult.DENIED
-            else if (repository.removeProfile(profileId)) AdminRemovalResult.REMOVED
+            else if (operation(profileId)) AdminRemovalResult.REMOVED
             else AdminRemovalResult.ALREADY_REMOVED
         } catch (cancelled: CancellationException) {
             throw cancelled

@@ -5,6 +5,7 @@
  */
 package com.example.code.admin
 
+import com.example.code.UserRole
 import com.example.code.data.awaitResult
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
@@ -20,7 +21,7 @@ import kotlinx.coroutines.flow.callbackFlow
  * @property email contact address, if provided.
  * @property phone phone number, if provided.
  */
-data class AdminProfile(val id: String, val name: String = "", val email: String = "", val phone: String = "")
+data class AdminProfile(val id: String, val name: String = "", val email: String = "", val phone: String = "", val isOwner: Boolean = false)
 
 /** Persistence boundary for profile removal; acceptance tests use an in-memory implementation. */
 interface AdminProfileRepository {
@@ -28,6 +29,9 @@ interface AdminProfileRepository {
     fun observeProfiles(): Flow<List<AdminProfile>>
     /** Deactivates and scrubs [profileId]; returns false if already inactive or absent. */
     suspend fun removeProfile(profileId: String): Boolean
+
+    /** Revokes the owner role while preserving the profile and its other roles. */
+    suspend fun revokeOwner(profileId: String): Boolean = error("Owner moderation is unavailable.")
 }
 
 /** Firestore implementation; server rules must enforce the administrator custom claim. */
@@ -46,6 +50,7 @@ class FirestoreAdminProfileRepository(
                     fields["name"] as? String ?: "",
                     fields["email"] as? String ?: "",
                     fields["phoneNumber"] as? String ?: "",
+                    UserRole.CAMPSITE_OWNER.name in (fields["roles"] as? List<*>).orEmpty(),
                 )
             }.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.name.ifBlank { it.id } })
             trySend(rows)
@@ -71,4 +76,21 @@ class FirestoreAdminProfileRepository(
             true
         }.awaitResult()
     }
+    override suspend fun revokeOwner(profileId: String): Boolean {
+        val target = db.collection("users").document(profileId)
+        return db.runTransaction { transaction ->
+            val profile = transaction.get(target)
+            val roles = (profile.get("roles") as? List<*>).orEmpty()
+            if (!profile.exists() || profile.getBoolean("isActive") == false ||
+                profile.get("deletedAt") != null || UserRole.CAMPSITE_OWNER.name !in roles
+            ) return@runTransaction false
+            transaction.update(
+                target,
+                "roles", roles.filterIsInstance<String>().filterNot { it == UserRole.CAMPSITE_OWNER.name },
+                "ownerRevokedAt", FieldValue.serverTimestamp(),
+            )
+            true
+        }.awaitResult()
+    }
+
 }

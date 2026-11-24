@@ -9,6 +9,11 @@ package com.example.code.controller
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.code.admin.FirebaseAdminAuthorization
+import com.example.code.data.awaitResult
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.launch
 import com.example.code.model.Campsite
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
@@ -83,9 +88,34 @@ class CampsiteController : ViewModel() {
      * @param onFailure called with an error message if the image was not removed
      */
     fun removeCampsiteImage(campsite: Campsite, onSuccess: () -> Unit, onFailure: (String) -> Unit) {
-        campsiteCollection.document(campsite.id).update("imageUrl", null)
-            .addOnSuccessListener { onSuccess() }
-            .addOnFailureListener { onFailure("Could not remove image. Try again.") }
+        val expectedImage = campsite.imageUrl
+        if (campsite.id.isBlank() || '/' in campsite.id || expectedImage.isNullOrBlank()) {
+            onFailure("Select a saved campsite image.")
+            return
+        }
+        viewModelScope.launch {
+            try {
+                if (!FirebaseAdminAuthorization().isAdmin()) {
+                    onFailure("Verified administrator access is required to remove images.")
+                    return@launch
+                }
+                val ref = campsiteCollection.document(campsite.id)
+                val removed = db.runTransaction { transaction ->
+                    val record = transaction.get(ref)
+                    if (!record.exists() || record.getString("imageUrl") != expectedImage) {
+                        return@runTransaction false
+                    }
+                    transaction.update(ref, "imageUrl", null)
+                    true
+                }.awaitResult()
+                if (removed) onSuccess()
+                else onFailure("This image changed or was already removed. Refresh the list and try again.")
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                onFailure("Could not remove image. Try again.")
+            }
+        }
     }
 
     /**

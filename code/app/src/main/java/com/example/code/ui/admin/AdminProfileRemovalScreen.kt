@@ -76,6 +76,24 @@ fun AdminProfileRemovalRoute(
         busyId = busyId,
         message = message,
         onProfileClick = { openedId = it },
+        onConfirmRevokeOwner = { id ->
+            if (busyId == null) {
+                busyId = id
+                scope.launch {
+                    message = when (controller.revokeOwner(id)) {
+                        AdminRemovalResult.REMOVED -> "Campsite owner access removed."
+                        AdminRemovalResult.ALREADY_REMOVED -> "This profile no longer has owner access."
+                        AdminRemovalResult.DENIED -> {
+                            retry++
+                            "Administrator access is required."
+                        }
+                        AdminRemovalResult.INVALID -> "Choose another active profile."
+                        AdminRemovalResult.FAILED -> "Could not remove owner access. Try again."
+                    }
+                    busyId = null
+                }
+            }
+        },
         onRefresh = { removedIds = emptySet(); message = null; retry++ },
         onConfirmRemove = { id ->
             if (busyId == null) {
@@ -108,14 +126,34 @@ fun AdminProfileRemovalScreen(
     onRefresh: () -> Unit,
     onConfirmRemove: (String) -> Unit,
     onProfileClick: (String) -> Unit = {},
+    onConfirmRevokeOwner: (String) -> Unit = {},
 ) {
     var pendingId by rememberSaveable { mutableStateOf<String?>(null) }
+    var pendingOwnerId by rememberSaveable { mutableStateOf<String?>(null) }
+    val pendingOwner = state.profiles.firstOrNull { it.id == pendingOwnerId && it.isOwner }
+    if (pendingOwner != null && state.authorized && pendingOwner.id != currentProfileId) {
+        AlertDialog(
+            onDismissRequest = { pendingOwnerId = null },
+            title = { Text("Remove campsite owner access?") },
+            text = { Text("Remove owner privileges for ${pendingOwner.name.ifBlank { pendingOwner.id }} for a policy violation? Their profile and existing records will be kept.") },
+            confirmButton = {
+                Button(
+                    enabled = busyId == null,
+                    onClick = {
+                        pendingOwnerId = null
+                        onConfirmRevokeOwner(pendingOwner.id)
+                    },
+                ) { Text("Confirm owner removal") }
+            },
+            dismissButton = { TextButton(onClick = { pendingOwnerId = null }) { Text("Cancel") } },
+        )
+    }
     val pending = state.profiles.firstOrNull { it.id == pendingId }
     if (pending != null && state.authorized && pending.id != currentProfileId) {
         AlertDialog(
             onDismissRequest = { pendingId = null },
             title = { Text("Remove profile?") },
-            text = { Text("Permanently remove ${pending.name.ifBlank { pending.id }}'s profile? This cannot be undone. Campsite and reservation records are retained.") },
+            text = { Text("Remove ${pending.name.ifBlank { pending.id }}'s profile and its personal details? Campsite and reservation records are retained.") },
             confirmButton = {
                 Button(onClick = { pendingId = null; onConfirmRemove(pending.id) }, enabled = busyId == null) { Text("Confirm removal") }
             },
@@ -142,6 +180,13 @@ fun AdminProfileRemovalScreen(
                                 Text(profile.name.ifBlank { "Unnamed profile" }, style = MaterialTheme.typography.titleMedium)
                                 if (profile.email.isNotBlank()) Text(profile.email)
                                 Text("Profile ID: ${profile.id}")
+                                if (profile.isOwner) Text("Campsite owner")
+                                if (profile.isOwner && profile.id != currentProfileId) {
+                                    TextButton(
+                                        enabled = busyId == null && currentProfileId.isNotBlank(),
+                                        onClick = { pendingOwnerId = profile.id },
+                                    ) { Text("Remove owner access") }
+                                }
                                 if (profile.id == currentProfileId) Text("Your profile")
                                 else Button(
                                     enabled = busyId == null && currentProfileId.isNotBlank(),

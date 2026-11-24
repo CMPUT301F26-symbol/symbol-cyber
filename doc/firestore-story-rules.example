@@ -1,0 +1,91 @@
+// Integration example for Dean's assigned stories.
+// Add inside match /databases/{database}/documents after reviewing existing grants.
+// Server-issued claims: admin=true for administrators and deviceId for bound profiles.
+
+function storyAdmin() {
+  return request.auth != null && request.auth.token.get("admin", false) == true;
+}
+
+function storyDeviceId() {
+  return request.auth == null ? "" : request.auth.token.get("deviceId", "");
+}
+
+function storyProfileActive(data) {
+  return data.get("isActive", true) != false && data.get("deletedAt", null) == null;
+}
+
+function storyOwner(ownerId) {
+  let profile = get(/databases/$(database)/documents/users/$(ownerId));
+  return ownerId != "" && storyDeviceId() == ownerId
+      && storyProfileActive(profile.data)
+      && profile.data.get("roles", []).hasAny(["CAMPSITE_OWNER"]);
+}
+
+function storyValidReview(campsiteId, reservationId) {
+  let stay = get(/databases/$(database)/documents/reservations/$(reservationId)).data;
+  let review = request.resource.data;
+  let entrantId = stay.entrantId;
+  let profile = get(/databases/$(database)/documents/users/$(entrantId)).data;
+  return entrantId != "" && storyDeviceId() == entrantId
+      && storyProfileActive(profile)
+      && stay.campsiteId == campsiteId && stay.status == "ACTIVE"
+      && stay.endDate is int && stay.endDate > 0 && stay.endDate < request.time.toMillis()
+      && exists(/databases/$(database)/documents/campsites/$(campsiteId))
+      && review.keys().hasOnly(["authorName", "body", "createdAt"])
+      && review.authorName == profile.get("name", "")
+      && review.body is string && review.body.size() > 0 && review.body.size() <= 1000
+      && review.body.matches('(?s).*\\S.*') && review.createdAt == request.time;
+}
+
+match /campsites/{campsiteId}/reviews/{reservationId} {
+  allow read: if request.auth != null;
+  allow create: if request.auth != null && storyValidReview(campsiteId, reservationId);
+  // No client update or delete. Transaction creates a single review per reservation.
+}
+
+match /users/{profileId} {
+  // Combine with the existing self-profile reads and default profile creation.
+  // Self create must establish only ENTRANT and no moderation fields.
+  allow get, list: if storyAdmin();
+  allow update: if storyAdmin() && storyDeviceId() != "" && storyDeviceId() != profileId && (
+    (
+      storyProfileActive(resource.data)
+        && request.resource.data.keys().hasOnly(["deviceId", "isActive", "deletedAt"])
+        && request.resource.data.deviceId == profileId
+        && request.resource.data.isActive == false
+        && request.resource.data.deletedAt == request.time
+    ) || (
+      storyProfileActive(resource.data)
+        && resource.data.get("roles", []).hasAny(["CAMPSITE_OWNER"])
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["roles", "ownerRevokedAt"])
+        && request.resource.data.roles == resource.data.roles.removeAll(["CAMPSITE_OWNER"])
+        && request.resource.data.ownerRevokedAt == request.time
+    )
+  );
+  allow update: if storyDeviceId() == profileId && storyProfileActive(resource.data)
+      && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(["name", "email", "phoneNumber", "profilePhotoUrl", "notificationsEnabled"]);
+  // Keep the tombstone. Do not grant an overlapping client delete or unrestricted write.
+}
+
+match /campsites/{campsiteId} {
+  // Combine with existing legitimate owner updates and admin campsite deletion.
+  allow update: if storyAdmin()
+      && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["imageUrl"])
+      && request.resource.data.imageUrl == null;
+}
+
+match /notifications/{notificationId} {
+  allow get, list: if storyAdmin() || (
+      storyDeviceId() != "" && resource.data.recipientId == storyDeviceId()
+  );
+  // Preserve the existing authorized notification writes.
+}
+
+match /reservationMessages/{messageId} {
+  allow get, list: if storyAdmin() || (
+      storyDeviceId() != "" && resource.data.entrantId == storyDeviceId()
+  );
+  // Issue #80 adds the write condition using the corresponding reservation,
+  // its verified owner and entrant, and the live storyOwner(ownerId) check.
+}

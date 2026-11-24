@@ -21,12 +21,16 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
@@ -62,16 +66,18 @@ import com.example.code.ui.admin.AdminCampsiteRatingsScreen
 import com.example.code.ui.admin.AdminCampsiteReviewsScreen
 import com.example.code.ui.admin.AdminCampsitesScreen
 import com.example.code.ui.admin.AdminImagesScreen
+import com.example.code.ui.admin.AdminLogsRoute
 import com.example.code.ui.admin.AdminProfileRemovalRoute
-import com.example.code.ui.common.PlaceholderScreen
 import com.example.code.ui.common.ProfileScreen
 import com.example.code.ui.entrant.CampsiteDetailsDestination
 import com.example.code.ui.entrant.CampsiteScanRoute
+import com.example.code.ui.entrant.CampsiteReviews
 import com.example.code.ui.entrant.ExploreScreen
 import com.example.code.ui.owner.OwnerCampsiteDetailsDestination
 import com.example.code.ui.owner.OwnerCampsitesScreen
 import com.example.code.ui.owner.RegisterCampsiteScreen
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.CancellationException
 
 private const val OWNER_CAMPSITE_DETAILS_ROUTE = "owner/campsite/{campsiteId}"
 
@@ -127,41 +133,66 @@ fun AppNavHost(
     lotteryCreationRepository: LotteryCreationRepository =
         remember { FirestoreLotteryRepository() },
 ) {
-    val userController =
-        remember {
-            UserController(FirestoreUserRepository())
-        }
+    val userRepository = remember { FirestoreUserRepository() }
+    val userController = remember { UserController(userRepository) }
 
     val coroutineScope = rememberCoroutineScope()
     val rawDeviceId = ownerId ?: rememberDeviceId()
-
-    LaunchedEffect(rawDeviceId) {
-        userController.loadOrCreateUser(rawDeviceId)
-    }
 
     val currentUser by userController.currentUser.collectAsState()
     val userIsLoading by userController.isLoading.collectAsState()
     val userError by userController.errorMessage.collectAsState()
     val availableModes by controller.availableModes.collectAsState()
+    var serverUser by remember(rawDeviceId) { mutableStateOf<User?>(null) }
+    var profileObserved by remember(rawDeviceId) { mutableStateOf(false) }
+    var profileWatchError by remember(rawDeviceId) { mutableStateOf(false) }
 
-    LaunchedEffect(currentUser) {
-        currentUser?.let { user ->
-            controller.setAvailableModes(
-                modesForRoles(user.roles),
-            )
+    var profileRetry by remember(rawDeviceId) { mutableIntStateOf(0) }
+    LaunchedEffect(rawDeviceId, profileRetry) {
+        if (!profileObserved) userController.loadOrCreateUser(rawDeviceId)
+        profileWatchError = false
+        if (userController.currentUser.value == null) return@LaunchedEffect
+        try {
+            userRepository.observeUser(rawDeviceId).collect {
+                serverUser = it
+                profileObserved = true
+            }
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Exception) {
+            profileWatchError = true
         }
     }
 
-    if (currentUser == null) {
-        Text(
-            text = userError ?: "Loading user profile...",
-        )
+    val user = if (profileObserved) serverUser else currentUser
+    val roles = user?.roles
+    LaunchedEffect(roles, profileObserved, profileWatchError) {
+        val modes = if (profileObserved && !profileWatchError && roles != null) modesForRoles(roles) else emptySet()
+        controller.setAvailableModes(modes.ifEmpty { setOf(AppMode.ENTRANT) })
+    }
+
+    if (user == null || profileWatchError) {
+        Column {
+            Text(
+                when {
+                    profileWatchError -> "Could not verify your profile."
+                    profileObserved -> "This profile is no longer active."
+                    else -> userError ?: "Loading user profile..."
+                },
+            )
+            if (profileWatchError || (!profileObserved && userError != null)) {
+                TextButton(onClick = { profileRetry++ }) { Text("Retry") }
+            }
+        }
         return
     }
 
-    val user = currentUser!!
     val deviceId = user.deviceId
     val mode by controller.activeMode.collectAsState()
+
+    if (mode != AppMode.ENTRANT &&
+        (!profileObserved || profileWatchError || mode !in modesForRoles(user.roles))
+    ) return
 
     val lotterySnapshot by
     waitingListController.allLotteries.collectAsState(initial = null)
@@ -438,6 +469,9 @@ private fun ModeShell(
                                     }
                                 },
                             )
+                            campsiteId?.takeIf { it.isNotBlank() }?.let {
+                                CampsiteReviews(it, deviceId, reservations)
+                            }
                         },
                     )
                 }
@@ -746,6 +780,8 @@ private fun DestinationContent(
                 controller = reservationController,
             )
 
+        Destination.ADMIN_LOGS -> AdminLogsRoute()
+
         Destination.ADMIN_PROFILES ->
             AdminProfileRemovalRoute(
                 currentProfileId = deviceId,
@@ -813,9 +849,6 @@ private fun DestinationContent(
                 onNotificationPreferenceChange = onNotificationPreferenceChange,
                 onSwitchMode = onSwitchMode,
             )
-
-        else ->
-            PlaceholderScreen(destination.label)
     }
 }
 

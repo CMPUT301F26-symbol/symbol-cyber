@@ -176,9 +176,10 @@ All changes were reviewed, run and tested by me before committing.
 "Help me resolve this merge conflict and keep both changes." prompt. Claude, model Claude Opus 5.5, Anthropic, 6 Nov. 2026, claude.ai/code. (10%)
 
 ## AI Tool Use Disclosure (Part 4)
-**AI Tool Use in US-02.04.02 (95%)** ChatGPT6-Sol was used to write the overwhelming majority of the code for the above user story as well as to help in creating the Unit and Intent Testing files cases for US-02.04.02.
+**AI Tool Use in US-02.04.02, US-02.04.06 (95%)** ChatGPT6-Sol was used to write the overwhelming majority of the code for the above user stories as well as to help in creating the Unit and Intent Testing files cases.
 
-“Please look at my code base and implement User Story 2.04.02"prompt. ChatGPT, model GPT-6.1 Sol, OpenAI, 17 Nov. 2026, chatgpt.com. (95%)
+“Please look at my code base and implement User Story 2.04.02"prompt. ChatGPT, model GPT-6.1 Sol, OpenAI, 24 Nov. 2026, chatgpt.com. (95%)
+"Please implement US 02.04.06 As a campsite owner, I want to update my campsite lottery listing. Include all UI elements, logic, and test cases"prompt. ChatGPT, model GPT-6.1 Sol, OpenAI, 24 Nov. 2026, chatgpt.com. (95%)
 
 ---
 

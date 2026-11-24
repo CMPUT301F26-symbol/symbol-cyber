@@ -1,6 +1,7 @@
 /*
  * WinnerReservationCard.kt
  * Shown on the campsite details lottery card after the draw: a winner
+ * reads the campsite rules and policies and confirms them (US 02.11.01),
  * accepts their reservation, then sees it confirmed or rejected.
  * Known issues: declining a win (US 01.04.03) is not available yet.
  */
@@ -9,11 +10,24 @@ package com.example.code.ui.entrant
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.example.code.model.Reservation
 import com.example.code.model.WaitingListEntry
@@ -26,7 +40,10 @@ import com.example.code.ui.common.formatDateRange
  * @param reservation the entrant's reservation from this lottery, or null.
  * @param busy true while the reservation is being saved.
  * @param statusMessage result of the last action, or null.
- * @param onAccept called when the winner taps "Accept reservation".
+ * @param onAccept called when the winner taps "Accept reservation", with
+ * true if they confirmed the rules and policies.
+ * @param rules campsite rules the winner must read; blank if none.
+ * @param cancellationPolicy campsite cancellation policy; blank if none.
  */
 @Composable
 fun WinnerReservationCard(
@@ -34,15 +51,34 @@ fun WinnerReservationCard(
     reservation: Reservation?,
     busy: Boolean,
     statusMessage: String?,
-    onAccept: () -> Unit,
+    onAccept: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
+    rules: String = "",
+    cancellationPolicy: String = "",
 ) {
     if (myEntry?.status != WaitingListEntry.STATUS_WON) return
+    val mustConfirm = rules.isNotBlank() || cancellationPolicy.isNotBlank()
+    var confirmed by remember { mutableStateOf(false) }
 
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
         when {
-            reservation == null -> Button(onClick = onAccept, enabled = !busy) {
-                Text("Accept reservation")
+            reservation == null -> {
+                if (mustConfirm) {
+                    RulesCard(rules = rules, cancellationPolicy = cancellationPolicy)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .toggleable(value = confirmed, role = Role.Checkbox, onValueChange = { confirmed = it })
+                            .testTag("confirmRules"),
+                    ) {
+                        Checkbox(checked = confirmed, onCheckedChange = null)
+                        Text("I have read and agree to the campsite rules and policies")
+                    }
+                }
+                Button(onClick = { onAccept(confirmed) }, enabled = !busy && (!mustConfirm || confirmed)) {
+                    Text("Accept reservation")
+                }
             }
 
             reservation.status == Reservation.STATUS_REJECTED ->
@@ -59,6 +95,24 @@ fun WinnerReservationCard(
 
         if (statusMessage != null) {
             Text(statusMessage, style = MaterialTheme.typography.bodySmall)
+        }
+    }
+}
+
+/** The campsite rules and cancellation policy the winner must read. */
+@Composable
+private fun RulesCard(rules: String, cancellationPolicy: String) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text("Before you reserve", style = MaterialTheme.typography.titleSmall)
+            if (rules.isNotBlank()) {
+                Text("Campsite rules", style = MaterialTheme.typography.labelLarge)
+                Text(rules)
+            }
+            if (cancellationPolicy.isNotBlank()) {
+                Text("Cancellation policy", style = MaterialTheme.typography.labelLarge)
+                Text(cancellationPolicy)
+            }
         }
     }
 }

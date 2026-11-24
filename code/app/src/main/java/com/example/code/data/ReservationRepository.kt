@@ -92,6 +92,7 @@ fun reservationFromMap(id: String, data: Map<String, Any?>): Reservation = Reser
     status = data["status"] as? String ?: Reservation.STATUS_ACTIVE,
     rejectionReason = data["rejectionReason"] as? String ?: "",
     createdAt = (data["createdAt"] as? Number)?.toLong() ?: 0L,
+    rulesAccepted = data["rulesAccepted"] as? Boolean ?: false,
 )
 
 /** Converts [reservation] to the fields stored in Firestore. */
@@ -107,4 +108,5 @@ fun reservationToMap(reservation: Reservation): Map<String, Any> = mapOf(
     "status" to reservation.status,
     "rejectionReason" to reservation.rejectionReason,
     "createdAt" to reservation.createdAt,
+    "rulesAccepted" to reservation.rulesAccepted,
 )

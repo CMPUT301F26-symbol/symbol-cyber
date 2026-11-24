@@ -26,6 +26,8 @@ package com.example.code.model
  * @property status [STATUS_ACTIVE] or [STATUS_REJECTED].
  * @property rejectionReason owner's reason, if rejected.
  * @property createdAt time the reservation was made.
+ * @property rulesAccepted true if the entrant confirmed reading the campsite
+ * rules and policies before reserving (US 02.11.01).
  */
 data class Reservation(
     val id: String = "",
@@ -40,6 +42,7 @@ data class Reservation(
     val status: String = STATUS_ACTIVE,
     val rejectionReason: String = "",
     val createdAt: Long = 0L,
+    val rulesAccepted: Boolean = false,
 ) {
 
     companion object {

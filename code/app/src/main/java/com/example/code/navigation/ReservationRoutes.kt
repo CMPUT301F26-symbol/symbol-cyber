@@ -58,6 +58,37 @@ fun WinnerReservationContent(
         statusMessage = message,
         rules = campsite?.rules.orEmpty(),
         cancellationPolicy = campsite?.cancellationPolicy.orEmpty(),
+        // US 01.04.01: the winner picks days that are still free on this campsite.
+        availableDays = myEntry?.let {
+            com.example.code.controller.availableDays(
+                lottery,
+                reservations,
+                it.entrantId,
+                campsiteId ?: lottery.campsiteId,
+            )
+        }.orEmpty(),
+        onAcceptStay = { rulesAccepted, first, last ->
+            val entry = myEntry ?: return@WinnerReservationCard
+            busy = true
+            scope.launch {
+                message = try {
+                    val reserved = controller.acceptWin(
+                        lottery,
+                        entry,
+                        campsiteId,
+                        rulesRequired = ReservationController.rulesRequired(campsite),
+                        rulesAccepted = rulesAccepted,
+                        startDate = first,
+                        endDate = last,
+                        others = reservations,
+                    )
+                    if (reserved != null) "Reservation confirmed." else "You already accepted this reservation."
+                } catch (e: Exception) {
+                    "Could not reserve: ${e.message}"
+                }
+                busy = false
+            }
+        },
         onAccept = { rulesAccepted ->
             val entry = myEntry ?: return@WinnerReservationCard
             busy = true

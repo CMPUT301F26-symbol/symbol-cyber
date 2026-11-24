@@ -1,8 +1,8 @@
 /*
  * EntrantReservationsScreen.kt
  * Entrant's Reservations tab (mockup E09): the entrant's active
- * reservations (US 01.06.01).
- * Known issues: past reservations (US 01.06.02) are not shown yet.
+ * reservations (US 01.06.01) and past reservations (US 01.06.02).
+ * Known issues: none.
  */
 
 package com.example.code.ui.entrant
@@ -24,14 +24,16 @@ import com.example.code.model.Reservation
 import com.example.code.ui.common.formatDateRange
 
 /**
- * Lists the entrant's active reservations.
+ * Lists the entrant's active and past reservations.
  *
  * @param reservations active reservations, soonest first.
+ * @param pastReservations reservations whose stay has ended, most recent first.
  */
 @Composable
 fun EntrantReservationsScreen(
     reservations: List<Reservation>,
     modifier: Modifier = Modifier,
+    pastReservations: List<Reservation> = emptyList(),
 ) {
     Column(
         modifier = modifier
@@ -41,24 +43,42 @@ fun EntrantReservationsScreen(
     ) {
         Text("My reservations", style = MaterialTheme.typography.headlineSmall)
 
-        if (reservations.isEmpty()) {
-            Text("You have no active reservations.")
-            return@Column
-        }
-
         LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            items(reservations, key = { it.id }) { reservation ->
-                Card(modifier = Modifier.fillMaxWidth()) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp),
-                    ) {
-                        Text(reservation.campsiteName, style = MaterialTheme.typography.titleMedium)
-                        Text("Stay: ${formatDateRange(reservation.startDate, reservation.endDate)}")
-                        Text("Status: Active")
-                    }
-                }
+            if (reservations.isEmpty()) {
+                item { Text("You have no active reservations.") }
             }
+            items(reservations, key = { it.id }) { reservation ->
+                ReservationCard(reservation, status = "Active")
+            }
+
+            item {
+                Text(
+                    "Past reservations",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(top = 8.dp),
+                )
+            }
+            if (pastReservations.isEmpty()) {
+                item { Text("You have no past reservations.") }
+            }
+            items(pastReservations, key = { "past-${it.id}" }) { reservation ->
+                ReservationCard(reservation, status = "Completed")
+            }
+        }
+    }
+}
+
+/** One reservation: campsite, stay and [status]. */
+@Composable
+private fun ReservationCard(reservation: Reservation, status: String) {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Text(reservation.campsiteName, style = MaterialTheme.typography.titleMedium)
+            Text("Stay: ${formatDateRange(reservation.startDate, reservation.endDate)}")
+            Text("Status: $status")
         }
     }
 }

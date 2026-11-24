@@ -84,12 +84,10 @@ fun WinnerReservationContent(
  */
 @Composable
 fun EntrantReservationsRoute(reservations: List<Reservation>, deviceId: String) {
+    val now = System.currentTimeMillis()
     EntrantReservationsScreen(
-        reservations = ReservationController.activeForEntrant(
-            reservations,
-            deviceId,
-            System.currentTimeMillis(),
-        ),
+        reservations = ReservationController.activeForEntrant(reservations, deviceId, now),
+        pastReservations = com.example.code.controller.pastReservationsForEntrant(reservations, deviceId, now),
     )
 }
 

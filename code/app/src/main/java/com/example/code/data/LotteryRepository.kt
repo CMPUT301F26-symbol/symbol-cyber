@@ -19,6 +19,8 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import com.example.code.model.LotteryCampsite
+import com.example.code.controller.LotteryUpdateController
+import com.example.code.model.Campsite
 
 /** Result of trying to join a waiting list. */
 enum class JoinResult {
@@ -84,9 +86,51 @@ interface LotteryRepository {
 //This class for the FirestoreLotteryReposistory was generated primarily by GPT6-Sol "Based on the required project specifications provided and the existing code, I need help adding in code for US 2.04.01, 03,04, 05, and 07", 11-05-2026
 class FirestoreLotteryRepository(
     private val db: FirebaseFirestore = FirebaseFirestore.getInstance(),
-) : LotteryRepository, LotteryCreationRepository {
+// The following block(s) of code were generated primarily by GPt-6 Sol, "Please implement US 02.04.06 As a campsite owner, I want to update my campsite lottery listing. Include all UI elements, logic, and test cases", November 24, 2026.
+) : LotteryRepository, LotteryCreationRepository, LotteryUpdateRepository {
 
     private val lotteries = db.collection(LOTTERIES)
+    // The following block(s) of code were generated primarily by GPt-6 Sol, "Please implement US 02.04.06 As a campsite owner, I want to update my campsite lottery listing. Include all UI elements, logic, and test cases", November 24, 2026.
+
+    /**
+     * US 02.04.06: Edits listing fields in the original document without
+     * replacing its waiting list, entrant count, draw status, or winner data.
+     */
+    override suspend fun updateLottery(original: Lottery, ownerId: String, changes: Lottery) {
+        require(original.id.isNotBlank() && '/' !in original.id && original.id != "." && original.id != "..") {
+            "A saved lottery is required."
+        }
+        require(changes.id == original.id && changes.ownerId == ownerId) {
+            "The lottery identity or owner cannot change."
+        }
+        LotteryController.validateCreation(changes)
+        val ref = lotteries.document(original.id)
+        val selected = LotteryController.includedCampsites(changes)
+        db.runTransaction { transaction ->
+            val snapshot = transaction.get(ref)
+            require(snapshot.exists()) { "This lottery no longer exists." }
+            val current = lotteryFromMap(snapshot.id, snapshot.data.orEmpty())
+            // All reads precede the write; Firestore retries if a read document changes.
+            val campsiteSnapshots = selected.map {
+                transaction.get(db.collection("campsites").document(it.id))
+            }
+            val savedCampsites = campsiteSnapshots.map { campsite ->
+                require(campsite.exists()) { "A selected campsite no longer exists." }
+                Campsite(
+                    id = campsite.id,
+                    ownerId = campsite.getString("ownerId").orEmpty(),
+                    name = campsite.getString("name").orEmpty(),
+                )
+            }
+            val updated = LotteryUpdateController.revalidate(
+                original, current, ownerId, savedCampsites, changes, System.currentTimeMillis(),
+            )
+            val fields = lotteryUpdateToMap(updated).mapValues { (_, value) ->
+                value ?: FieldValue.delete()
+            }
+            transaction.update(ref, fields)
+        }.awaitResult()
+    }
 
     //Implement owner publication in the existing Firestore repository and lotteries collection.
 

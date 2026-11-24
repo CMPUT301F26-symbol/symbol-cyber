@@ -88,6 +88,9 @@ fun OwnerReservationsScreen(
                     Text(reservation.campsiteName, style = MaterialTheme.typography.titleSmall)
                     Text(reservation.entrantName.ifBlank { "Entrant ${reservation.entrantId.take(6)}" })
                     Text(formatDateRange(reservation.startDate, reservation.endDate))
+                    if (reservation.rulesAccepted) {
+                        Text("Confirmed the campsite rules", style = MaterialTheme.typography.bodySmall)
+                    }
                     OutlinedButton(onClick = { rejecting = reservation }) { Text("Reject") }
                 }
             }

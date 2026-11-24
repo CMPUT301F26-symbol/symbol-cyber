@@ -28,7 +28,7 @@ import androidx.compose.ui.unit.dp
 import com.example.code.model.Campsite
 
 /**
- * Admin home: browse every campsite, open one to see its details or ratings, and remove one when needed.
+ * Admin home: browse every campsite, open one to see its details, ratings or reviews, and remove one when needed.
  *
  * The admin is asked to confirm before a campsite is removed.
  *
@@ -39,6 +39,7 @@ import com.example.code.model.Campsite
  * @param onRetry called when the admin taps Retry after an error.
  * @param onCampsiteClick called with the campsite the admin tapped, to show its details.
  * @param onRatingsClick called with the campsite whose Ratings button the admin tapped.
+ * @param onReviewsClick called with the campsite whose Reviews button the admin tapped.
  * @param onRemoveCampsite called with the campsite to remove and a way to show an error if removing fails.
  */
 @Composable
@@ -50,6 +51,7 @@ fun AdminCampsitesScreen(
     onRetry: () -> Unit = {},
     onCampsiteClick: (Campsite) -> Unit = {},
     onRatingsClick: (Campsite) -> Unit = {},
+    onReviewsClick: (Campsite) -> Unit = {},
     onRemoveCampsite: (Campsite, (String) -> Unit) -> Unit = { _, _ -> },
 ) {
     // The campsite the admin tapped Remove on, waiting to be confirmed
@@ -96,6 +98,7 @@ fun AdminCampsitesScreen(
                         campsite = campsite,
                         onClick = { onCampsiteClick(campsite) },
                         onRatings = { onRatingsClick(campsite) },
+                        onReviews = { onReviewsClick(campsite) },
                         onRemove = { campsiteToRemove = campsite },
                     )
                 }
@@ -139,11 +142,12 @@ fun AdminCampsitesScreen(
 }
 
 /**
- * Displays one campsite that can be tapped for details, with buttons to see its ratings or remove it.
+ * Displays one campsite that can be tapped for details, with buttons to see its ratings or reviews, or remove it.
  *
  * @param campsite the campsite to show.
  * @param onClick called when the admin taps the card.
  * @param onRatings called when the admin taps Ratings.
+ * @param onReviews called when the admin taps Reviews.
  * @param onRemove called when the admin taps Remove.
  */
 @Composable
@@ -151,6 +155,7 @@ private fun AdminCampsiteCard(
     campsite: Campsite,
     onClick: () -> Unit,
     onRatings: () -> Unit,
+    onReviews: () -> Unit,
     onRemove: () -> Unit,
 ) {
     Card(
@@ -175,6 +180,13 @@ private fun AdminCampsiteCard(
                     modifier = Modifier.testTag("ratingsButton-${campsite.id}"), // for testing
                 ) {
                     Text("Ratings")
+                }
+
+                Button(
+                    onClick = onReviews,
+                    modifier = Modifier.testTag("reviewsButton-${campsite.id}"), // for testing
+                ) {
+                    Text("Reviews")
                 }
 
                 Button(

@@ -59,6 +59,9 @@ class AdminCampsitesScreenTest {
     // The campsite whose ratings the admin opened
     private var ratingsCampsite: Campsite? = null
 
+    // The campsite whose reviews the admin opened
+    private var reviewsCampsite: Campsite? = null
+
     // Show a fresh admin screen before every single test
     @Before
     fun setUp() {
@@ -70,6 +73,7 @@ class AdminCampsitesScreenTest {
         retryTapped = false
         openedCampsite = null
         ratingsCampsite = null
+        reviewsCampsite = null
 
         composeTestRule.setContent {
             AdminCampsitesScreen(
@@ -79,6 +83,7 @@ class AdminCampsitesScreenTest {
                 onRetry = { retryTapped = true },
                 onCampsiteClick = { openedCampsite = it },
                 onRatingsClick = { ratingsCampsite = it },
+                onReviewsClick = { reviewsCampsite = it },
                 onRemoveCampsite = { campsite, showError ->
                     // Remove it like Firestore would, or show the error if removing fails
                     if (removeFails) {
@@ -189,5 +194,14 @@ class AdminCampsitesScreenTest {
 
         // verify that campsite's ratings were asked for
         assertEquals(waterton, ratingsCampsite)
+    }
+
+    @Test
+    fun adminCampsites_reviewsTapped_reviewsOpened() {
+        // tap Reviews on one campsite
+        composeTestRule.onNodeWithTag("reviewsButton-site-waterton").performClick()
+
+        // verify that campsite's reviews were asked for
+        assertEquals(waterton, reviewsCampsite)
     }
 }

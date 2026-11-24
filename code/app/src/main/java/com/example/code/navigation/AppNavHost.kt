@@ -41,6 +41,7 @@ import com.example.code.controller.CampsiteController
 import com.example.code.controller.DrawController
 import com.example.code.controller.LotteryController
 import com.example.code.controller.RatingController
+import com.example.code.controller.ReviewController
 import com.example.code.controller.ReservationController
 import com.example.code.controller.UserController
 import com.example.code.controller.WaitingListController
@@ -54,6 +55,7 @@ import com.example.code.model.Reservation
 import com.example.code.model.ownedCampsites
 import com.example.code.model.updateFromForm
 import com.example.code.ui.admin.AdminCampsiteRatingsScreen
+import com.example.code.ui.admin.AdminCampsiteReviewsScreen
 import com.example.code.ui.admin.AdminCampsitesScreen
 import com.example.code.ui.admin.AdminImagesScreen
 import com.example.code.ui.admin.AdminProfileRemovalRoute
@@ -77,6 +79,8 @@ private const val CAMPSITE_DETAILS_ROUTE =
 private const val ADMIN_CAMPSITE_DETAILS_ROUTE = "admin/campsite/{campsiteId}"
 
 private const val ADMIN_CAMPSITE_RATINGS_ROUTE = "admin/campsite/{campsiteId}/ratings"
+
+private const val ADMIN_CAMPSITE_REVIEWS_ROUTE = "admin/campsite/{campsiteId}/reviews"
 
 private const val OWNER_WAITING_LIST_ROUTE =
     "owner/lottery/{lotteryId}/waiting-list"
@@ -490,6 +494,42 @@ private fun ModeShell(
                         },
                     )
                 }
+
+                composable(
+                    route = ADMIN_CAMPSITE_REVIEWS_ROUTE,
+                    arguments =
+                        listOf(
+                            navArgument("campsiteId") {
+                                type = NavType.StringType
+                            },
+                        ),
+                ) { reviewsEntry ->
+                    // Only listens for reviews while this screen is open
+                    val reviewController: ReviewController = viewModel()
+                    val reviews by reviewController.reviews.collectAsState()
+                    val reviewsLoading by reviewController.isLoading.collectAsState()
+                    val reviewsError by reviewController.errorMessage.collectAsState()
+
+                    val campsiteId = reviewsEntry.arguments?.getString("campsiteId")
+
+                    AdminCampsiteReviewsScreen(
+                        campsite = campsites.firstOrNull { it.id == campsiteId },
+                        reviews = reviews,
+                        isLoading = reviewsLoading,
+                        errorMessage = reviewsError,
+                        onRetry = reviewController::retryLoading,
+                        onBack = { navController.popBackStack() },
+                        onRemoveReview = { review, showError ->
+                            reviewController.removeReview(
+                                review,
+                                onSuccess = {},
+                                onFailure = { message ->
+                                    showError(message)
+                                },
+                            )
+                        },
+                    )
+                }
             }
 
             if (mode == AppMode.OWNER) {
@@ -701,6 +741,11 @@ private fun DestinationContent(
                 onRatingsClick = { campsite ->
                     navController.navigate(
                         "admin/campsite/${Uri.encode(campsite.id)}/ratings",
+                    )
+                },
+                onReviewsClick = { campsite ->
+                    navController.navigate(
+                        "admin/campsite/${Uri.encode(campsite.id)}/reviews",
                     )
                 },
                 onRemoveCampsite = { campsite, showError ->

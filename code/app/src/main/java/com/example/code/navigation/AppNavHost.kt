@@ -25,6 +25,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
@@ -64,6 +66,7 @@ import com.example.code.ui.owner.OwnerCampsiteDetailsDestination
 import com.example.code.ui.owner.OwnerCampsitesScreen
 import com.example.code.ui.owner.RegisterCampsiteScreen
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.CancellationException
 
 private const val OWNER_CAMPSITE_DETAILS_ROUTE = "owner/campsite/{campsiteId}"
 
@@ -113,41 +116,56 @@ fun AppNavHost(
     lotteryCreationRepository: LotteryCreationRepository =
         remember { FirestoreLotteryRepository() },
 ) {
-    val userController =
-        remember {
-            UserController(FirestoreUserRepository())
-        }
+    val userRepository = remember { FirestoreUserRepository() }
+    val userController = remember { UserController(userRepository) }
 
     val coroutineScope = rememberCoroutineScope()
     val rawDeviceId = ownerId ?: rememberDeviceId()
-
-    LaunchedEffect(rawDeviceId) {
-        userController.loadOrCreateUser(rawDeviceId)
-    }
 
     val currentUser by userController.currentUser.collectAsState()
     val userIsLoading by userController.isLoading.collectAsState()
     val userError by userController.errorMessage.collectAsState()
     val availableModes by controller.availableModes.collectAsState()
+    var serverUser by remember(rawDeviceId) { mutableStateOf<User?>(null) }
+    var profileObserved by remember(rawDeviceId) { mutableStateOf(false) }
+    var profileWatchError by remember(rawDeviceId) { mutableStateOf(false) }
 
-    LaunchedEffect(currentUser) {
-        currentUser?.let { user ->
-            controller.setAvailableModes(
-                modesForRoles(user.roles),
-            )
+    LaunchedEffect(rawDeviceId) {
+        userController.loadOrCreateUser(rawDeviceId)
+        if (userController.currentUser.value == null) return@LaunchedEffect
+        try {
+            userRepository.observeUser(rawDeviceId).collect {
+                serverUser = it
+                profileObserved = true
+            }
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Exception) {
+            profileWatchError = true
         }
     }
 
-    if (currentUser == null) {
+    val user = if (profileObserved) serverUser else currentUser
+    val roles = user?.roles
+    LaunchedEffect(roles, profileObserved, profileWatchError) {
+        val modes = if (profileObserved && !profileWatchError && roles != null) modesForRoles(roles) else emptySet()
+        controller.setAvailableModes(modes.ifEmpty { setOf(AppMode.ENTRANT) })
+    }
+
+    if (user == null || (profileObserved && serverUser == null)) {
         Text(
-            text = userError ?: "Loading user profile...",
+            text = if (profileObserved) "This profile is no longer active."
+            else userError ?: "Loading user profile...",
         )
         return
     }
 
-    val user = currentUser!!
     val deviceId = user.deviceId
     val mode by controller.activeMode.collectAsState()
+
+    if (mode != AppMode.ENTRANT &&
+        (!profileObserved || profileWatchError || mode !in modesForRoles(user.roles))
+    ) return
 
     val lotterySnapshot by
     waitingListController.allLotteries.collectAsState(initial = null)

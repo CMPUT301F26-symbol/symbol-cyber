@@ -113,6 +113,7 @@ fun OwnerReservationsRoute(
     OwnerReservationsScreen(
         bookedDates = ReservationController.bookedDates(reservations, deviceId, now),
         reservations = ReservationController.activeForOwner(reservations, deviceId, now),
+        pastReservations = com.example.code.controller.pastReservationsForOwner(reservations, deviceId, now),
         statusMessage = message,
         onReject = { reservation, reason ->
             scope.launch {

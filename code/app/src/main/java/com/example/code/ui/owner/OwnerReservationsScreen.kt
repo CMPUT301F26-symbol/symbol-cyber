@@ -1,10 +1,9 @@
 /*
  * OwnerReservationsScreen.kt
  * Owner's Reservations tab (mockups O03, O06, O08): booked dates for each
- * campsite (US 02.06.01), active reservations (US 02.07.01) and rejecting a
- * reservation with a reason (US 02.08.01).
- * Known issues: past and cancelled reservations (US 02.07.02, 02.07.03) are
- * not shown yet.
+ * campsite (US 02.06.01), active reservations (US 02.07.01), rejecting a
+ * reservation with a reason (US 02.08.01) and past reservations (US 02.07.02).
+ * Known issues: cancelled reservations (US 02.07.03) are not shown yet.
  */
 
 package com.example.code.ui.owner
@@ -41,6 +40,7 @@ import com.example.code.ui.common.formatDateRange
  * @param reservations active reservations, soonest first.
  * @param statusMessage result of the last action, or null.
  * @param onReject called with a reservation and the owner's reason.
+ * @param pastReservations reservations whose stay has ended, most recent first.
  */
 @Composable
 fun OwnerReservationsScreen(
@@ -49,6 +49,7 @@ fun OwnerReservationsScreen(
     statusMessage: String?,
     onReject: (Reservation, String) -> Unit,
     modifier: Modifier = Modifier,
+    pastReservations: List<Reservation> = emptyList(),
 ) {
     var rejecting by remember { mutableStateOf<Reservation?>(null) }
 
@@ -92,6 +93,14 @@ fun OwnerReservationsScreen(
                 }
             }
         }
+
+        item { Text("Past reservations", style = MaterialTheme.typography.titleMedium) }
+        if (pastReservations.isEmpty()) {
+            item { Text("No past reservations.") }
+        }
+        items(pastReservations, key = { "past-${it.id}" }) { reservation ->
+            HistoryCard(reservation, status = "Completed")
+        }
     }
 
     rejecting?.let { reservation ->
@@ -103,6 +112,23 @@ fun OwnerReservationsScreen(
             },
             onDismiss = { rejecting = null },
         )
+    }
+}
+
+/** A finished or cancelled reservation: campsite, entrant, stay and [status]. */
+@Composable
+private fun HistoryCard(reservation: Reservation, status: String, detail: String = "") {
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Text(reservation.campsiteName, style = MaterialTheme.typography.titleSmall)
+            Text(reservation.entrantName.ifBlank { "Entrant ${reservation.entrantId.take(6)}" })
+            Text(formatDateRange(reservation.startDate, reservation.endDate))
+            Text("Status: $status")
+            if (detail.isNotBlank()) Text(detail, style = MaterialTheme.typography.bodySmall)
+        }
     }
 }
 

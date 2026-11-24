@@ -27,6 +27,16 @@ import com.example.code.ui.owner.OwnerWaitingListScreen
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
+// The following block(s) of code were generated primarily by GPt-6 Sol, "Please implement US 02.04.06 As a campsite owner, I want to update my campsite lottery listing. Include all UI elements, logic, and test cases", November 24, 2026.
+import androidx.activity.compose.BackHandler
+import androidx.compose.material3.Button
+import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.Column
+import com.example.code.controller.LotteryUpdateController
+import com.example.code.data.FirestoreLotteryRepository
+import com.example.code.data.LotteryUpdateRepository
+import com.example.code.model.Campsite
+import com.example.code.ui.owner.EditLotteryScreen
 
 /**
  * Lottery card on the entrant's campsite details screen.
@@ -111,14 +121,58 @@ fun EntrantLotteryCard(
  * @param onOpenWaitingList called with the lottery to open.
  */
 @Composable
+// The following block(s) of code were generated primarily by GPt-6 Sol, "Please implement US 02.04.06 As a campsite owner, I want to update my campsite lottery listing. Include all UI elements, logic, and test cases", November 24, 2026.
 fun OwnerLotteriesRoute(
     lotteries: List<Lottery>,
     deviceId: String,
     onOpenWaitingList: (Lottery) -> Unit,
+    campsites: List<Campsite> = emptyList(),
+    updateRepository: LotteryUpdateRepository = remember { FirestoreLotteryRepository() },
+    clock: () -> Long = System::currentTimeMillis,
 ) {
+    var editing by remember(deviceId) { mutableStateOf<Lottery?>(null) }
+    var message by remember(deviceId) { mutableStateOf<String?>(null) }
+    var now by remember { mutableLongStateOf(clock()) }
+    LaunchedEffect(clock) {
+        while (true) {
+            delay(1_000L)
+            now = clock()
+        }
+    }
+    val owned = WaitingListController.lotteriesOfOwner(lotteries, deviceId)
+    val original = editing
+    if (original != null) {
+        val current = owned.firstOrNull { it.id == original.id }
+        if (current == null) {
+            BackHandler { editing = null }
+            Column {
+                Text("This lottery no longer exists or no longer belongs to you.")
+                Button(onClick = { editing = null }) { Text("Back") }
+            }
+        } else {
+            EditLotteryScreen(
+                lottery = original,
+                currentLottery = current,
+                ownerId = deviceId,
+                campsites = campsites,
+                onSave = { selected, settings ->
+                    LotteryUpdateController.updateLottery(
+                        updateRepository, original, deviceId, selected, settings, clock,
+                    )
+                },
+                onSaved = { editing = null; message = "Lottery updated." },
+                onCancel = { editing = null },
+                clock = clock,
+            )
+        }
+        return
+    }
     OwnerLotteriesScreen(
-        lotteries = WaitingListController.lotteriesOfOwner(lotteries, deviceId),
+        lotteries = owned,
         onOpenWaitingList = onOpenWaitingList,
+        onEditLottery = { message = null; editing = it },
+        statusMessage = message,
+        now = now,
     )
 }
 

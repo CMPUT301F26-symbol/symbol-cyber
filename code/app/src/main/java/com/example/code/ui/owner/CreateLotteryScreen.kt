@@ -232,7 +232,8 @@ fun CreateLotteryScreen(
 
 /** Native pickers avoid requiring an additional date library or Material opt-in. */
 @Composable
-private fun LotteryDateTimeField(
+// The following block(s) of code were generated primarily by GPt-6 Sol, "Please implement US 02.04.06 As a campsite owner, I want to update my campsite lottery listing. Include all UI elements, logic, and test cases", November 24, 2026.
+internal fun LotteryDateTimeField(
     label: String,
     value: Long?,
     enabled: Boolean,

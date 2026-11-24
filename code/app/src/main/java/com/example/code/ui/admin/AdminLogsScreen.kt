@@ -3,6 +3,7 @@ package com.example.code.ui.admin
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -19,6 +20,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -35,24 +37,32 @@ import java.util.Date
 fun AdminLogsRoute() {
     val repository = remember { FirestoreAdminLogs() }
     val controller = remember { AdminLogController(FirebaseAdminAuthorization()) }
-    val read = remember(repository) { repository::notifications }
-    AdminLogsScreen(controller, read)
+    val notifications = remember(repository) { repository::notifications }
+    val messages = remember(repository) { repository::reservationMessages }
+    AdminLogsScreen(controller, notifications, messages)
 }
 
 @Composable
 internal fun AdminLogsScreen(
     controller: AdminLogController,
-    read: suspend () -> List<AdminLogEntry>,
+    readNotifications: suspend () -> List<AdminLogEntry>,
+    readMessages: suspend () -> List<AdminLogEntry>,
 ) {
+    var showMessages by rememberSaveable { mutableStateOf(false) }
+    val read = if (showMessages) readMessages else readNotifications
     var refresh by remember { mutableIntStateOf(0) }
-    var result by remember { mutableStateOf<AdminLogResult?>(null) }
+    var result by remember(controller, showMessages, refresh) { mutableStateOf<AdminLogResult?>(null) }
     LaunchedEffect(controller, read, refresh) {
         result = null
         result = controller.load(read)
     }
 
     Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text("Notification logs", style = MaterialTheme.typography.headlineSmall)
+        Text("Logs", style = MaterialTheme.typography.headlineSmall)
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            TextButton(onClick = { showMessages = false }, enabled = showMessages) { Text("Notifications") }
+            TextButton(onClick = { showMessages = true }, enabled = !showMessages) { Text("Reservation messages") }
+        }
         when (val state = result) {
             null -> CircularProgressIndicator()
             AdminLogResult.Denied -> Text("Verified administrator access is required to view logs.")
@@ -63,10 +73,10 @@ internal fun AdminLogsScreen(
             is AdminLogResult.Loaded -> {
                 TextButton(onClick = { refresh++ }) { Text("Refresh logs") }
                 if (state.rows.isEmpty()) {
-                    Text("No notifications have been recorded.")
+                    Text(if (showMessages) "No reservation messages have been recorded." else "No notifications have been recorded.")
                 } else {
                     LazyColumn(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        items(state.rows, key = { it.id }) { row -> AdminLogCard(row) }
+                        items(state.rows, key = { it.id }) { row -> AdminLogCard(row, showMessages) }
                     }
                 }
             }
@@ -75,13 +85,13 @@ internal fun AdminLogsScreen(
 }
 
 @Composable
-private fun AdminLogCard(row: AdminLogEntry) {
+private fun AdminLogCard(row: AdminLogEntry, reservationMessage: Boolean) {
     Card(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(row.title, style = MaterialTheme.typography.titleMedium)
             Text(row.body)
-            Text("From: ${row.sender.ifBlank { "Unknown" }}")
-            Text("To: ${row.recipient.ifBlank { "Unknown" }}")
+            Text("${if (reservationMessage) "Owner" else "From"}: ${row.sender.ifBlank { "Unknown" }}")
+            Text("${if (reservationMessage) "Entrant" else "To"}: ${row.recipient.ifBlank { "Unknown" }}")
             if (row.context.isNotBlank()) Text(row.context)
             row.sentAt?.let { Text(DateFormat.getDateTimeInstance().format(Date(it))) }
         }

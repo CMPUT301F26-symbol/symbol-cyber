@@ -1,4 +1,4 @@
-/* Maps existing notification documents into the admin log without changing delivery. */
+/* Maps notification and reservation-message documents into the admin log without changing delivery. */
 package com.example.code.admin
 
 import com.example.code.data.FirestoreNotificationRepository
@@ -25,4 +25,24 @@ class FirestoreAdminLogs(private val db: FirebaseFirestore = FirebaseFirestore.g
                     sentAt = document.getLong("createdAt")?.takeIf { it > 0 },
                 )
             }
+    /** Reads owner messages stored by the reservation messaging feature (US 02.12.01). */
+    suspend fun reservationMessages(): List<AdminLogEntry> =
+        db.collection("reservationMessages").get(Source.SERVER)
+            .awaitResult().documents.map { document ->
+                AdminLogEntry(
+                    id = document.id,
+                    title = document.getString("campsiteName").orEmpty().ifBlank { "Reservation message" },
+                    body = document.getString("message").orEmpty(),
+                    sender = document.getString("ownerId").orEmpty(),
+                    recipient = document.getString("entrantId").orEmpty(),
+                    context = document.getString("reservationId").orEmpty()
+                        .takeIf { it.isNotBlank() }?.let { "Reservation: ${it}" }.orEmpty(),
+                    sentAt = when (val createdAt = document.get("createdAt")) {
+                        is com.google.firebase.Timestamp -> createdAt.toDate().time
+                        is Number -> createdAt.toLong().takeIf { it > 0 }
+                        else -> null
+                    },
+                )
+            }
+
 }

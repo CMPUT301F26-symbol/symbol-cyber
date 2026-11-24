@@ -50,6 +50,10 @@ class ReservationController(
      * @param rulesRequired true when the campsite has rules or policies the
      * winner must confirm (US 02.11.01).
      * @param rulesAccepted true if the winner confirmed reading them.
+     * @param startDate first day the winner chose, or null for the whole
+     * booking period (US 01.04.01).
+     * @param endDate last day the winner chose, or null for the whole period.
+     * @param others all reservations, to check the chosen days are still free.
      * @return the reservation, or null if the winner had already accepted.
      * @throws IllegalArgumentException if [entry] did not win [lottery], or the
      * rules are required but were not confirmed.
@@ -62,6 +66,9 @@ class ReservationController(
         campsiteId: String? = null,
         rulesRequired: Boolean = false,
         rulesAccepted: Boolean = false,
+        startDate: Long? = null,
+        endDate: Long? = null,
+        others: List<Reservation> = emptyList(),
     ): Reservation? {
         require(lottery.status == Lottery.STATUS_DRAWN) { "Winners have not been drawn yet" }
         require(entry.status == WaitingListEntry.STATUS_WON) { "Only a winner can accept" }
@@ -73,8 +80,14 @@ class ReservationController(
         val selectedCampsite = requireNotNull(included.firstOrNull { it.id == selectedId }) {
             "This campsite is not included in the lottery."
         }
-        // Compatibility only: still uses the lottery's complete booking period.
-        // This does not implement entrant date selection in US 01.04.02.
+        // US 01.04.01: the winner's chosen days, or the whole booking period.
+        val start = startDate ?: lottery.bookingStart
+        val end = endDate ?: lottery.bookingEnd
+        if (startDate != null || endDate != null) {
+            require(isStayAvailable(lottery, others, entry.entrantId, selectedCampsite.id, start, end)) {
+                DATES_NOT_AVAILABLE
+            }
+        }
         val reservation = Reservation(
             id = reservationId(lottery.id, entry.entrantId),
             lotteryId = lottery.id,
@@ -83,8 +96,8 @@ class ReservationController(
             entrantId = entry.entrantId,
             entrantName = entry.entrantName,
             ownerId = lottery.ownerId,
-            startDate = lottery.bookingStart,
-            endDate = lottery.bookingEnd,
+            startDate = start,
+            endDate = end,
             createdAt = clock(),
             rulesAccepted = rulesAccepted,
         )

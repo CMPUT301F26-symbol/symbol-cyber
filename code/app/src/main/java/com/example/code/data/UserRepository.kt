@@ -11,6 +11,7 @@ import com.example.code.UserRole
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.MetadataChanges
+import com.google.firebase.firestore.Source
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -51,7 +52,7 @@ class FirestoreUserRepository(
         val snapshot =
             db.collection(USERS)
                 .document(deviceId)
-                .get()
+                .get(Source.SERVER)
                 .awaitResult()
 
         if (!snapshot.exists()) return null

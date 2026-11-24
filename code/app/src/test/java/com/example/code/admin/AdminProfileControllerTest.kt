@@ -13,6 +13,7 @@ class AdminProfileControllerTest {
         val rows = MutableStateFlow(listOf(AdminProfile("device-avery", "Avery Chen", "avery@example.com")))
         var observations = 0
         var removals = 0
+        var ownerRevocations = 0
         var fail = false
         override fun observeProfiles(): Flow<List<AdminProfile>> { observations++; return rows }
         override suspend fun removeProfile(profileId: String): Boolean {
@@ -22,6 +23,13 @@ class AdminProfileControllerTest {
             rows.value = rows.value.filterNot { it.id == profileId }
             return exists
         }
+        override suspend fun revokeOwner(profileId: String): Boolean {
+            ownerRevocations++
+            val owner = rows.value.firstOrNull { it.id == profileId && it.isOwner } ?: return false
+            rows.value = rows.value.map { if (it.id == profileId) owner.copy(isOwner = false) else it }
+            return true
+        }
+
     }
 
     @Test fun nonAdminsCannotBrowseOrDelete() = runBlocking {
@@ -78,6 +86,22 @@ class AdminProfileControllerTest {
         assertTrue(failure.profiles.isEmpty())
         failRead = false
         assertEquals(1, controller.observe().first { !it.loading }.profiles.size)
+    }
+
+    @Test fun ownerRevocationRechecksAdminAndKeepsTheProfile() = runBlocking {
+        val repo = FakeProfiles()
+        val owner = repo.rows.value.single().copy(isOwner = true)
+        repo.rows.value = listOf(owner)
+        var allowed = false
+        val controller = AdminProfileController(repo, { allowed }, "admin-device")
+        assertEquals(AdminRemovalResult.DENIED, controller.revokeOwner(owner.id))
+        assertEquals(0, repo.ownerRevocations)
+        allowed = true
+        assertEquals(AdminRemovalResult.INVALID, controller.revokeOwner("admin-device"))
+        assertEquals(AdminRemovalResult.REMOVED, controller.revokeOwner(owner.id))
+        assertEquals(listOf(owner.copy(isOwner = false)), controller.observe().first { !it.loading }.profiles)
+        assertEquals(AdminRemovalResult.ALREADY_REMOVED, controller.revokeOwner(owner.id))
+        assertEquals(0, repo.removals)
     }
 
 }

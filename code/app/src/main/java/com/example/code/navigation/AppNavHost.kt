@@ -11,6 +11,7 @@
 package com.example.code.navigation
 
 import android.net.Uri
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
@@ -19,12 +20,14 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
@@ -58,7 +61,6 @@ import com.example.code.ui.admin.AdminCampsitesScreen
 import com.example.code.ui.admin.AdminImagesScreen
 import com.example.code.ui.admin.AdminLogsRoute
 import com.example.code.ui.admin.AdminProfileRemovalRoute
-import com.example.code.ui.common.PlaceholderScreen
 import com.example.code.ui.common.ProfileScreen
 import com.example.code.ui.entrant.CampsiteDetailsDestination
 import com.example.code.ui.entrant.CampsiteScanRoute
@@ -132,8 +134,10 @@ fun AppNavHost(
     var profileObserved by remember(rawDeviceId) { mutableStateOf(false) }
     var profileWatchError by remember(rawDeviceId) { mutableStateOf(false) }
 
-    LaunchedEffect(rawDeviceId) {
-        userController.loadOrCreateUser(rawDeviceId)
+    var profileRetry by remember(rawDeviceId) { mutableIntStateOf(0) }
+    LaunchedEffect(rawDeviceId, profileRetry) {
+        if (!profileObserved) userController.loadOrCreateUser(rawDeviceId)
+        profileWatchError = false
         if (userController.currentUser.value == null) return@LaunchedEffect
         try {
             userRepository.observeUser(rawDeviceId).collect {
@@ -154,11 +158,19 @@ fun AppNavHost(
         controller.setAvailableModes(modes.ifEmpty { setOf(AppMode.ENTRANT) })
     }
 
-    if (user == null || (profileObserved && serverUser == null)) {
-        Text(
-            text = if (profileObserved) "This profile is no longer active."
-            else userError ?: "Loading user profile...",
-        )
+    if (user == null || profileWatchError) {
+        Column {
+            Text(
+                when {
+                    profileWatchError -> "Could not verify your profile."
+                    profileObserved -> "This profile is no longer active."
+                    else -> userError ?: "Loading user profile..."
+                },
+            )
+            if (profileWatchError || (!profileObserved && userError != null)) {
+                TextButton(onClick = { profileRetry++ }) { Text("Retry") }
+            }
+        }
         return
     }
 
@@ -722,9 +734,6 @@ private fun DestinationContent(
                 onNotificationPreferenceChange = onNotificationPreferenceChange,
                 onSwitchMode = onSwitchMode,
             )
-
-        else ->
-            PlaceholderScreen(destination.label)
     }
 }
 

@@ -48,7 +48,8 @@ object LotteryUpdateController {
             "This lottery cannot be edited after registration closes or winners are drawn."
         }
         require(campsites.isNotEmpty()) { "Select at least one campsite." }
-        require(campsites.all { it.ownerId == ownerId }) {
+        // Other owners' campsites already in a shared lottery can stay, but only your own can be added
+        require(campsites.all { it.ownerId == ownerId || LotteryController.includesCampsite(current, it.id) }) {
             "You can only select your own campsites."
         }
         require(campsites.map { it.id }.distinct().size == campsites.size) {

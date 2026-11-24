@@ -69,8 +69,14 @@ fun EditLotteryScreen(
     val candidates = campsites.filter { it.ownerId == ownerId && it.id.isNotBlank() }
         .distinctBy { it.id }
         .sortedWith(compareBy<Campsite> { it.name.lowercase() }.thenBy { it.id })
+    // Other owners' campsites aren't listed here, since only they can change them
     var selectedIds by rememberSaveable(lottery.id, ownerId) {
-        mutableStateOf(ArrayList(LotteryController.includedCampsites(lottery).map { it.id }))
+        mutableStateOf(
+            ArrayList(
+                LotteryController.includedCampsites(lottery).map { it.id }
+                    .filter { id -> candidates.any { it.id == id } },
+            ),
+        )
     }
     var registrationStart by rememberSaveable(lottery.id) { mutableLongStateOf(lottery.registrationStart) }
     var registrationEnd by rememberSaveable(lottery.id) { mutableLongStateOf(lottery.registrationEnd) }

@@ -11,12 +11,14 @@
 package com.example.code.navigation
 
 import android.net.Uri
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -28,6 +30,8 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -77,6 +81,8 @@ private const val CAMPSITE_DETAILS_ROUTE =
 private const val ADMIN_CAMPSITE_DETAILS_ROUTE = "admin/campsite/{campsiteId}"
 
 private const val ADMIN_CAMPSITE_RATINGS_ROUTE = "admin/campsite/{campsiteId}/ratings"
+
+private const val OWNER_SHARED_LOTTERIES_ROUTE = "owner/shared-lotteries"
 
 private const val OWNER_WAITING_LIST_ROUTE =
     "owner/lottery/{lotteryId}/waiting-list"
@@ -493,6 +499,15 @@ private fun ModeShell(
             }
 
             if (mode == AppMode.OWNER) {
+                composable(route = OWNER_SHARED_LOTTERIES_ROUTE) {
+                    SharedLotteriesRoute(
+                        lotteries = lotteries,
+                        campsites = campsites,
+                        deviceId = deviceId,
+                        onBack = { navController.popBackStack() },
+                    )
+                }
+
                 composable(
                     route = OWNER_WAITING_LIST_ROUTE,
                     arguments =
@@ -643,17 +658,29 @@ private fun DestinationContent(
             )
 
         Destination.OWNER_LOTTERIES ->
-            OwnerLotteriesRoute(
-                lotteries = lotteries,
-                deviceId = deviceId,
-                // The following block(s) of code were generated primarily by GPt-6 Sol, "Please implement US 02.04.06 As a campsite owner, I want to update my campsite lottery listing. Include all UI elements, logic, and test cases", November 24, 2026.
-                campsites = campsites,
-                onOpenWaitingList = { lottery ->
-                    navController.navigate(
-                        "owner/lottery/${lottery.id}/waiting-list",
-                    )
-                },
-            )
+            Column {
+                // Opens the lotteries other owners can share campsites in
+                OutlinedButton(
+                    onClick = { navController.navigate(OWNER_SHARED_LOTTERIES_ROUTE) },
+                    modifier = Modifier
+                        .padding(start = 16.dp, top = 16.dp)
+                        .testTag("sharedLotteriesButton"), // for testing
+                ) {
+                    Text("Shared lotteries")
+                }
+
+                OwnerLotteriesRoute(
+                    lotteries = lotteries,
+                    deviceId = deviceId,
+                    // The following block(s) of code were generated primarily by GPt-6 Sol, "Please implement US 02.04.06 As a campsite owner, I want to update my campsite lottery listing. Include all UI elements, logic, and test cases", November 24, 2026.
+                    campsites = campsites,
+                    onOpenWaitingList = { lottery ->
+                        navController.navigate(
+                            "owner/lottery/${lottery.id}/waiting-list",
+                        )
+                    },
+                )
+            }
 
         Destination.ENTRANT_NOTIFICATIONS ->
             EntrantNotificationsRoute(

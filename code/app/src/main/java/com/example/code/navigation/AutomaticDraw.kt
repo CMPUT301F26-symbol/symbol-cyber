@@ -8,6 +8,7 @@
 
 package com.example.code.navigation
 
+import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import com.example.code.controller.DrawController
@@ -31,7 +32,8 @@ fun AutomaticDraw(lotteries: List<Lottery>, controller: DrawController) {
             try {
                 controller.drawAllDue(lotteries)
             } catch (e: Exception) {
-                // A failed draw is retried on the next check.
+                // A failed draw is retried on the next check, but log it so it isn't silent
+                Log.e("AutomaticDraw", "Lottery draw failed", e)
             }
             delay(DRAW_CHECK_INTERVAL_MS)
         }

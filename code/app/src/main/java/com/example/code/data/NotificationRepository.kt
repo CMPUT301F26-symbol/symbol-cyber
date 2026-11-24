@@ -2,10 +2,12 @@
  * NotificationRepository.kt
  * Saves and loads in-app notifications in Cloud Firestore.
  * Notification delivery respects each user's notification preference.
+ * If a preference can't be read, the notification is still delivered.
  */
 
 package com.example.code.data
 
+import android.util.Log
 import com.example.code.model.AppNotification
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.channels.awaitClose
@@ -42,15 +44,20 @@ class FirestoreNotificationRepository(
 
         val deliverableNotifications =
             notifications.filter { notification ->
-                val user =
-                    db.collection(USERS)
-                        .document(notification.recipientId)
-                        .get()
-                        .awaitResult()
+                // A failed read counts as enabled, so one bad read doesn't drop everyone's notifications
+                val enabled =
+                    try {
+                        db.collection(USERS)
+                            .document(notification.recipientId)
+                            .get()
+                            .awaitResult()
+                            .getBoolean("notificationsEnabled")
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Could not read notification preference", e)
+                        null
+                    }
 
-                shouldDeliverNotification(
-                    user.getBoolean("notificationsEnabled"),
-                )
+                shouldDeliverNotification(enabled)
             }
 
         if (deliverableNotifications.isEmpty()) {
@@ -137,6 +144,7 @@ class FirestoreNotificationRepository(
     companion object {
         const val NOTIFICATIONS = "notifications"
         private const val USERS = "users"
+        private const val TAG = "NotificationRepository"
     }
     /**
      * Returns whether a notification should be delivered for the stored preference.

@@ -729,11 +729,8 @@ private fun DestinationContent(
                     FirestoreNotificationRepository()
                 },
                 onOpenReservations = {
-                    navController.navigate(
-                        Destination.ENTRANT_RESERVATIONS.route,
-                    ) {
-                        launchSingleTop = true
-                    }
+                    // Switch tabs like the bottom bar does, so Notifications can still be opened afterwards
+                    navController.openTab(Destination.ENTRANT_RESERVATIONS, mode)
                 },
             )
         Destination.ENTRANT_RESERVATIONS ->

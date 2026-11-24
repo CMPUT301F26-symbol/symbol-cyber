@@ -10,9 +10,15 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 
+/** Access to a campsite's public reviews and completed-stay submission. */
+interface CampsiteReviewStore {
+    fun observe(campsiteId: String): Flow<List<CampsiteReview>>
+    suspend fun post(campsiteId: String, reservationId: String, entrantId: String, text: String)
+}
+
 /** Stores one review per reservation. Server rules independently enforce eligibility. */
-class CampsiteReviewRepository(private val db: FirebaseFirestore = FirebaseFirestore.getInstance()) {
-    fun observe(campsiteId: String): Flow<List<CampsiteReview>> = callbackFlow {
+class CampsiteReviewRepository(private val db: FirebaseFirestore = FirebaseFirestore.getInstance()) : CampsiteReviewStore {
+    override fun observe(campsiteId: String): Flow<List<CampsiteReview>> = callbackFlow {
         val registration = reviews(campsiteId).addSnapshotListener { snapshot, error ->
             if (error != null) {
                 close(error)
@@ -34,7 +40,7 @@ class CampsiteReviewRepository(private val db: FirebaseFirestore = FirebaseFires
     }
 
     /** Rechecks the persisted reservation and profile immediately before writing. */
-    suspend fun post(campsiteId: String, reservationId: String, entrantId: String, text: String) {
+    override suspend fun post(campsiteId: String, reservationId: String, entrantId: String, text: String) {
         require(listOf(campsiteId, reservationId, entrantId).all { it.isNotBlank() && '/' !in it })
         val body = text.trim()
         require(body.isNotEmpty() && body.length <= MAX_REVIEW_LENGTH)

@@ -23,6 +23,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.code.data.CampsiteReviewRepository
+import com.example.code.data.CampsiteReviewStore
 import com.example.code.model.CampsiteReview
 import com.example.code.model.MAX_REVIEW_LENGTH
 import com.example.code.model.Reservation
@@ -32,8 +33,12 @@ import kotlinx.coroutines.launch
 
 /** Placed in campsite details after the lottery content. */
 @Composable
-fun CampsiteReviews(campsiteId: String, entrantId: String, reservations: List<Reservation>) {
-    val repository = remember { CampsiteReviewRepository() }
+fun CampsiteReviews(
+    campsiteId: String,
+    entrantId: String,
+    reservations: List<Reservation>,
+    repository: CampsiteReviewStore = remember { CampsiteReviewRepository() },
+) {
     var rows by remember(campsiteId) { mutableStateOf<List<CampsiteReview>?>(null) }
     var loadFailed by remember(campsiteId) { mutableStateOf(false) }
     var reload by remember(campsiteId) { mutableIntStateOf(0) }
@@ -43,7 +48,7 @@ fun CampsiteReviews(campsiteId: String, entrantId: String, reservations: List<Re
     var message by remember(campsiteId, entrantId) { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
 
-    LaunchedEffect(campsiteId, reload) {
+    LaunchedEffect(campsiteId, repository, reload) {
         loadFailed = false
         rows = null
         try {
@@ -99,7 +104,7 @@ fun CampsiteReviews(campsiteId: String, entrantId: String, reservations: List<Re
                     message = null
                     scope.launch {
                         try {
-                            repository.post(campsiteId, stay.id, entrantId, draft)
+                            repository.post(campsiteId, stay.id, entrantId, draft.trim())
                             postedIds = postedIds + stay.id
                             draft = ""
                             message = "Review posted."

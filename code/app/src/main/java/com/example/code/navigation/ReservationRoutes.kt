@@ -124,12 +124,14 @@ fun WinnerReservationContent(
  * @param reservations all reservations.
  * @param deviceId this entrant's ID.
  * @param controller reservation controller, used to cancel (US 01.07.01); null hides Cancel.
+ * @param onMessageOwner opens the conversation with the owner (US 01.14.01).
  */
 @Composable
 fun EntrantReservationsRoute(
     reservations: List<Reservation>,
     deviceId: String,
     controller: ReservationController? = null,
+    onMessageOwner: ((Reservation) -> Unit)? = null,
 ) {
     val scope = rememberCoroutineScope()
     var cancelMessage by remember { mutableStateOf<String?>(null) }
@@ -138,6 +140,7 @@ fun EntrantReservationsRoute(
         reservations = ReservationController.activeForEntrant(reservations, deviceId, now),
         pastReservations = com.example.code.controller.pastReservationsForEntrant(reservations, deviceId, now),
         statusMessage = cancelMessage,
+        onMessageOwner = onMessageOwner,
         onCancel = controller?.let { c ->
             { reservation ->
                 scope.launch {

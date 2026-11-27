@@ -35,6 +35,7 @@ import com.example.code.controller.LotteryUpdateController
  *
  * @param lotteries lotteries created by this owner.
  * @param onOpenWaitingList called with the lottery whose waiting list to show.
+ * @param onOpenSentNotifications opens the list of sent notifications (US 02.10.02); null hides it.
  */
 @Composable
 fun OwnerLotteriesScreen(
@@ -45,6 +46,7 @@ fun OwnerLotteriesScreen(
     onEditLottery: ((Lottery) -> Unit)? = null,
     statusMessage: String? = null,
     now: Long = System.currentTimeMillis(),
+    onOpenSentNotifications: (() -> Unit)? = null,
 ) {
     Column(
         modifier = modifier
@@ -55,6 +57,9 @@ fun OwnerLotteriesScreen(
         Text("My lotteries", style = MaterialTheme.typography.headlineSmall)
         // The following block(s) of code were generated primarily by GPt-6 Sol, "Please implement US 02.04.06 As a campsite owner, I want to update my campsite lottery listing. Include all UI elements, logic, and test cases", November 24, 2026.
         statusMessage?.let { Text(it) }
+        if (onOpenSentNotifications != null) {
+            OutlinedButton(onClick = onOpenSentNotifications) { Text("Sent notifications") }
+        }
 
         if (lotteries.isEmpty()) {
             Text("You have no lotteries yet.")

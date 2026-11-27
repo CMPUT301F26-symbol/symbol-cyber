@@ -79,12 +79,26 @@ fun WinnerReservationContent(
                         rulesRequired = ReservationController.rulesRequired(campsite),
                         rulesAccepted = rulesAccepted,
                         startDate = first,
-                        endDate = last,
+                        // The stay lasts until the end of its last day.
+                        endDate = com.example.code.controller.endOfDay(last),
                         others = reservations,
                     )
                     if (reserved != null) "Reservation confirmed." else "You already accepted this reservation."
                 } catch (e: Exception) {
                     "Could not reserve: ${e.message}"
+                }
+                busy = false
+            }
+        },
+        // US 01.04.03: the winner can decline instead of reserving.
+        onDecline = {
+            val entry = myEntry ?: return@WinnerReservationCard
+            busy = true
+            scope.launch {
+                message = try {
+                    if (controller.declineWin(lottery, entry)) "You declined the reservation." else "You already answered."
+                } catch (e: Exception) {
+                    "Could not decline: ${e.message}"
                 }
                 busy = false
             }
@@ -179,6 +193,7 @@ fun OwnerReservationsRoute(
         reservations = ReservationController.activeForOwner(reservations, deviceId, now),
         onMessage = onMessage,
         pastReservations = com.example.code.controller.pastReservationsForOwner(reservations, deviceId, now),
+        cancelledReservations = com.example.code.controller.cancelledReservationsForOwner(reservations, deviceId),
         statusMessage = message,
         onReject = { reservation, reason ->
             scope.launch {

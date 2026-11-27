@@ -9,10 +9,12 @@ package com.example.code.data
 
 import android.util.Log
 import com.example.code.model.AppNotification
+import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.flowOf
 
 /**
  * Access to persisted application notifications.
@@ -28,6 +30,11 @@ interface NotificationRepository {
      * Observes notifications belonging to [recipientId].
      */
     fun notificationsFor(recipientId: String): Flow<List<AppNotification>>
+
+    /**
+     * Observes notifications sent by [senderId], newest first (US 02.10.02).
+     */
+    fun notificationsSentBy(senderId: String): Flow<List<AppNotification>> = flowOf(emptyList())
 }
 
 /**
@@ -141,6 +148,24 @@ class FirestoreNotificationRepository(
             }
         }
 
+    override fun notificationsSentBy(senderId: String): Flow<List<AppNotification>> =
+        callbackFlow {
+            val registration =
+                db.collection(NOTIFICATIONS)
+                    .whereEqualTo("senderId", senderId)
+                    .addSnapshotListener { snapshot, error ->
+                        if (error != null) {
+                            close(error)
+                            return@addSnapshotListener
+                        }
+                        val notifications = snapshot?.documents.orEmpty()
+                            .map(::sentNotificationFromDocument)
+                            .sortedByDescending { it.createdAt }
+                        trySend(notifications)
+                    }
+            awaitClose { registration.remove() }
+        }
+
     companion object {
         const val NOTIFICATIONS = "notifications"
         private const val USERS = "users"
@@ -177,3 +202,17 @@ fun shouldDeliverNotification(
 ): Boolean {
     return notificationsEnabled != false
 }
+
+/** Builds an [AppNotification] from a Firestore [document] (US 02.10.02). */
+private fun sentNotificationFromDocument(document: DocumentSnapshot): AppNotification =
+    AppNotification(
+        id = document.getString("id") ?: document.id,
+        recipientId = document.getString("recipientId") ?: "",
+        senderId = document.getString("senderId") ?: "",
+        lotteryId = document.getString("lotteryId") ?: "",
+        campsiteName = document.getString("campsiteName") ?: "",
+        type = document.getString("type") ?: AppNotification.TYPE_WAITLIST_MESSAGE,
+        title = document.getString("title") ?: "",
+        message = document.getString("message") ?: "",
+        createdAt = document.getLong("createdAt") ?: 0L,
+    )

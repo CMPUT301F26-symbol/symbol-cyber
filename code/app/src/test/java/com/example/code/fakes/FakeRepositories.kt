@@ -44,7 +44,7 @@ class FakeLotteryRepository(lotteries: List<Lottery> = emptyList()) : LotteryRep
             else -> {
                 waitingLists.value = waitingLists.value + (lotteryId to list + entry)
                 lotteries.value = lotteries.value +
-                    (lotteryId to lottery.copy(waitingListCount = lottery.waitingListCount + 1))
+                        (lotteryId to lottery.copy(waitingListCount = lottery.waitingListCount + 1))
                 JoinResult.JOINED
             }
         }
@@ -56,7 +56,7 @@ class FakeLotteryRepository(lotteries: List<Lottery> = emptyList()) : LotteryRep
         waitingLists.value = waitingLists.value + (lotteryId to list.filter { it.entrantId != entrantId })
         val lottery = lotteries.value.getValue(lotteryId)
         lotteries.value = lotteries.value +
-            (lotteryId to lottery.copy(waitingListCount = lottery.waitingListCount - 1))
+                (lotteryId to lottery.copy(waitingListCount = lottery.waitingListCount - 1))
         return true
     }
 
@@ -73,14 +73,14 @@ class FakeLotteryRepository(lotteries: List<Lottery> = emptyList()) : LotteryRep
         if (lottery.status != Lottery.STATUS_OPEN) return false
         lotteries.value = lotteries.value + (lotteryId to lottery.copy(status = Lottery.STATUS_DRAWN))
         waitingLists.value = waitingLists.value + (
-            lotteryId to waitingLists.value[lotteryId].orEmpty().map {
-                when (it.entrantId) {
-                    in winnerIds -> it.copy(status = WaitingListEntry.STATUS_WON)
-                    in notSelectedIds -> it.copy(status = WaitingListEntry.STATUS_NOT_SELECTED)
-                    else -> it
+                lotteryId to waitingLists.value[lotteryId].orEmpty().map {
+                    when (it.entrantId) {
+                        in winnerIds -> it.copy(status = WaitingListEntry.STATUS_WON)
+                        in notSelectedIds -> it.copy(status = WaitingListEntry.STATUS_NOT_SELECTED)
+                        else -> it
+                    }
                 }
-            }
-        )
+                )
         return true
     }
 }
@@ -126,5 +126,10 @@ class FakeReservationRepository(reservations: List<Reservation> = emptyList()) :
             rejectionReason = reason,
         )
         reservations.value = reservations.value + (reservationId to rejected)
+    }
+
+    override suspend fun cancel(reservationId: String) {
+        val reservation = reservations.value.getValue(reservationId)
+        reservations.value = reservations.value + (reservationId to reservation.copy(status = Reservation.STATUS_CANCELLED))
     }
 }

@@ -787,6 +787,7 @@ private fun DestinationContent(
             EntrantReservationsRoute(
                 reservations = reservations,
                 deviceId = deviceId,
+                controller = reservationController,
             )
 
         Destination.OWNER_RESERVATIONS ->

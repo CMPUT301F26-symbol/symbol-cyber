@@ -118,6 +118,18 @@ class ReservationController(
         reservations.reject(reservation.id, text)
     }
 
+    /**
+     * Cancels [reservation] for the entrant [entrantId] (US 01.07.01).
+     *
+     * @throws IllegalArgumentException if it is not [entrantId]'s reservation,
+     * or it is no longer active.
+     */
+    suspend fun cancel(reservation: Reservation, entrantId: String) {
+        require(reservation.entrantId == entrantId) { "You can only cancel your own reservation" }
+        require(isActive(reservation, clock())) { "Only an active reservation can be cancelled" }
+        reservations.cancel(reservation.id)
+    }
+
     companion object {
         /** Shown when a winner tries to reserve without confirming the rules. */
         const val RULES_NOT_CONFIRMED =

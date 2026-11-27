@@ -123,13 +123,33 @@ fun WinnerReservationContent(
  *
  * @param reservations all reservations.
  * @param deviceId this entrant's ID.
+ * @param controller reservation controller, used to cancel (US 01.07.01); null hides Cancel.
  */
 @Composable
-fun EntrantReservationsRoute(reservations: List<Reservation>, deviceId: String) {
+fun EntrantReservationsRoute(
+    reservations: List<Reservation>,
+    deviceId: String,
+    controller: ReservationController? = null,
+) {
+    val scope = rememberCoroutineScope()
+    var cancelMessage by remember { mutableStateOf<String?>(null) }
     val now = System.currentTimeMillis()
     EntrantReservationsScreen(
         reservations = ReservationController.activeForEntrant(reservations, deviceId, now),
         pastReservations = com.example.code.controller.pastReservationsForEntrant(reservations, deviceId, now),
+        statusMessage = cancelMessage,
+        onCancel = controller?.let { c ->
+            { reservation ->
+                scope.launch {
+                    cancelMessage = try {
+                        c.cancel(reservation, deviceId)
+                        "Reservation for ${reservation.campsiteName} cancelled."
+                    } catch (e: Exception) {
+                        "Could not cancel: ${e.message}"
+                    }
+                }
+            }
+        },
     )
 }
 

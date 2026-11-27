@@ -40,3 +40,24 @@ fun EntrantNotificationsRoute(
         onOpenReservations = onOpenReservations,
     )
 }
+
+/**
+ * Owner's list of sent notifications (US 02.10.02).
+ *
+ * @param deviceId this owner's ID, the sender.
+ * @param repository where notifications are read.
+ * @param onBack called when the owner goes back.
+ */
+@Composable
+fun SentNotificationsRoute(
+    deviceId: String,
+    repository: NotificationRepository,
+    onBack: () -> Unit,
+) {
+    val sent by remember(deviceId) { repository.notificationsSentBy(deviceId) }
+        .collectAsState(initial = emptyList())
+    com.example.code.ui.owner.SentNotificationsScreen(
+        sent = com.example.code.controller.SentNotifications.group(sent),
+        onBack = onBack,
+    )
+}

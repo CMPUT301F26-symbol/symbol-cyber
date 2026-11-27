@@ -120,6 +120,7 @@ fun EntrantLotteryCard(
  * @param lotteries all lotteries.
  * @param deviceId this owner's ID.
  * @param onOpenWaitingList called with the lottery to open.
+ * @param onOpenSentNotifications opens the sent notifications list (US 02.10.02).
  */
 @Composable
 // The following block(s) of code were generated primarily by GPt-6 Sol, "Please implement US 02.04.06 As a campsite owner, I want to update my campsite lottery listing. Include all UI elements, logic, and test cases", November 24, 2026.
@@ -130,6 +131,7 @@ fun OwnerLotteriesRoute(
     campsites: List<Campsite> = emptyList(),
     updateRepository: LotteryUpdateRepository = remember { FirestoreLotteryRepository() },
     clock: () -> Long = System::currentTimeMillis,
+    onOpenSentNotifications: (() -> Unit)? = null,
 ) {
     var editing by remember(deviceId) { mutableStateOf<Lottery?>(null) }
     var message by remember(deviceId) { mutableStateOf<String?>(null) }
@@ -178,6 +180,7 @@ fun OwnerLotteriesRoute(
         onEditLottery = { message = null; editing = it },
         statusMessage = message,
         now = now,
+        onOpenSentNotifications = onOpenSentNotifications,
     )
 }
 

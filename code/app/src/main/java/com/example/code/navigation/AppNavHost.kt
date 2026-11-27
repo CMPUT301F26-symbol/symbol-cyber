@@ -100,6 +100,9 @@ private const val OWNER_SHARED_LOTTERIES_ROUTE = "owner/shared-lotteries"
 private const val OWNER_WAITING_LIST_ROUTE =
     "owner/lottery/{lotteryId}/waiting-list"
 
+/** Owner's list of sent notifications (US 02.10.02). */
+private const val OWNER_SENT_NOTIFICATIONS_ROUTE = "owner/sent-notifications"
+
 /**
  * Root composable of the app.
  *
@@ -377,6 +380,14 @@ private fun ModeShell(
                                 "owner/campsite/${Uri.encode(campsite.id)}/edit",
                             )
                         },
+                    )
+                }
+
+                composable(OWNER_SENT_NOTIFICATIONS_ROUTE) {
+                    SentNotificationsRoute(
+                        deviceId = deviceId,
+                        repository = remember { FirestoreNotificationRepository() },
+                        onBack = { navController.popBackStack() },
                     )
                 }
 
@@ -768,6 +779,9 @@ private fun DestinationContent(
                         navController.navigate(
                             "owner/lottery/${lottery.id}/waiting-list",
                         )
+                    },
+                    onOpenSentNotifications = {
+                        navController.navigate(OWNER_SENT_NOTIFICATIONS_ROUTE)
                     },
                 )
             }

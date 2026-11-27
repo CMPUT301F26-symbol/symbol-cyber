@@ -102,6 +102,9 @@ class FakeNotificationRepository : NotificationRepository {
             sent.filter { it.recipientId == recipientId },
         )
     }
+
+    override fun notificationsSentBy(senderId: String): Flow<List<AppNotification>> =
+        flowOf(sent.filter { it.senderId == senderId }.sortedByDescending { it.createdAt })
 }
 
 /** [ReservationRepository] that keeps reservations in memory. */

@@ -1,7 +1,9 @@
 /*
  * EntrantReservationsScreen.kt
  * Entrant's Reservations tab (mockup E09): the entrant's active
- * reservations (US 01.06.01) and past reservations (US 01.06.02).
+ * reservations (US 01.06.01) and past reservations (US 01.06.02). The
+ * entrant can message the campsite owner about an active reservation
+ * (US 01.14.01).
  * Known issues: none.
  */
 
@@ -17,6 +19,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -37,6 +40,7 @@ import com.example.code.ui.common.formatDateRange
  * @param pastReservations reservations whose stay has ended, most recent first.
  * @param onCancel cancels a reservation after the entrant confirms (US 01.07.01); null hides the button.
  * @param statusMessage result of the last action, or null.
+ * @param onMessageOwner opens the conversation with the owner (US 01.14.01); null hides the button.
  */
 @Composable
 fun EntrantReservationsScreen(
@@ -45,6 +49,7 @@ fun EntrantReservationsScreen(
     pastReservations: List<Reservation> = emptyList(),
     onCancel: ((Reservation) -> Unit)? = null,
     statusMessage: String? = null,
+    onMessageOwner: ((Reservation) -> Unit)? = null,
 ) {
     var cancelling by remember { mutableStateOf<Reservation?>(null) }
     Column(
@@ -67,6 +72,7 @@ fun EntrantReservationsScreen(
                     reservation,
                     status = "Active",
                     onCancel = onCancel?.let { { cancelling = reservation } },
+                    onMessageOwner = onMessageOwner?.let { { it(reservation) } },
                 )
             }
 
@@ -106,7 +112,12 @@ fun EntrantReservationsScreen(
 
 /** One reservation: campsite, stay and [status]. */
 @Composable
-private fun ReservationCard(reservation: Reservation, status: String, onCancel: (() -> Unit)? = null) {
+private fun ReservationCard(
+    reservation: Reservation,
+    status: String,
+    onCancel: (() -> Unit)? = null,
+    onMessageOwner: (() -> Unit)? = null,
+) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier.padding(16.dp),
@@ -115,6 +126,9 @@ private fun ReservationCard(reservation: Reservation, status: String, onCancel: 
             Text(reservation.campsiteName, style = MaterialTheme.typography.titleMedium)
             Text("Stay: ${formatDateRange(reservation.startDate, reservation.endDate)}")
             Text("Status: $status")
+            if (onMessageOwner != null) {
+                OutlinedButton(onClick = onMessageOwner) { Text("Message owner") }
+            }
             if (onCancel != null) {
                 TextButton(onClick = onCancel) {
                     Text("Cancel reservation", color = MaterialTheme.colorScheme.error)

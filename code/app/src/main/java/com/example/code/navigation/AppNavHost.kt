@@ -508,6 +508,7 @@ private fun ModeShell(
                                             // === US 02.04.02: END pass the currently viewed campsite for acceptance ===
                                             campsite =
                                                 campsites.firstOrNull { it.id == campsiteId },
+                                            campsites = campsites,
                                         )
                                     }
                                 },

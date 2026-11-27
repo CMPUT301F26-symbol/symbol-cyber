@@ -1,6 +1,7 @@
 /*
  * WinnerReservationCard.kt
  * Shown on the campsite details lottery card after the draw: a winner
+ * of a multiple-campsite lottery picks which campsite to reserve (US 01.04.02),
  * picks available dates (US 01.04.01), reads the campsite rules and policies and confirms them (US 02.11.01),
  * accepts their reservation or declines it (US 01.04.03), then sees it
  * confirmed, rejected or declined.
@@ -38,6 +39,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.example.code.controller.STATUS_DECLINED
 import com.example.code.controller.endDayOptions
+import com.example.code.model.LotteryCampsite
 import com.example.code.model.Reservation
 import com.example.code.model.WaitingListEntry
 import com.example.code.ui.common.formatDate
@@ -58,6 +60,10 @@ import com.example.code.ui.common.formatDateRange
  * only with [onAcceptStay].
  * @param onAcceptStay if set, the winner picks a first and last day and this
  * is called instead of [onAccept], with the rules answer and the two days.
+ * @param campsiteChoices campsites of a multiple-campsite lottery the winner
+ * can choose from (US 01.04.02); with one or none, no choice is shown.
+ * @param chosenCampsiteId the campsite the winner picked, or null.
+ * @param onChooseCampsite called with the campsite the winner picks.
  * @param onDecline if set, shows a Decline button; called after the winner confirms (US 01.04.03).
  */
 @Composable
@@ -73,19 +79,36 @@ fun WinnerReservationCard(
     availableDays: List<Long> = emptyList(),
     onAcceptStay: ((Boolean, Long, Long) -> Unit)? = null,
     onDecline: (() -> Unit)? = null,
+    campsiteChoices: List<LotteryCampsite> = emptyList(),
+    chosenCampsiteId: String? = null,
+    onChooseCampsite: (String) -> Unit = {},
 ) {
     if (myEntry?.status != WaitingListEntry.STATUS_WON) return
     val mustConfirm = rules.isNotBlank() || cancellationPolicy.isNotBlank()
     var confirmed by remember { mutableStateOf(false) }
     var arrive by remember { mutableStateOf<Long?>(null) }
     var leave by remember { mutableStateOf<Long?>(null) }
+    val choosingCampsite = campsiteChoices.size > 1
+    val campsiteChosen = !choosingCampsite || campsiteChoices.any { it.id == chosenCampsiteId }
     val datesChosen = onAcceptStay == null || (arrive != null && leave != null)
     var confirmingDecline by remember { mutableStateOf(false) }
 
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
         when {
             reservation == null -> {
-                if (onAcceptStay != null) {
+                if (choosingCampsite) {
+                    CampsiteChooser(
+                        choices = campsiteChoices,
+                        chosenId = chosenCampsiteId,
+                        onChoose = {
+                            // Different campsites have different free days, so pick the dates again.
+                            arrive = null
+                            leave = null
+                            onChooseCampsite(it)
+                        },
+                    )
+                }
+                if (onAcceptStay != null && campsiteChosen) {
                     StayDatePicker(
                         availableDays = availableDays,
                         arrive = arrive,
@@ -120,7 +143,7 @@ fun WinnerReservationCard(
                             onAccept(confirmed)
                         }
                     },
-                    enabled = !busy && (!mustConfirm || confirmed) && datesChosen,
+                    enabled = !busy && (!mustConfirm || confirmed) && datesChosen && campsiteChosen,
                 ) {
                     Text("Accept reservation")
                 }
@@ -164,6 +187,25 @@ fun WinnerReservationCard(
             },
             dismissButton = { TextButton(onClick = { confirmingDecline = false }) { Text("Keep it") } },
         )
+    }
+}
+
+/** Lets the winner of a multiple-campsite lottery pick one campsite (US 01.04.02). */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun CampsiteChooser(choices: List<LotteryCampsite>, chosenId: String?, onChoose: (String) -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text("Choose your campsite", style = MaterialTheme.typography.titleSmall)
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            choices.forEach { campsite ->
+                FilterChip(
+                    selected = campsite.id == chosenId,
+                    onClick = { onChoose(campsite.id) },
+                    label = { Text(campsite.name.ifBlank { campsite.id }) },
+                    modifier = Modifier.testTag("chooseCampsite-${campsite.id}"),
+                )
+            }
+        }
     }
 }
 

@@ -23,7 +23,7 @@ package com.example.code.model
  * @property ownerId device ID of the campsite owner.
  * @property startDate first day of the stay.
  * @property endDate last day of the stay.
- * @property status [STATUS_ACTIVE] or [STATUS_REJECTED].
+ * @property status [STATUS_ACTIVE], [STATUS_REJECTED] or [STATUS_CANCELLED].
  * @property rejectionReason owner's reason, if rejected.
  * @property createdAt time the reservation was made.
  * @property rulesAccepted true if the entrant confirmed reading the campsite
@@ -51,5 +51,8 @@ data class Reservation(
 
         /** Owner rejected the reservation (US 02.08.01). */
         const val STATUS_REJECTED = "REJECTED"
+
+        /** Entrant cancelled the reservation (US 01.07.01). */
+        const val STATUS_CANCELLED = "CANCELLED"
     }
 }

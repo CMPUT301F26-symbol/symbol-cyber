@@ -29,6 +29,9 @@ interface ReservationRepository {
 
     /** Marks reservation [reservationId] as rejected with [reason]. */
     suspend fun reject(reservationId: String, reason: String)
+
+    /** Marks reservation [reservationId] as cancelled by the entrant (US 01.07.01). */
+    suspend fun cancel(reservationId: String)
 }
 
 /** [ReservationRepository] backed by Cloud Firestore. */
@@ -67,6 +70,12 @@ class FirestoreReservationRepository(
     override suspend fun reject(reservationId: String, reason: String) {
         reservations.document(reservationId)
             .update(mapOf("status" to Reservation.STATUS_REJECTED, "rejectionReason" to reason))
+            .awaitResult()
+    }
+
+    override suspend fun cancel(reservationId: String) {
+        reservations.document(reservationId)
+            .update(mapOf("status" to Reservation.STATUS_CANCELLED))
             .awaitResult()
     }
 

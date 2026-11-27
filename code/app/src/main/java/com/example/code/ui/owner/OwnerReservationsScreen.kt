@@ -2,8 +2,9 @@
  * OwnerReservationsScreen.kt
  * Owner's Reservations tab (mockups O03, O06, O08): booked dates for each
  * campsite (US 02.06.01), active reservations (US 02.07.01), rejecting a
- * reservation with a reason (US 02.08.01) and past reservations (US 02.07.02).
- * Known issues: cancelled reservations (US 02.07.03) are not shown yet.
+ * reservation with a reason (US 02.08.01), past reservations (US 02.07.02)
+ * and cancelled reservations (US 02.07.03).
+ * Known issues: none.
  */
 
 package com.example.code.ui.owner
@@ -41,6 +42,7 @@ import com.example.code.ui.common.formatDateRange
  * @param statusMessage result of the last action, or null.
  * @param onReject called with a reservation and the owner's reason.
  * @param pastReservations reservations whose stay has ended, most recent first.
+ * @param cancelledReservations cancelled or rejected reservations, newest first.
  */
 @Composable
 fun OwnerReservationsScreen(
@@ -50,6 +52,7 @@ fun OwnerReservationsScreen(
     onReject: (Reservation, String) -> Unit,
     modifier: Modifier = Modifier,
     pastReservations: List<Reservation> = emptyList(),
+    cancelledReservations: List<Reservation> = emptyList(),
 ) {
     var rejecting by remember { mutableStateOf<Reservation?>(null) }
 
@@ -103,6 +106,18 @@ fun OwnerReservationsScreen(
         }
         items(pastReservations, key = { "past-${it.id}" }) { reservation ->
             HistoryCard(reservation, status = "Completed")
+        }
+
+        item { Text("Cancelled reservations", style = MaterialTheme.typography.titleMedium) }
+        if (cancelledReservations.isEmpty()) {
+            item { Text("No cancelled reservations.") }
+        }
+        items(cancelledReservations, key = { "cancelled-${it.id}" }) { reservation ->
+            if (reservation.status == Reservation.STATUS_REJECTED) {
+                HistoryCard(reservation, status = "Rejected by you", detail = "Reason: ${reservation.rejectionReason}")
+            } else {
+                HistoryCard(reservation, status = "Cancelled by the entrant")
+            }
         }
     }
 

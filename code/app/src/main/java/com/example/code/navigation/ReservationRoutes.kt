@@ -79,7 +79,8 @@ fun WinnerReservationContent(
                         rulesRequired = ReservationController.rulesRequired(campsite),
                         rulesAccepted = rulesAccepted,
                         startDate = first,
-                        endDate = last,
+                        // The stay lasts until the end of its last day.
+                        endDate = com.example.code.controller.endOfDay(last),
                         others = reservations,
                     )
                     if (reserved != null) "Reservation confirmed." else "You already accepted this reservation."

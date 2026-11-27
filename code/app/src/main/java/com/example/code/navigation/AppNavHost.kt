@@ -83,6 +83,9 @@ private const val OWNER_CAMPSITE_DETAILS_ROUTE = "owner/campsite/{campsiteId}"
 
 private const val OWNER_EDIT_CAMPSITE_ROUTE = "owner/campsite/{campsiteId}/edit"
 
+/** Owner's conversation with the entrant of a reservation (US 02.12.01). */
+private const val OWNER_MESSAGES_ROUTE = "owner/messages/{reservationId}"
+
 private const val CAMPSITE_DETAILS_ROUTE =
     "entrant/campsite/{campsiteId}"
 
@@ -374,6 +377,19 @@ private fun ModeShell(
                                 "owner/campsite/${Uri.encode(campsite.id)}/edit",
                             )
                         },
+                    )
+                }
+
+                composable(
+                    route = OWNER_MESSAGES_ROUTE,
+                    arguments = listOf(navArgument("reservationId") { type = NavType.StringType }),
+                ) { messagesEntry ->
+                    ConversationRoute(
+                        reservationId = messagesEntry.arguments?.getString("reservationId"),
+                        reservations = reservations,
+                        deviceId = deviceId,
+                        userName = user.name,
+                        onBack = { navController.popBackStack() },
                     )
                 }
 
@@ -778,6 +794,9 @@ private fun DestinationContent(
                 reservations = reservations,
                 deviceId = deviceId,
                 controller = reservationController,
+                onMessage = { reservation ->
+                    navController.navigate("owner/messages/${Uri.encode(reservation.id)}")
+                },
             )
 
         Destination.ADMIN_LOGS -> AdminLogsRoute()

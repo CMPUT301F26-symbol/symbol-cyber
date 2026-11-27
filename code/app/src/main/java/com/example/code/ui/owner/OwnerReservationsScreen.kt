@@ -11,12 +11,14 @@ package com.example.code.ui.owner
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -39,6 +41,7 @@ import com.example.code.ui.common.formatDateRange
  *
  * @param bookedDates booked stays grouped by campsite.
  * @param reservations active reservations, soonest first.
+ * @param onMessage opens the conversation with the entrant (US 02.12.01); null hides the button.
  * @param statusMessage result of the last action, or null.
  * @param onReject called with a reservation and the owner's reason.
  * @param pastReservations reservations whose stay has ended, most recent first.
@@ -48,6 +51,7 @@ import com.example.code.ui.common.formatDateRange
 fun OwnerReservationsScreen(
     bookedDates: List<BookedDates>,
     reservations: List<Reservation>,
+    onMessage: ((Reservation) -> Unit)? = null,
     statusMessage: String?,
     onReject: (Reservation, String) -> Unit,
     modifier: Modifier = Modifier,
@@ -95,7 +99,12 @@ fun OwnerReservationsScreen(
                     if (reservation.rulesAccepted) {
                         Text("Confirmed the campsite rules", style = MaterialTheme.typography.bodySmall)
                     }
-                    OutlinedButton(onClick = { rejecting = reservation }) { Text("Reject") }
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        if (onMessage != null) {
+                            Button(onClick = { onMessage(reservation) }) { Text("Message entrant") }
+                        }
+                        OutlinedButton(onClick = { rejecting = reservation }) { Text("Reject") }
+                    }
                 }
             }
         }

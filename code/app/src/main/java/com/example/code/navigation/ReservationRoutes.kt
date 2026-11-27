@@ -145,6 +145,7 @@ fun OwnerReservationsRoute(
     reservations: List<Reservation>,
     deviceId: String,
     controller: ReservationController,
+    onMessage: ((Reservation) -> Unit)? = null,
 ) {
     val scope = rememberCoroutineScope()
     var message by remember { mutableStateOf<String?>(null) }
@@ -153,6 +154,7 @@ fun OwnerReservationsRoute(
     OwnerReservationsScreen(
         bookedDates = ReservationController.bookedDates(reservations, deviceId, now),
         reservations = ReservationController.activeForOwner(reservations, deviceId, now),
+        onMessage = onMessage,
         pastReservations = com.example.code.controller.pastReservationsForOwner(reservations, deviceId, now),
         cancelledReservations = com.example.code.controller.cancelledReservationsForOwner(reservations, deviceId),
         statusMessage = message,

@@ -13,6 +13,7 @@ All deliverables are maintained in the repository's **GitHub Wiki**.
 | Product Backlog | Wiki: [Product Backlog](https://github.com/CMPUT301F26-symbol/symbol-cyber/wiki/Product-Backlog) | Fahad Khan, Amr Soliman |
 | UI Mockups and Storyboards | Wiki: [UI Mockups](https://github.com/CMPUT301F26-symbol/symbol-cyber/wiki/UI-Mockups) and [Storyboards](https://github.com/CMPUT301F26-symbol/symbol-cyber/wiki/Storyboards) | Aalok Mishra, Abhishek Mishra |
 | CRC Cards | Wiki: [CRC Cards](https://github.com/CMPUT301F26-symbol/symbol-cyber/wiki/CRC-Cards) | Noor Alam |
+| UML Class Diagrams | Wiki: [UML](https://github.com/CMPUT301F26-symbol/symbol-cyber/wiki/UML); [versioned page](doc/UML.md) | All members maintain their implemented classes |
 | Wiki Structure and Tool Use | Wiki: [Tool Use](https://github.com/CMPUT301F26-symbol/symbol-cyber/wiki/Tool-Use) | Dean Elbery |
 | Sprint Planning and Reviews | Wiki: [Sprint Planning and Reviews](https://github.com/CMPUT301F26-symbol/symbol-cyber/wiki/Sprint-Planning-and-Reviews) | Dean Elbery; all members supply weekly story evidence |
 | Project Part 2 Feedback | Wiki: [Project Part 2 Feedback](https://github.com/CMPUT301F26-symbol/symbol-cyber/wiki/Project-Part-2-Feedback) | Dean Elbery; relevant deliverable owners |

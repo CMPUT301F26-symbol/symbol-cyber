@@ -1,0 +1,44 @@
+classDiagram
+    direction TB
+    class CampsiteController {
+        +StateFlow campsites
+        +StateFlow isLoading
+        +StateFlow errorMessage
+        +retryLoading()
+        +addCampsite(campsite, onSuccess, onFailure)
+        +removeCampsite(campsite, onSuccess, onFailure)
+    }
+    class FirebaseFirestore {
+        <<external>>
+    }
+    class CampsiteFilterController {
+        +parse(location, guests, start, end) CampsiteFilterSelection
+        +apply(campsites, selection, lotteries, reservations) List
+    }
+    class CampsiteFilterSelection {
+        +String location
+        +Int? guests
+        +FilterStay? stay
+        +Boolean isActive
+    }
+    class FilterStay {
+        +Long start
+        +Long end
+    }
+    class CampsiteFilters {
+        +String location
+        +Int? guestCount
+        +Set~String~? availableCampsiteIds
+        +Boolean isActive
+    }
+    class Campsite
+    class Lottery
+    class Reservation
+    CampsiteController --> FirebaseFirestore : direct campsite persistence
+    CampsiteController --> Campsite : observes and writes
+    CampsiteFilterController ..> CampsiteFilterSelection : validates input
+    CampsiteFilterSelection --> FilterStay : optional stay
+    CampsiteFilterController ..> CampsiteFilters : builds criteria
+    CampsiteFilterController ..> Campsite : filters
+    CampsiteFilterController ..> Lottery : booking periods
+    CampsiteFilterController ..> Reservation : excludes active overlaps

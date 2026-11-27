@@ -103,6 +103,32 @@ class ReservationController(
         )
         return if (reservations.create(reservation)) reservation else null
     }
+
+    /**
+     * Declines the win of [entry] in [lottery] (US 01.04.03). The declined
+     * reservation is saved so the winner cannot accept it later.
+     *
+     * @return false if the winner had already accepted or declined.
+     * @throws IllegalArgumentException if [entry] did not win [lottery].
+     */
+    suspend fun declineWin(lottery: Lottery, entry: WaitingListEntry): Boolean {
+        require(lottery.status == Lottery.STATUS_DRAWN) { "Winners have not been drawn yet" }
+        require(entry.status == WaitingListEntry.STATUS_WON) { "Only a winner can decline" }
+        val declined = Reservation(
+            id = reservationId(lottery.id, entry.entrantId),
+            lotteryId = lottery.id,
+            campsiteId = lottery.campsiteId,
+            campsiteName = lottery.campsiteName,
+            entrantId = entry.entrantId,
+            entrantName = entry.entrantName,
+            ownerId = lottery.ownerId,
+            startDate = lottery.bookingStart,
+            endDate = lottery.bookingEnd,
+            status = STATUS_DECLINED,
+            createdAt = clock(),
+        )
+        return reservations.create(declined)
+    }
     // === US 02.04.02: END accept the campsite shown on the current details page ===
 
     /**

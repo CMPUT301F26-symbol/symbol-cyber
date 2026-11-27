@@ -2,8 +2,9 @@
  * WinnerReservationCard.kt
  * Shown on the campsite details lottery card after the draw: a winner
  * picks available dates (US 01.04.01), reads the campsite rules and policies and confirms them (US 02.11.01),
- * accepts their reservation, then sees it confirmed or rejected.
- * Known issues: declining a win (US 01.04.03) is not available yet.
+ * accepts their reservation or declines it (US 01.04.03), then sees it
+ * confirmed, rejected or declined.
+ * Known issues: none.
  */
 
 package com.example.code.ui.entrant
@@ -16,12 +17,15 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.selection.toggleable
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -32,6 +36,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import com.example.code.controller.STATUS_DECLINED
 import com.example.code.controller.endDayOptions
 import com.example.code.model.Reservation
 import com.example.code.model.WaitingListEntry
@@ -53,6 +58,7 @@ import com.example.code.ui.common.formatDateRange
  * only with [onAcceptStay].
  * @param onAcceptStay if set, the winner picks a first and last day and this
  * is called instead of [onAccept], with the rules answer and the two days.
+ * @param onDecline if set, shows a Decline button; called after the winner confirms (US 01.04.03).
  */
 @Composable
 fun WinnerReservationCard(
@@ -66,6 +72,7 @@ fun WinnerReservationCard(
     cancellationPolicy: String = "",
     availableDays: List<Long> = emptyList(),
     onAcceptStay: ((Boolean, Long, Long) -> Unit)? = null,
+    onDecline: (() -> Unit)? = null,
 ) {
     if (myEntry?.status != WaitingListEntry.STATUS_WON) return
     val mustConfirm = rules.isNotBlank() || cancellationPolicy.isNotBlank()
@@ -73,6 +80,7 @@ fun WinnerReservationCard(
     var arrive by remember { mutableStateOf<Long?>(null) }
     var leave by remember { mutableStateOf<Long?>(null) }
     val datesChosen = onAcceptStay == null || (arrive != null && leave != null)
+    var confirmingDecline by remember { mutableStateOf(false) }
 
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(8.dp)) {
         when {
@@ -116,7 +124,15 @@ fun WinnerReservationCard(
                 ) {
                     Text("Accept reservation")
                 }
+                if (onDecline != null) {
+                    OutlinedButton(onClick = { confirmingDecline = true }, enabled = !busy) {
+                        Text("Decline")
+                    }
+                }
             }
+
+            reservation.status == STATUS_DECLINED ->
+                Text("You declined this reservation.")
 
             reservation.status == Reservation.STATUS_REJECTED ->
                 Text("The owner rejected this reservation: ${reservation.rejectionReason}")
@@ -133,6 +149,21 @@ fun WinnerReservationCard(
         if (statusMessage != null) {
             Text(statusMessage, style = MaterialTheme.typography.bodySmall)
         }
+    }
+
+    if (confirmingDecline && onDecline != null) {
+        AlertDialog(
+            onDismissRequest = { confirmingDecline = false },
+            title = { Text("Decline this reservation?") },
+            text = { Text("Your spot goes back to the campsite owner. You can't accept it later.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmingDecline = false
+                    onDecline()
+                }) { Text("Decline reservation") }
+            },
+            dismissButton = { TextButton(onClick = { confirmingDecline = false }) { Text("Keep it") } },
+        )
     }
 }
 

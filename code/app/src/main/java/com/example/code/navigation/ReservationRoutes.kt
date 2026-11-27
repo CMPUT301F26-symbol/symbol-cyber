@@ -89,6 +89,19 @@ fun WinnerReservationContent(
                 busy = false
             }
         },
+        // US 01.04.03: the winner can decline instead of reserving.
+        onDecline = {
+            val entry = myEntry ?: return@WinnerReservationCard
+            busy = true
+            scope.launch {
+                message = try {
+                    if (controller.declineWin(lottery, entry)) "You declined the reservation." else "You already answered."
+                } catch (e: Exception) {
+                    "Could not decline: ${e.message}"
+                }
+                busy = false
+            }
+        },
         onAccept = { rulesAccepted ->
             val entry = myEntry ?: return@WinnerReservationCard
             busy = true

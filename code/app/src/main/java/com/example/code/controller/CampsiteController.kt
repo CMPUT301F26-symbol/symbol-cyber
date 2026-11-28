@@ -161,7 +161,10 @@ class CampsiteController : ViewModel() {
             return
         }
 
-        campsiteCollection.document(campsite.id).set(campsite)
+        // The following block(s) of code were generated primarily by GPt-6 Sol, "Please implement US 02.13.01. Make sure to look through existing code and add all UI elements, logic, and test cases", November 27, 2026.
+        // Owner edits now update only listing fields. The earlier full-document
+        // description is historical: entrant scores and aggregate totals stay intact.
+        campsiteCollection.document(campsite.id).update(campsiteOwnerUpdateToMap(campsite))
             .addOnSuccessListener { onSuccess() }
             .addOnFailureListener { onFailure("Could not save changes. Try again.") }
     }

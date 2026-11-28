@@ -4,14 +4,16 @@ package com.example.code.controller
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import com.example.code.model.Rating
-import com.example.code.model.averageRating
-import com.example.code.model.ratingsForCampsite
-import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+// The following block(s) of code were generated primarily by GPt-6 Sol, "Please implement US 02.13.01. Make sure to look through existing code and add all UI elements, logic, and test cases", November 27, 2026.
+import androidx.lifecycle.viewModelScope
+import com.example.code.data.FirestoreCampsiteRatingRepository
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.launch
 
 /**
  * Controls campsite ratings in Firestore and provides them to the UI.
@@ -24,7 +26,9 @@ class RatingController : ViewModel() {
 
     private val db = FirebaseFirestore.getInstance()
     private val ratingCollection = db.collection("ratings")
-    private val campsiteCollection = db.collection("campsites")
+    // The following block(s) of code were generated primarily by GPt-6 Sol, "Please implement US 02.13.01. Make sure to look through existing code and add all UI elements, logic, and test cases", November 27, 2026.
+    // Entrant submissions now exist; the historical header above describes the previous implementation.
+    private val ratingRepository = FirestoreCampsiteRatingRepository(db)
 
     private val _ratings = MutableStateFlow<List<Rating>>(emptyList())
     val ratings: StateFlow<List<Rating>> = _ratings.asStateFlow()
@@ -65,23 +69,19 @@ class RatingController : ViewModel() {
      * @param onFailure called with an error message if the rating was not removed
      */
     fun removeRating(rating: Rating, onSuccess: () -> Unit, onFailure: (String) -> Unit) {
-        // The ratings the campsite keeps after this one is removed
-        val remaining = ratingsForCampsite(_ratings.value, rating.campsiteId)
-            .filter { it.id != rating.id }
-
-        val batch = db.batch()
-        batch.delete(ratingCollection.document(rating.id))
-
-        // Old test campsites keep their score under averageRating, so clear that too
-        batch.update(
-            campsiteCollection.document(rating.campsiteId),
-            "rating", averageRating(remaining),
-            "averageRating", FieldValue.delete(),
-        )
-
-        batch.commit()
-            .addOnSuccessListener { onSuccess() }
-            .addOnFailureListener { onFailure("Could not remove rating. Try again.") }
+        // The following block(s) of code were generated primarily by GPt-6 Sol, "Please implement US 02.13.01. Make sure to look through existing code and add all UI elements, logic, and test cases", November 27, 2026.
+        // The repository reads the saved score and aggregate inside the same transaction.
+        // This prevents a removal from overwriting a concurrent entrant submission.
+        viewModelScope.launch {
+            try {
+                ratingRepository.removeRating(rating)
+                onSuccess()
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                onFailure("Could not remove rating. Try again.")
+            }
+        }
     }
 
     /**
@@ -130,5 +130,8 @@ internal fun ratingFromDocument(id: String, data: Map<String, Any?>): Rating? {
         entrantId = data["entrantId"] as? String ?: "",
         campsiteId = campsiteId,
         score = (data["score"] as? Number)?.toInt() ?: 0,
+        // The following block(s) of code were generated primarily by GPt-6 Sol, "Please implement US 02.13.01. Make sure to look through existing code and add all UI elements, logic, and test cases", November 27, 2026.
+        reservationId = data["reservationId"] as? String ?: "",
     )
 }
+

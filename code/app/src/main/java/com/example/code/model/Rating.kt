@@ -14,6 +14,9 @@ data class Rating(
     val entrantId: String = "",
     val campsiteId: String = "",
     val score: Int = 0,
+    // The following block(s) of code were generated primarily by GPt-6 Sol, "Please implement US 02.13.01. Make sure to look through existing code and add all UI elements, logic, and test cases", November 27, 2026.
+    /** Reservation identifier: one rating document per completed stay (US 01.13.01). */
+    val reservationId: String = "",
 )
 
 /**
@@ -39,3 +42,4 @@ fun averageRating(ratings: List<Rating>): Double? {
     }
     return ratings.map { it.score }.average()
 }
+

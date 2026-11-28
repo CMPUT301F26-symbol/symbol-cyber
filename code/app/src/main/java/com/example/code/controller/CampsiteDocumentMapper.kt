@@ -29,3 +29,21 @@ internal fun campsiteFromDocument(id: String, data: Map<String, Any?>): Campsite
         cancellationPolicy = data["cancellationPolicy"] as? String ?: "",
     )
 }
+
+// The following block(s) of code were generated primarily by GPt-6 Sol, "Please implement US 02.13.01. Make sure to look through existing code and add all UI elements, logic, and test cases", November 27, 2026.
+/** Owner listing edits never replace scores or aggregate fields maintained by rating transactions. */
+internal fun campsiteOwnerUpdateToMap(campsite: Campsite): Map<String, Any?> = mapOf(
+    "name" to campsite.name,
+    "location" to campsite.location,
+    "description" to campsite.description,
+    "maxOccupancy" to campsite.maxOccupancy,
+    "latitude" to campsite.latitude,
+    "longitude" to campsite.longitude,
+    "imageUrl" to campsite.imageUrl,
+    "tags" to campsite.tags,
+    "price" to campsite.price,
+    "currency" to campsite.currency,
+    "rules" to campsite.rules,
+    "cancellationPolicy" to campsite.cancellationPolicy,
+)
+

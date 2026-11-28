@@ -72,6 +72,8 @@ import com.example.code.ui.common.ProfileScreen
 import com.example.code.ui.entrant.CampsiteDetailsDestination
 import com.example.code.ui.entrant.CampsiteScanRoute
 import com.example.code.ui.entrant.CampsiteReviews
+// The following block(s) of code were generated primarily by GPt-6 Sol, "Please implement US 02.13.01. Make sure to look through existing code and add all UI elements, logic, and test cases", November 27, 2026.
+import com.example.code.ui.entrant.CampsiteRatings
 import com.example.code.ui.entrant.ExploreScreen
 import com.example.code.ui.owner.OwnerCampsiteDetailsDestination
 import com.example.code.ui.owner.OwnerCampsitesScreen
@@ -514,6 +516,8 @@ private fun ModeShell(
                                 },
                             )
                             campsiteId?.takeIf { it.isNotBlank() }?.let {
+                                // The following block(s) of code were generated primarily by GPt-6 Sol, "Please implement US 02.13.01. Make sure to look through existing code and add all UI elements, logic, and test cases", November 27, 2026.
+                                CampsiteRatings(it, deviceId, reservations)
                                 CampsiteReviews(it, deviceId, reservations)
                             }
                         },
